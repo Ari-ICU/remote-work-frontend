@@ -4,13 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-    Briefcase,
     ArrowLeft,
     Mail,
     Lock,
     User,
     Sparkles,
-    CheckCircle2,
     Github,
     Chrome,
     BriefcaseBusiness
@@ -18,7 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Header } from "@/components/header";
 import { fadeIn, scaleUp } from "@/lib/animations";
 
 export default function RegisterPage() {
@@ -38,7 +35,6 @@ export default function RegisterPage() {
     if (isSuccess) {
         return (
             <div className="min-h-screen flex flex-col bg-background">
-                <Header />
                 <div className="flex-1 flex items-center justify-center p-4">
                     <motion.div
                         initial="hidden"
@@ -67,8 +63,7 @@ export default function RegisterPage() {
 
     return (
         <div className="relative min-h-screen flex flex-col bg-background">
-            <Header />
-            <div className="flex-1 relative flex items-center justify-center p-4 overflow-hidden pt-20">
+            <div className="flex-1 relative flex items-center justify-center p-4 overflow-hidden">
                 {/* Background Ornaments */}
                 <div className="absolute inset-0 -z-10">
                     <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(var(--primary-rgb),0.08),transparent_50%)]" />
