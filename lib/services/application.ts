@@ -9,5 +9,10 @@ export const applicationService = {
     getForJob: async (jobId: string) => {
         const response = await api.get(`/applications/job/${jobId}`);
         return response.data;
+    },
+
+    getMyApplications: async () => {
+        const response = await api.get('/applications/me');
+        return response.data;
     }
 };

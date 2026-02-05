@@ -55,5 +55,10 @@ export const jobsService = {
     delete: async (id: string) => {
         const response = await api.delete(`/jobs/${id}`);
         return response.data;
+    },
+
+    getMyJobs: async () => {
+        const response = await api.get('/jobs/my-jobs');
+        return response.data;
     }
 };

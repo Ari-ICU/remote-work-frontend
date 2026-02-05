@@ -71,7 +71,9 @@ export function AiChatBot() {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className={cn("fixed z-50 transition-all duration-300",
+            isOpen ? "inset-0 sm:inset-auto sm:bottom-6 sm:right-6" : "bottom-6 right-6"
+        )}>
             {!isOpen && (
                 <Button
                     onClick={() => setIsOpen(true)}
@@ -82,7 +84,7 @@ export function AiChatBot() {
             )}
 
             {isOpen && (
-                <Card className="w-[380px] h-[600px] shadow-2xl flex flex-col border-primary/20 animate-in fade-in slide-in-from-bottom-10 duration-200">
+                <Card className="w-full h-full sm:w-[380px] sm:h-[600px] shadow-2xl flex flex-col border-primary/20 animate-in fade-in slide-in-from-bottom-10 duration-200 sm:rounded-xl rounded-none">
                     <CardHeader className="flex flex-row items-center justify-between p-4 border-b bg-muted/30">
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-primary/10 rounded-full">

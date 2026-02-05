@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Briefcase, User, LogOut, ShieldCheck } from "lucide-react";
+import { Menu, X, Briefcase, User, LogOut, ShieldCheck, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { authService } from "@/lib/services/auth";
 import { useRouter } from "next/navigation";
@@ -84,6 +84,17 @@ export function Header() {
                   </Button>
                 </Link>
               )}
+              <Link href="/dashboard">
+                <Button variant="ghost" size="icon" className="group rounded-xl relative" title="Dashboard">
+                  <ShieldCheck className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </Button>
+              </Link>
+              <Link href="/messages">
+                <Button variant="ghost" size="icon" className="group rounded-xl relative" title="Messages">
+                  <MessageSquare className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  {/* Optional: <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-background" /> */}
+                </Button>
+              </Link>
               <Link href="/profile">
                 <Button variant="ghost" size="sm" className="gap-2 rounded-xl h-10 px-3">
                   <div className="h-6 w-6 rounded-full bg-muted overflow-hidden flex items-center justify-center border border-border">
@@ -157,6 +168,18 @@ export function Header() {
               <div className="mt-2 flex flex-col gap-2 border-t border-border pt-4">
                 {user ? (
                   <>
+                    <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="justify-start w-full gap-2">
+                        <ShieldCheck className="h-4 w-4" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Link href="/messages" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="justify-start w-full gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Messages
+                      </Button>
+                    </Link>
                     <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="ghost" className="justify-start w-full gap-2">
                         <User className="h-4 w-4" />
