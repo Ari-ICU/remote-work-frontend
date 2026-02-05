@@ -77,11 +77,7 @@ export function ProfileEditModal({ user, isOpen, onClose, onSuccess }: ProfileEd
         uploadData.append('file', file);
 
         try {
-            const response = await api.post('/users/upload-avatar', uploadData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.post('/users/avatar', uploadData);
 
             const updatedUser = response.data;
             setFormData(prev => ({ ...prev, avatar: updatedUser.avatar }));

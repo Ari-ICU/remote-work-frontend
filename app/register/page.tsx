@@ -231,7 +231,11 @@ export default function RegisterPage() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <Button variant="outline" className="h-12 bg-background/50 border-border rounded-xl hover:bg-muted group/social">
+                            <Button
+                                variant="outline"
+                                className="h-12 bg-background/50 border-border rounded-xl hover:bg-muted group/social"
+                                onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/google`}
+                            >
                                 <Chrome className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
                                 Google
                             </Button>
