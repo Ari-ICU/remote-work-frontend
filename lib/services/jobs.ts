@@ -14,8 +14,8 @@ const mapBackendJobToFrontendJob = (backendJob: any): Job => {
         featured: false,
         category: backendJob.category,
         description: backendJob.description,
-        requirements: [],
-        responsibilities: [],
+        requirements: backendJob.requirements || [],
+        responsibilities: backendJob.responsibilities || [],
     };
 };
 
