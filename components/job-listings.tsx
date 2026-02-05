@@ -18,12 +18,12 @@ interface JobListingsProps {
   hideViewAll?: boolean;
 }
 
-export function JobListings({ jobs, searchQuery, locationQuery, onReset, hideViewAll = false }: JobListingsProps) {
-  const [savedJobs, setSavedJobs] = useState<number[]>([]);
+export function JobListings({ jobs, searchQuery, locationQuery, filterCount = 0, onReset, hideViewAll = false }: JobListingsProps) {
+  const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
 
-  const toggleSaveJob = (jobId: number) => {
+  const toggleSaveJob = (jobId: string) => {
     setSavedJobs((prev) =>
       prev.includes(jobId)
         ? prev.filter((id) => id !== jobId)
@@ -31,12 +31,12 @@ export function JobListings({ jobs, searchQuery, locationQuery, onReset, hideVie
     );
   };
 
-  // Reset page when search changes
+  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, locationQuery]);
+  }, [searchQuery, locationQuery, filterCount]);
 
-  const isSearching = searchQuery || locationQuery;
+  const isSearching = searchQuery || locationQuery || filterCount > 0;
   const totalPages = Math.ceil(jobs.length / ITEMS_PER_PAGE);
   const paginatedJobs = jobs.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -127,8 +127,8 @@ export function JobListings({ jobs, searchQuery, locationQuery, onReset, hideVie
                 >
                   <JobCard
                     job={job}
-                    isSaved={savedJobs.includes(job.id)}
-                    onToggleSave={toggleSaveJob}
+                    isSaved={savedJobs.includes(String(job.id))}
+                    onToggleSave={(id) => toggleSaveJob(id)}
                   />
                 </motion.div>
               ))

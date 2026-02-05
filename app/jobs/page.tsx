@@ -130,13 +130,16 @@ export default function JobsPage() {
                                 <Button
                                     size="lg"
                                     variant="outline"
-                                    className="h-12 rounded-xl px-6"
+                                    className={`h-12 rounded-xl px-6 transition-all ${showFilters || selectedTypes.length > 0
+                                        ? "border-primary/50 text-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
+                                        : ""
+                                        }`}
                                     onClick={() => setShowFilters(!showFilters)}
                                 >
-                                    <Filter className="h-4 w-4 mr-2" />
+                                    <Filter className={`h-4 w-4 mr-2 ${showFilters || selectedTypes.length > 0 ? "text-primary" : ""}`} />
                                     Filters
                                     {selectedTypes.length > 0 && (
-                                        <Badge variant="secondary" className="ml-2 rounded-full h-5 w-5 p-0 flex items-center justify-center">
+                                        <Badge variant="secondary" className="ml-2 rounded-full h-5 w-5 p-0 flex items-center justify-center bg-primary text-primary-foreground border-none">
                                             {selectedTypes.length}
                                         </Badge>
                                     )}
@@ -249,6 +252,7 @@ export default function JobsPage() {
                             jobs={filteredJobs}
                             searchQuery={searchQuery}
                             locationQuery={locationQuery}
+                            filterCount={selectedTypes.length}
                             onReset={handleReset}
                             hideViewAll={true}
                         />

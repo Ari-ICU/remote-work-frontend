@@ -12,7 +12,7 @@ import { slugify } from "@/lib/utils";
 interface JobCardProps {
     job: Job;
     isSaved: boolean;
-    onToggleSave: (id: number) => void;
+    onToggleSave: (id: string) => void;
 }
 
 export function JobCard({ job, isSaved, onToggleSave }: JobCardProps) {
@@ -51,7 +51,7 @@ export function JobCard({ job, isSaved, onToggleSave }: JobCardProps) {
                 <motion.button
                     whileTap={{ scale: 0.8 }}
                     type="button"
-                    onClick={() => onToggleSave(job.id)}
+                    onClick={() => onToggleSave(String(job.id))}
                     className="shrink-0 p-1 text-muted-foreground transition-colors hover:text-primary"
                     aria-label={isSaved ? "Unsave job" : "Save job"}
                 >
