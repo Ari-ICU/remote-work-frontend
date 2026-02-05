@@ -2,6 +2,7 @@ import React from "react"
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { AiChatBot } from "@/components/ai-chat-bot"
 import './globals.css'
 
 const geistSans = Geist({
@@ -45,6 +46,7 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased">
         {children}
+        <AiChatBot />
         <Analytics />
       </body>
     </html>
