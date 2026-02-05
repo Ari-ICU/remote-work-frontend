@@ -13,6 +13,7 @@ interface JobListingsProps {
   jobs: Job[];
   searchQuery?: string;
   locationQuery?: string;
+  filterCount?: number;
   onReset?: () => void;
   hideViewAll?: boolean;
 }
