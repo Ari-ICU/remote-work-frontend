@@ -187,7 +187,11 @@ function LoginContent() {
                                 <Chrome className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
                                 Google
                             </Button>
-                            <Button variant="outline" className="h-11 bg-background/50 border-border hover:bg-muted group/social">
+                            <Button
+                                variant="outline"
+                                className="h-11 bg-background/50 border-border hover:bg-muted group/social"
+                                onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/github`}
+                            >
                                 <Github className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
                                 GitHub
                             </Button>
