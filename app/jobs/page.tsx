@@ -59,13 +59,12 @@ export default function JobsPage() {
             // Job type filtering
             let matchesType = true;
             if (selectedTypes.length > 0) {
-                const jobTypeLower = job.type.toLowerCase();
                 matchesType = selectedTypes.some(type => {
-                    if (type === "remote") return jobTypeLower.includes("remote");
-                    if (type === "freelance") return jobTypeLower.includes("freelance");
-                    if (type === "part-time") return jobTypeLower.includes("part-time");
-                    if (type === "full-time") return jobTypeLower.includes("full-time");
-                    if (type === "hourly") return job.salary.toLowerCase().includes("/hr");
+                    if (type === "remote") return job.remote || job.location.toLowerCase().includes("remote");
+                    if (type === "hourly") return job.budgetType === "HOURLY" || job.salary.toLowerCase().includes("/hr");
+                    if (type === "freelance") return job.type.toLowerCase().includes("freelance");
+                    if (type === "part-time") return job.type.toLowerCase().includes("part-time");
+                    if (type === "full-time") return job.type.toLowerCase().includes("full-time");
                     return false;
                 });
             }

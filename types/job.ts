@@ -4,6 +4,8 @@ export interface Job {
     company: string;
     location: string;
     type: string;
+    remote: boolean;
+    budgetType: 'HOURLY' | 'FIXED';
     salary: string;
     posted: string;
     tags: string[];
