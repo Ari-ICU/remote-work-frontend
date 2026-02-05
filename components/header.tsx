@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Briefcase, User, LogOut } from "lucide-react";
+import { Menu, X, Briefcase, User, LogOut, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { authService } from "@/lib/services/auth";
 import { useRouter } from "next/navigation";
@@ -76,6 +76,14 @@ export function Header() {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
+              {user.role === 'ADMIN' && (
+                <Link href="/admin">
+                  <Button variant="outline" size="sm" className="gap-2 border-primary/20 hover:bg-primary/10">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                    Dashboard
+                  </Button>
+                </Link>
+              )}
               <Link href="/profile">
                 <Button variant="ghost" size="sm" className="gap-2 rounded-xl h-10 px-3">
                   <div className="h-6 w-6 rounded-full bg-muted overflow-hidden flex items-center justify-center border border-border">
