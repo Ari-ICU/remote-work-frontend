@@ -11,25 +11,51 @@ import {
     Sparkles,
     Github,
     Chrome,
-    BriefcaseBusiness
+    BriefcaseBusiness,
+    Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fadeIn, scaleUp } from "@/lib/animations";
+import { authService } from "@/lib/services/auth";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setError(null);
         setIsLoading(true);
-        // Simulate registration
-        setTimeout(() => {
-            setIsLoading(false);
+
+        const formData = new FormData(e.currentTarget);
+        const fullName = formData.get("fullname") as string;
+        const email = formData.get("email") as string;
+        const password = formData.get("password") as string;
+
+        // Split name for backend
+        const nameParts = fullName.trim().split(/\s+/);
+        const firstName = nameParts[0] || "";
+        const lastName = nameParts.slice(1).join(" ") || " ";
+
+        try {
+            await authService.register({
+                email,
+                password,
+                firstName,
+                lastName
+            });
             setIsSuccess(true);
-        }, 2000);
+        } catch (err: any) {
+            console.error("Registration failed:", err);
+            setError(err.response?.data?.message || "Registration failed. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     if (isSuccess) {
@@ -123,6 +149,16 @@ export default function RegisterPage() {
                             </p>
                         </div>
 
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                className="mb-6 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium"
+                            >
+                                {error}
+                            </motion.div>
+                        )}
+
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="space-y-2">
                                 <Label htmlFor="fullname">Full Name</Label>
@@ -130,6 +166,7 @@ export default function RegisterPage() {
                                     <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                                     <Input
                                         id="fullname"
+                                        name="fullname"
                                         placeholder="John Doe"
                                         required
                                         className="pl-11 h-12 bg-background/50 rounded-xl border-border focus-visible:ring-primary/20"
@@ -143,6 +180,7 @@ export default function RegisterPage() {
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                                     <Input
                                         id="email"
+                                        name="email"
                                         type="email"
                                         placeholder="name@example.com"
                                         required
@@ -157,6 +195,7 @@ export default function RegisterPage() {
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                                     <Input
                                         id="password"
+                                        name="password"
                                         type="password"
                                         placeholder="••••••••"
                                         required
@@ -173,7 +212,7 @@ export default function RegisterPage() {
                             >
                                 {isLoading ? (
                                     <div className="flex items-center gap-2">
-                                        <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <Loader2 className="h-5 w-5 animate-spin" />
                                         Creating Account...
                                     </div>
                                 ) : (

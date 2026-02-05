@@ -4,12 +4,11 @@ import { useState, useMemo, useEffect } from "react";
 import { Header } from "@/components/header";
 import { JobListings } from "@/components/job-listings";
 import { Footer } from "@/components/footer";
-// import { jobs } from "@/lib/data"; // Removed static data
-import { getJobs } from "@/lib/api"; // Import API client
+import { jobsService } from "@/lib/services/jobs"; // Import jobs service
 import { Job } from "@/types/job";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Filter, X } from "lucide-react";
+import { Search, MapPin, Filter, X, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 
@@ -24,6 +23,7 @@ const JOB_TYPE_FILTERS = [
 export default function JobsPage() {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [locationQuery, setLocationQuery] = useState("");
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -31,10 +31,17 @@ export default function JobsPage() {
 
     useEffect(() => {
         const fetchJobs = async () => {
-            setIsLoading(true);
-            const data = await getJobs();
-            setJobs(data);
-            setIsLoading(false);
+            try {
+                setIsLoading(true);
+                const data = await jobsService.getAll();
+                setJobs(data);
+                setError(null);
+            } catch (err) {
+                console.error("Failed to fetch jobs:", err);
+                setError("Failed to load jobs. Please try again later.");
+            } finally {
+                setIsLoading(false);
+            }
         };
         fetchJobs();
     }, []);
@@ -222,13 +229,31 @@ export default function JobsPage() {
                         </motion.div>
                     </div>
 
-                    <JobListings
-                        jobs={filteredJobs}
-                        searchQuery={searchQuery}
-                        locationQuery={locationQuery}
-                        onReset={handleReset}
-                        hideViewAll={true}
-                    />
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center py-24 gap-4">
+                            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                            <p className="text-muted-foreground font-medium">Finding the best opportunities for you...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="text-center py-24 bg-destructive/5 border border-destructive/20 rounded-3xl">
+                            <p className="text-destructive font-semibold text-lg">{error}</p>
+                            <Button
+                                variant="outline"
+                                className="mt-4 border-destructive/30 hover:bg-destructive/10"
+                                onClick={() => window.location.reload()}
+                            >
+                                Try Refreshing
+                            </Button>
+                        </div>
+                    ) : (
+                        <JobListings
+                            jobs={filteredJobs}
+                            searchQuery={searchQuery}
+                            locationQuery={locationQuery}
+                            onReset={handleReset}
+                            hideViewAll={true}
+                        />
+                    )}
                 </div>
             </main>
 

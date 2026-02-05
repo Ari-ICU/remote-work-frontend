@@ -3,20 +3,34 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Briefcase } from "lucide-react";
+import { Menu, X, Briefcase, User, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { authService } from "@/lib/services/auth";
+import { useRouter } from "next/navigation";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll);
+
+    // Check for user on mount
+    setUser(authService.getCurrentUser());
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleLogout = () => {
+    authService.logout();
+    setUser(null);
+    router.push("/");
+  };
 
   return (
     <header
@@ -53,16 +67,37 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link href="/login">
-            <Button variant="ghost" size="sm">
-              Log In
-            </Button>
-          </Link>
-          <Link href="/post-job">
-            <Button size="sm" className="shadow-md hover:shadow-lg transition-shadow">
-              Post a Job
-            </Button>
-          </Link>
+          {user ? (
+            <>
+              <Link href="/profile">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <User className="h-4 w-4" />
+                  {user.firstName}
+                </Button>
+              </Link>
+              <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
+                <LogOut className="h-4 w-4" />
+              </Button>
+              <Link href="/post-job">
+                <Button size="sm" className="shadow-md hover:shadow-lg transition-shadow">
+                  Post a Job
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button variant="ghost" size="sm">
+                  Log In
+                </Button>
+              </Link>
+              <Link href="/post-job">
+                <Button size="sm" className="shadow-md hover:shadow-lg transition-shadow">
+                  Post a Job
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -99,14 +134,34 @@ export function Header() {
                 </Link>
               ))}
               <div className="mt-2 flex flex-col gap-2 border-t border-border pt-4">
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" className="justify-start w-full">
-                    Log In
-                  </Button>
-                </Link>
-                <Link href="/post-job" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="justify-start w-full">Post a Job</Button>
-                </Link>
+                {user ? (
+                  <>
+                    <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="justify-start w-full gap-2">
+                        <User className="h-4 w-4" />
+                        Profile
+                      </Button>
+                    </Link>
+                    <Button variant="ghost" className="justify-start w-full gap-2 text-destructive" onClick={handleLogout}>
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </Button>
+                    <Link href="/post-job" onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="justify-start w-full">Post a Job</Button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="justify-start w-full">
+                        Log In
+                      </Button>
+                    </Link>
+                    <Link href="/post-job" onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="justify-start w-full">Post a Job</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </motion.div>

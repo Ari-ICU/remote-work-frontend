@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Briefcase } from "lucide-react";
+import { Search, MapPin, Briefcase, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { authService } from "@/lib/services/auth";
 
 interface HeroSectionProps {
   onSearch?: (query: string, location: string) => void;
@@ -13,6 +14,11 @@ interface HeroSectionProps {
 export function HeroSection({ onSearch }: HeroSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    setUser(authService.getCurrentUser());
+  }, []);
 
   const handleSearch = () => {
     onSearch?.(searchQuery, location);
@@ -54,6 +60,16 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-center"
         >
+          {user && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6"
+            >
+              <Sparkles className="h-4 w-4" />
+              Welcome back, {user.firstName}!
+            </motion.div>
+          )}
           <h1 className="text-pretty text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-7xl">
             Cambodia&apos;s Exclusive
             <span className="block text-primary">Remote & Freelance</span>

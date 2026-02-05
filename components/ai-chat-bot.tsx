@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { MessageCircle, X, Send, Bot, User } from "lucide-react"
-import api from "@/lib/api"
+import { aiService } from "@/lib/services/ai"
 import { cn } from "@/lib/utils"
 
 interface Message {
@@ -50,11 +50,11 @@ export function AiChatBot() {
         setIsLoading(true)
 
         try {
-            const response = await api.post('/ai/chat', { message: userMessage.content })
+            const data = await aiService.chat(userMessage.content)
             const botMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "bot",
-                content: response.data.reply
+                content: data.reply
             }
             setMessages(prev => [...prev, botMessage])
         } catch (error) {

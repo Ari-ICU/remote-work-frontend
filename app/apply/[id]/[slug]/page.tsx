@@ -26,40 +26,89 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/header";
 import { Job } from "@/types/job";
-import { jobs } from "@/lib/data";
+import { jobsService } from "@/lib/services/jobs";
+import { applicationService } from "@/lib/services/application";
+import { authService } from "@/lib/services/auth";
 import { fadeIn, scaleUp } from "@/lib/animations";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 
 export default function ApplyPage() {
     const params = useParams();
     const router = useRouter();
     const [job, setJob] = useState<Job | undefined>(undefined);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (params.id) {
-            const foundJob = jobs.find(j => j.id === Number(params.id));
-            setJob(foundJob);
-        }
+        const fetchJob = async () => {
+            if (params.id) {
+                try {
+                    setIsLoading(true);
+                    const foundJob = await jobsService.getById(params.id as string);
+                    setJob(foundJob);
+                } catch (err) {
+                    console.error("Failed to fetch job:", err);
+                    setError("Could not find the job you're looking for.");
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+        fetchJob();
     }, [params.id]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setIsLoading(true);
-        // Simulate application submission
-        setTimeout(() => {
-            setIsLoading(false);
+
+        const user = authService.getCurrentUser();
+        if (!user) {
+            router.push(`/login?redirect=/apply/${params.id}/${params.slug}`);
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const formData = new FormData(e.currentTarget);
+            const applicationData = {
+                coverLetter: formData.get("coverLetter") as string,
+                // In a real app, we'd upload the file first and get a URL/ID
+                resumeUrl: "https://example.com/resume.pdf"
+            };
+
+            await applicationService.apply(params.id as string, applicationData);
             setIsSuccess(true);
-        }, 2000);
+        } catch (err) {
+            console.error("Failed to submit application:", err);
+            alert("Something went wrong. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    if (!job && !jobs.find(j => j.id === Number(params.id))) {
+    if (isLoading) {
         return (
             <div className="min-h-screen flex flex-col bg-background">
                 <Header />
-                <div className="flex-1 flex items-center justify-center">
-                    <p>Loading job...</p>
+                <div className="flex-1 flex flex-col items-center justify-center gap-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Loading job details...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !job) {
+        return (
+            <div className="min-h-screen flex flex-col bg-background">
+                <Header />
+                <div className="flex-1 flex flex-col items-center justify-center gap-4">
+                    <p className="text-destructive font-bold text-xl">{error || "Job not found"}</p>
+                    <Button asChild variant="outline">
+                        <Link href="/">Back to Jobs</Link>
+                    </Button>
                 </div>
             </div>
         );
@@ -206,19 +255,29 @@ export default function ApplyPage() {
                                             <div className="space-y-4">
                                                 <div className="space-y-2">
                                                     <Label htmlFor="fullname">Full Name</Label>
-                                                    <Input id="fullname" placeholder="John Doe" required className="rounded-xl" />
+                                                    <Input id="fullname" name="fullname" placeholder="John Doe" required className="rounded-xl" />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="email">Email Address</Label>
-                                                    <Input id="email" type="email" placeholder="john@example.com" required className="rounded-xl" />
+                                                    <Input id="email" name="email" type="email" placeholder="john@example.com" required className="rounded-xl" />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="phone">Phone Number</Label>
-                                                    <Input id="phone" type="tel" placeholder="+855 12 345 678" required className="rounded-xl" />
+                                                    <Input id="phone" name="phone" type="tel" placeholder="+855 12 345 678" required className="rounded-xl" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="coverLetter">Cover Letter</Label>
+                                                    <Textarea
+                                                        id="coverLetter"
+                                                        name="coverLetter"
+                                                        placeholder="Tell the employer why you're a good fit..."
+                                                        className="rounded-xl min-h-[120px]"
+                                                        required
+                                                    />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="resume">Resume/CV</Label>
-                                                    <Input id="resume" type="file" required className="rounded-xl cursor-pointer" />
+                                                    <Input id="resume" name="resume" type="file" required className="rounded-xl cursor-pointer" />
                                                 </div>
                                             </div>
 
@@ -226,11 +285,11 @@ export default function ApplyPage() {
                                                 type="submit"
                                                 size="lg"
                                                 className="w-full h-12 font-bold rounded-xl shadow-lg shadow-primary/20"
-                                                disabled={isLoading}
+                                                disabled={isSubmitting}
                                             >
-                                                {isLoading ? (
+                                                {isSubmitting ? (
                                                     <div className="flex items-center gap-2">
-                                                        <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                        <Loader2 className="h-5 w-5 animate-spin" />
                                                         Sending...
                                                     </div>
                                                 ) : (

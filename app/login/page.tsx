@@ -1,23 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Briefcase, ArrowLeft, Mail, Lock, Eye, EyeOff, Github, Chrome } from "lucide-react";
+import { Briefcase, ArrowLeft, Mail, Lock, Eye, EyeOff, Github, Chrome, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fadeIn, scaleUp } from "@/lib/animations";
+import { authService } from "@/lib/services/auth";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginContent() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirect = searchParams.get("redirect") || "/";
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setError(null);
         setIsLoading(true);
-        // Simulate login
-        setTimeout(() => setIsLoading(false), 2000);
+
+        const formData = new FormData(e.currentTarget);
+        const email = formData.get("email") as string;
+        const password = formData.get("password") as string;
+
+        try {
+            await authService.login({ email, password });
+            router.push(redirect);
+            router.refresh();
+        } catch (err: any) {
+            console.error("Login failed:", err);
+            setError(err.response?.data?.message || "Invalid email or password. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -80,6 +100,16 @@ export default function LoginPage() {
                             </p>
                         </div>
 
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                className="mb-6 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium"
+                            >
+                                {error}
+                            </motion.div>
+                        )}
+
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email address</Label>
@@ -87,6 +117,7 @@ export default function LoginPage() {
                                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                                     <Input
                                         id="email"
+                                        name="email"
                                         type="email"
                                         placeholder="name@example.com"
                                         required
@@ -106,6 +137,7 @@ export default function LoginPage() {
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                                     <Input
                                         id="password"
+                                        name="password"
                                         type={showPassword ? "text" : "password"}
                                         placeholder="••••••••"
                                         required
@@ -181,5 +213,17 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
     );
 }

@@ -30,19 +30,56 @@ import {
 import { Header } from "@/components/header";
 import { fadeIn, scaleUp, staggerContainer } from "@/lib/animations";
 
+import { jobsService } from "@/lib/services/jobs";
+import { authService } from "@/lib/services/auth";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+
 export default function PostJobPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [activeStep, setActiveStep] = useState(1);
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const [category, setCategory] = useState("");
+    const [type, setType] = useState("");
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        const user = authService.getCurrentUser();
+        if (!user) {
+            router.push("/login?redirect=/post-job");
+            return;
+        }
+
+        setError(null);
         setIsLoading(true);
-        // Simulate submission
-        setTimeout(() => {
-            setIsLoading(false);
+
+        const formData = new FormData(e.currentTarget);
+        const jobData = {
+            title: formData.get("title") as string,
+            company: formData.get("company") as string,
+            location: formData.get("location") as string,
+            type: type || "Full-time",
+            salary: formData.get("salary") as string,
+            description: formData.get("description") as string,
+            category: category || "General",
+            tags: ["Remote"],
+            posted: "Just now",
+            featured: false
+        };
+
+        try {
+            await jobsService.create(jobData);
             setIsSubmitted(true);
-        }, 2000);
+        } catch (err: any) {
+            console.error("Failed to post job:", err);
+            setError(err.response?.data?.message || "Failed to publish job listing. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     if (isSubmitted) {
@@ -151,6 +188,16 @@ export default function PostJobPage() {
                                 ))}
                             </div>
 
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium"
+                                >
+                                    {error}
+                                </motion.div>
+                            )}
+
                             {/* Section 1: Core Info */}
                             <div className="space-y-8">
                                 <div className="flex items-center gap-3 pb-4 border-b border-border/50">
@@ -166,11 +213,11 @@ export default function PostJobPage() {
                                 <div className="grid gap-8 md:grid-cols-2">
                                     <div className="space-y-3">
                                         <Label htmlFor="title" className="text-sm font-semibold">Listing Title</Label>
-                                        <Input id="title" placeholder="e.g. Senior Product Designer" required className="h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
+                                        <Input id="title" name="title" placeholder="e.g. Senior Product Designer" required className="h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
                                     </div>
                                     <div className="space-y-3">
                                         <Label htmlFor="category" className="text-sm font-semibold">Work Category</Label>
-                                        <Select required>
+                                        <Select onValueChange={setCategory} required>
                                             <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-border/50">
                                                 <SelectValue placeholder="Select talent area" />
                                             </SelectTrigger>
@@ -190,14 +237,14 @@ export default function PostJobPage() {
                                         <Label htmlFor="company" className="text-sm font-semibold">Company Name</Label>
                                         <div className="relative group">
                                             <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                            <Input id="company" placeholder="e.g. Acme Inc." required className="pl-11 h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
+                                            <Input id="company" name="company" placeholder="e.g. Acme Inc." required className="pl-11 h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
                                         </div>
                                     </div>
                                     <div className="space-y-3">
                                         <Label htmlFor="location" className="text-sm font-semibold">Remote Location</Label>
                                         <div className="relative group">
                                             <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                            <Input id="location" placeholder="e.g. Remote (Global)" required className="pl-11 h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
+                                            <Input id="location" name="location" placeholder="e.g. Remote (Global)" required className="pl-11 h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
                                         </div>
                                     </div>
                                 </div>
@@ -218,15 +265,15 @@ export default function PostJobPage() {
                                 <div className="grid gap-8 md:grid-cols-2">
                                     <div className="space-y-3">
                                         <Label htmlFor="type" className="text-sm font-semibold">Contract Style</Label>
-                                        <Select required>
+                                        <Select onValueChange={setType} required>
                                             <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-border/50">
                                                 <SelectValue placeholder="How will they work?" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="remote-full">Full-time Remote</SelectItem>
-                                                <SelectItem value="remote-part">Part-time Remote</SelectItem>
-                                                <SelectItem value="freelance">Freelance / Contract</SelectItem>
-                                                <SelectItem value="hourly">Hourly Billing</SelectItem>
+                                                <SelectItem value="Full-time">Full-time Remote</SelectItem>
+                                                <SelectItem value="Part-time">Part-time Remote</SelectItem>
+                                                <SelectItem value="Freelance">Freelance / Contract</SelectItem>
+                                                <SelectItem value="Hourly">Hourly Billing</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -234,7 +281,7 @@ export default function PostJobPage() {
                                         <Label htmlFor="salary" className="text-sm font-semibold">Salary / Rate Range</Label>
                                         <div className="relative group">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
-                                            <Input id="salary" placeholder="2,000 - 4,000" required className="pl-8 h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
+                                            <Input id="salary" name="salary" placeholder="2,000 - 4,000" required className="pl-8 h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
                                         </div>
                                         <p className="text-xs text-muted-foreground italic">Specify monthly range for full-time or hourly rate for freelance.</p>
                                     </div>
@@ -257,8 +304,9 @@ export default function PostJobPage() {
                                     <Label htmlFor="description" className="text-sm font-semibold">Role & Requirements</Label>
                                     <Textarea
                                         id="description"
+                                        name="description"
                                         placeholder="We're looking for a person who... 
-
+ 
 Expected skills:
 - Skill 1
 - Skill 2"
@@ -266,28 +314,11 @@ Expected skills:
                                         required
                                     />
                                     <div className="flex items-start gap-2 p-4 bg-muted/20 border border-border/30 rounded-xl">
-                                        <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                                        <Loader2 className="h-5 w-5 text-primary shrink-0 mt-0.5 animate-pulse" />
                                         <p className="text-xs text-muted-foreground leading-relaxed">
                                             Tip: Clear and detailed descriptions get 3x more relevant applicants. Be specific about the tools you use and your company culture.
                                         </p>
                                     </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <Label className="text-sm font-semibold">Branding (Optional)</Label>
-                                    <label
-                                        htmlFor="logo-upload"
-                                        className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-border/50 rounded-2xl cursor-pointer hover:bg-muted/30 hover:border-primary/50 transition-all group overflow-hidden"
-                                    >
-                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                            <div className="p-3 bg-muted rounded-full group-hover:bg-primary/20 group-hover:text-primary transition-colors mb-3">
-                                                <Upload className="w-6 h-6" />
-                                            </div>
-                                            <p className="mb-1 text-sm font-medium">Click to upload company logo</p>
-                                            <p className="text-xs text-muted-foreground">PNG or JPEG up to 5MB</p>
-                                        </div>
-                                        <input id="logo-upload" type="file" className="hidden" />
-                                    </label>
                                 </div>
                             </div>
 
@@ -300,13 +331,12 @@ Expected skills:
                                     </div>
                                     <Button
                                         type="submit"
-                                        // size="xl" 
                                         className="w-full md:w-auto min-w-[240px] h-14 text-lg font-bold rounded-2xl shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all active:scale-[0.98]"
                                         disabled={isLoading}
                                     >
                                         {isLoading ? (
                                             <div className="flex items-center gap-3">
-                                                <div className="h-5 w-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                                                <Loader2 className="h-5 w-5 animate-spin" />
                                                 <span>Publishing Listing...</span>
                                             </div>
                                         ) : (

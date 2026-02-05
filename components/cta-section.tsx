@@ -4,8 +4,16 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { authService } from "@/lib/services/auth";
 
 export function CTASection() {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    setUser(authService.getCurrentUser());
+  }, []);
+
   return (
     <section id="about" className="py-16 sm:py-24 scroll-mt-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -30,9 +38,9 @@ export function CTASection() {
                 top companies. We exclusively offer remote and freelance
                 opportunities that allow you to work from anywhere.
               </p>
-              <Link href="/register">
+              <Link href={user ? "/#find-jobs" : "/register"}>
                 <Button size="lg" className="mt-8 group/btn w-full sm:w-auto">
-                  Create Free Profile
+                  {user ? "Browse Opportunities" : "Create Free Profile"}
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
                 </Button>
               </Link>
