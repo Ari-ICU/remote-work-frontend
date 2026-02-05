@@ -24,27 +24,42 @@ import { Footer } from "@/components/footer";
 import { authService } from "@/lib/services/auth";
 import api from "@/lib/api";
 import { fadeIn, staggerContainer } from "@/lib/animations";
+import { ProfileEditModal } from "@/components/profile-edit-modal";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function ProfilePage() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
             const currentUser = authService.getCurrentUser();
             if (!currentUser) {
+                setIsLoading(false);
                 router.push("/login?redirect=/profile");
                 return;
             }
 
             try {
                 const response = await api.get("/users/profile/me");
-                setUser(response.data);
-            } catch (error) {
+                if (response.data) {
+                    setUser(response.data);
+                } else {
+                    // Token might be valid but user does not exist in DB
+                    authService.logout();
+                    router.push("/login?redirect=/profile");
+                }
+            } catch (error: any) {
                 console.error("Failed to fetch user profile:", error);
-                // Fallback to local storage if API fails
-                setUser(currentUser);
+                if (error.response?.status === 401 || error.response?.status === 404) {
+                    authService.logout();
+                    router.push("/login?redirect=/profile");
+                } else {
+                    // Fallback to local storage if it's just a network error
+                    setUser(currentUser);
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -52,6 +67,14 @@ export default function ProfilePage() {
 
         fetchUserProfile();
     }, [router]);
+
+    // Helper to get full avatar URL
+    const getAvatarUrl = (path: string) => {
+        if (!path) return null;
+        if (path.startsWith('http')) return path;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        return `${baseUrl}${path}`;
+    };
 
     if (isLoading) {
         return (
@@ -84,7 +107,7 @@ export default function ProfilePage() {
                             <div className="absolute -top-16 left-6 sm:left-10 p-1 bg-background rounded-2xl border border-border shadow-xl">
                                 <div className="h-32 w-32 rounded-xl bg-muted flex items-center justify-center overflow-hidden relative group">
                                     {user.avatar ? (
-                                        <img src={user.avatar} alt={user.firstName} className="h-full w-full object-cover" />
+                                        <img src={getAvatarUrl(user.avatar) || ''} alt={user.firstName} className="h-full w-full object-cover" />
                                     ) : (
                                         <User className="h-16 w-16 text-muted-foreground" />
                                     )}
@@ -117,7 +140,11 @@ export default function ProfilePage() {
                                         <Settings className="h-4 w-4 mr-2" />
                                         Settings
                                     </Button>
-                                    <Button size="sm" className="rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105">
+                                    <Button
+                                        size="sm"
+                                        className="rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105"
+                                        onClick={() => setIsEditModalOpen(true)}
+                                    >
                                         <Edit3 className="h-4 w-4 mr-2" />
                                         Edit Profile
                                     </Button>
@@ -227,6 +254,14 @@ export default function ProfilePage() {
                 </div>
             </main>
 
+            <ProfileEditModal
+                user={user}
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                onSuccess={(updatedUser) => setUser(updatedUser)}
+            />
+
+            <Toaster position="top-center" />
             <Footer />
         </div>
     );

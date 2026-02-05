@@ -32,6 +32,13 @@ export function Header() {
     router.push("/");
   };
 
+  const getAvatarUrl = (path: string) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    return `${baseUrl}${path}`;
+  };
+
   return (
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${scrolled
@@ -70,12 +77,18 @@ export function Header() {
           {user ? (
             <>
               <Link href="/profile">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <User className="h-4 w-4" />
-                  {user.firstName}
+                <Button variant="ghost" size="sm" className="gap-2 rounded-xl h-10 px-3">
+                  <div className="h-6 w-6 rounded-full bg-muted overflow-hidden flex items-center justify-center border border-border">
+                    {user.avatar ? (
+                      <img src={getAvatarUrl(user.avatar) || ''} alt={user.firstName} className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <span className="font-medium">{user.firstName}</span>
                 </Button>
               </Link>
-              <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
+              <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout" className="rounded-xl">
                 <LogOut className="h-4 w-4" />
               </Button>
               <Link href="/post-job">

@@ -22,8 +22,14 @@ export const authService = {
 
     getCurrentUser: () => {
         if (typeof window !== 'undefined') {
-            const userStr = localStorage.getItem('user');
-            return userStr ? JSON.parse(userStr) : null;
+            try {
+                const userStr = localStorage.getItem('user');
+                if (!userStr || userStr === 'undefined') return null;
+                return JSON.parse(userStr);
+            } catch (error) {
+                console.error("Error parsing user from localStorage:", error);
+                return null;
+            }
         }
         return null;
     }

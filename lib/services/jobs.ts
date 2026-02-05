@@ -32,6 +32,11 @@ export const jobsService = {
         return response.data;
     },
 
+    getFeaturedCompanies: async () => {
+        const response = await api.get('/jobs/companies');
+        return response.data;
+    },
+
     getById: async (id: string) => {
         const response = await api.get(`/jobs/${id}`);
         return mapBackendJobToFrontendJob(response.data);
