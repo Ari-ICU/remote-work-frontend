@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Header } from "@/components/header";
 import { JobListings } from "@/components/job-listings";
 import { Footer } from "@/components/footer";
-import { jobs } from "@/lib/data";
+// import { jobs } from "@/lib/data"; // Removed static data
+import { getJobs } from "@/lib/api"; // Import API client
 import { Job } from "@/types/job";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,13 +22,25 @@ const JOB_TYPE_FILTERS = [
 ];
 
 export default function JobsPage() {
+    const [jobs, setJobs] = useState<Job[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [locationQuery, setLocationQuery] = useState("");
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
     const [showFilters, setShowFilters] = useState(false);
 
+    useEffect(() => {
+        const fetchJobs = async () => {
+            setIsLoading(true);
+            const data = await getJobs();
+            setJobs(data);
+            setIsLoading(false);
+        };
+        fetchJobs();
+    }, []);
+
     const filteredJobs = useMemo(() => {
-        return (jobs as Job[]).filter((job) => {
+        return jobs.filter((job) => {
             const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 job.salary.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -52,7 +65,7 @@ export default function JobsPage() {
 
             return matchesSearch && matchesLocation && matchesType;
         });
-    }, [searchQuery, locationQuery, selectedTypes]);
+    }, [jobs, searchQuery, locationQuery, selectedTypes]);
 
     const handleReset = () => {
         setSearchQuery("");
@@ -160,8 +173,8 @@ export default function JobsPage() {
                                                     whileHover={{ scale: 1.02 }}
                                                     whileTap={{ scale: 0.98 }}
                                                     className={`relative px-4 py-3 rounded-xl text-sm font-semibold transition-all border-2 ${isSelected
-                                                            ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
-                                                            : "bg-background/50 text-foreground border-border hover:border-primary/50 hover:bg-muted/50"
+                                                        ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+                                                        : "bg-background/50 text-foreground border-border hover:border-primary/50 hover:bg-muted/50"
                                                         }`}
                                                 >
                                                     <div className="flex items-center justify-center gap-2">
