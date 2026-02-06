@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { jobsService } from "@/lib/services/jobs";
 
 interface Company {
+  id?: string;
   name: string;
   jobsCount: number;
   logo: string;
@@ -94,9 +95,9 @@ export function FeaturedCompanies() {
           viewport={{ once: true }}
           className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6"
         >
-          {companies.map((company) => (
+          {companies.map((company, index) => (
             <motion.button
-              key={company.name}
+              key={company.id || `${company.name}-${index}`}
               variants={item}
               whileHover={{ y: -5 }}
               type="button"

@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { MessageCircle, X, Send, Bot, User } from "lucide-react"
 import { aiService } from "@/lib/services/ai"
 import { cn } from "@/lib/utils"
+import { usePathname } from "next/navigation"
 
 interface Message {
     id: string
@@ -17,7 +18,10 @@ interface Message {
 }
 
 export function AiChatBot() {
+    const pathname = usePathname()
+    const isMessagesPage = pathname === "/messages"
     const [isOpen, setIsOpen] = useState(false)
+
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "1",
@@ -69,6 +73,10 @@ export function AiChatBot() {
             setIsLoading(false)
         }
     }
+
+    // Don't show the bot on the messages page to avoid UI conflict
+    // We check this at the end to satisfy Rules of Hooks (all hooks must be called every render)
+    if (isMessagesPage) return null;
 
     return (
         <div className={cn("fixed z-50 transition-all duration-300",

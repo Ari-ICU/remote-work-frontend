@@ -261,7 +261,9 @@ test('Multi-user simulation: Full platform feature test', async ({ browser }) =>
     const chatBtn = freelancerApp.locator('button:has-text("Chat")');
     await chatBtn.click();
     await employerPage.waitForURL('**/messages**');
-    await expect(employerPage.locator('h3')).toContainText('Test Freelancer');
+
+    // Wait for the recipient name to appear anywhere in the messages view
+    await expect(employerPage.getByText('Test Freelancer').first()).toBeVisible({ timeout: 20000 });
 
     // Give a moment for socket connection
     await employerPage.waitForTimeout(2000);
@@ -279,19 +281,18 @@ test('Multi-user simulation: Full platform feature test', async ({ browser }) =>
     // Wait for conversations to load
     console.log('Freelancer: Waiting for conversation with Test Employer...');
     // The conversation list item contains the name
+    // Use a more specific selector for the conversation item
     const employerConv = freelancerPage.locator('div').filter({ hasText: /^Test Employer$/i }).first();
+    const employerConvMoreSpecific = freelancerPage.locator('div.cursor-pointer').filter({ hasText: 'Test Employer' }).first();
 
-    // If exact match fails, try partial
-    const employerConvPartial = freelancerPage.locator('div').filter({ hasText: 'Test Employer' }).first();
-
-    await expect(employerConvPartial).toBeVisible({ timeout: 30000 }).catch(async () => {
+    await expect(employerConvMoreSpecific).toBeVisible({ timeout: 30000 }).catch(async () => {
         console.log('Freelancer: Conversation not found after 30s, current text on page:', await freelancerPage.innerText('body'));
         console.log('Freelancer: Reloading messages...');
         await freelancerPage.reload();
-        await expect(employerConvPartial).toBeVisible({ timeout: 20000 });
+        await expect(employerConvMoreSpecific).toBeVisible({ timeout: 20000 });
     });
 
-    await employerConvPartial.click();
+    await employerConvMoreSpecific.click();
     console.log('Freelancer: Clicked employer conversation.');
 
     // 4. Freelancer verifies message and replies
