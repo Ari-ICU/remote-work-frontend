@@ -325,10 +325,10 @@ export default function MessagesPage() {
 
     return (
         <div className="flex flex-col h-screen bg-[#F0F2F5] dark:bg-background">
-            <div className="shrink-0">
+            <div className="flex-none z-50 relative h-16">
                 <Header />
             </div>
-            <div className="flex flex-1 overflow-hidden relative max-w-[1600px] mx-auto w-full border-x border-border/50 bg-background shadow-2xl">
+            <div className="flex flex-1 overflow-hidden relative max-w-[1600px] mx-auto w-full border-x border-border/50 bg-background shadow-2xl ">
                 {/* Sidebar - Telegram/Messenger Style */}
                 <div
                     className={cn(
@@ -434,11 +434,13 @@ export default function MessagesPage() {
                 </div>
 
                 {/* Main Chat Area - Clean & Premium */}
-                <div className="flex-1 flex flex-col bg-background relative w-full min-h-0 border-l border-border/50 overflow-hidden">
+                <div className="flex-1 flex flex-col bg-background relative w-full border-l border-border/50 overflow-hidden">
                     {selectedUser ? (
                         <>
-                            {/* Modern Chat Header */}
-                            <div className="h-[70px] border-b border-border/50 flex items-center justify-between px-4 sm:px-6 bg-background/80 backdrop-blur-md z-10 shrink-0">
+                            {/* Modern Chat Header - Clean Responsive */}
+                            <div
+                                className="w-full flex-none min-h-[64px] md:min-h-[72px] h-auto py-2 border-b border-border flex items-center justify-between px-3 md:px-6 bg-card text-card-foreground shadow-sm relative z-40"
+                            >
                                 <div className="flex items-center gap-3">
                                     <Button
                                         variant="ghost"
@@ -465,15 +467,15 @@ export default function MessagesPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1 sm:gap-2">
-                                    <Button variant="ghost" size="icon" className="rounded-full text-primary hover:bg-primary/5">
+                                    <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
                                         <Phone className="h-[18px] w-[18px]" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="rounded-full text-primary hover:bg-primary/5 hidden sm:flex">
+                                    <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
                                         <Video className="h-[18px] w-[18px]" />
                                     </Button>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="rounded-full text-primary hover:bg-primary/5">
+                                            <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
                                                 <Info className="h-[18px] w-[18px]" />
                                             </Button>
                                         </DropdownMenuTrigger>
