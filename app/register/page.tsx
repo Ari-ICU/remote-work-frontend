@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [role, setRole] = useState<"FREELANCER" | "EMPLOYER">("FREELANCER");
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
 
@@ -47,7 +48,8 @@ export default function RegisterPage() {
                 email,
                 password,
                 firstName,
-                lastName
+                lastName,
+                role
             });
             setIsSuccess(true);
         } catch (err: any) {
@@ -160,6 +162,31 @@ export default function RegisterPage() {
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-5">
+                            <div className="grid grid-cols-2 gap-3 mb-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setRole("FREELANCER")}
+                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${role === "FREELANCER"
+                                        ? "bg-primary/10 border-primary text-primary"
+                                        : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                                        }`}
+                                >
+                                    <User className="h-5 w-5 mb-1" />
+                                    <span className="text-xs font-bold">Freelancer</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setRole("EMPLOYER")}
+                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${role === "EMPLOYER"
+                                        ? "bg-primary/10 border-primary text-primary"
+                                        : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                                        }`}
+                                >
+                                    <BriefcaseBusiness className="h-5 w-5 mb-1" />
+                                    <span className="text-xs font-bold">Employer</span>
+                                </button>
+                            </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="fullname">Full Name</Label>
                                 <div className="relative group">
