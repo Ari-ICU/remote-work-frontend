@@ -2,6 +2,7 @@ export interface Job {
     id: string | number;
     title: string;
     company: string;
+    companyName?: string;
     location: string;
     type: string;
     remote: boolean;

@@ -5,7 +5,7 @@ const mapBackendJobToFrontendJob = (backendJob: any): Job => {
     return {
         id: backendJob.id,
         title: backendJob.title,
-        company: backendJob.poster ? `${backendJob.poster.firstName} ${backendJob.poster.lastName}` : 'Unknown',
+        company: backendJob.companyName || (backendJob.poster ? `${backendJob.poster.firstName} ${backendJob.poster.lastName}` : 'Unknown'),
         location: backendJob.location || (backendJob.remote ? 'Remote' : 'As specified'),
         type: backendJob.budgetType === 'HOURLY' ? 'Hourly' : 'Freelance',
         remote: backendJob.remote || false,

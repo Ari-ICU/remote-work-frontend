@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
     User,
@@ -18,7 +19,11 @@ import {
     Loader2,
     Globe,
     Github,
-    Linkedin
+    Linkedin,
+    GraduationCap,
+    Languages,
+    FileText,
+    ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,14 +32,13 @@ import { Footer } from "@/components/footer";
 import { authService } from "@/lib/services/auth";
 import api from "@/lib/api";
 import { fadeIn, staggerContainer } from "@/lib/animations";
-import { ProfileEditModal } from "@/components/profile-edit-modal";
 import { Toaster } from "@/components/ui/sonner";
+import { User as UserType, Experience, Education } from "@/types/user";
 
 export default function ProfilePage() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<UserType | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -50,7 +54,6 @@ export default function ProfilePage() {
                 if (response.data) {
                     setUser(response.data);
                 } else {
-                    // Token might be valid but user does not exist in DB
                     authService.logout();
                     router.push("/login?redirect=/profile");
                 }
@@ -60,7 +63,6 @@ export default function ProfilePage() {
                     authService.logout();
                     router.push("/login?redirect=/profile");
                 } else {
-                    // Fallback to local storage if it's just a network error
                     setUser(currentUser);
                 }
             } finally {
@@ -71,7 +73,6 @@ export default function ProfilePage() {
         fetchUserProfile();
     }, [router]);
 
-    // Helper to get full avatar URL
     const getAvatarUrl = (path: string) => {
         if (!path) return null;
         if (path.startsWith('http')) return path;
@@ -114,9 +115,6 @@ export default function ProfilePage() {
                                     ) : (
                                         <User className="h-16 w-16 text-muted-foreground" />
                                     )}
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                                        <Edit3 className="h-6 w-6 text-white" />
-                                    </div>
                                 </div>
                             </div>
 
@@ -144,14 +142,10 @@ export default function ProfilePage() {
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <Button variant="outline" size="sm" className="rounded-xl">
-                                        <Settings className="h-4 w-4 mr-2" />
-                                        Settings
-                                    </Button>
                                     <Button
                                         size="sm"
                                         className="rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105"
-                                        onClick={() => setIsEditModalOpen(true)}
+                                        onClick={() => router.push("/profile/edit")}
                                     >
                                         <Edit3 className="h-4 w-4 mr-2" />
                                         Edit Profile
@@ -167,7 +161,7 @@ export default function ProfilePage() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="space-y-8"
+                            className="space-y-6"
                         >
                             <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
                                 <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
@@ -188,14 +182,6 @@ export default function ProfilePage() {
                                         <span className="font-medium text-foreground">
                                             {new Date(user.createdAt).toLocaleDateString()}
                                         </span>
-                                    </div>
-                                    <div className="flex items-center justify-between py-2 border-b border-border/50">
-                                        <span className="text-muted-foreground flex items-center gap-2">
-                                            <BadgeCheck className="h-4 w-4" /> Status
-                                        </span>
-                                        <Badge variant={user.verified ? "default" : "secondary"} className="h-5">
-                                            {user.verified ? "Verified" : "Pending"}
-                                        </Badge>
                                     </div>
                                     {user.hourlyRate && (
                                         <div className="flex items-center justify-between py-2 border-b border-border/50">
@@ -239,7 +225,6 @@ export default function ProfilePage() {
                             </div>
 
                             <div className="bg-card border border-border rounded-3xl p-6 shadow-sm overflow-hidden relative">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 blur-2xl"></div>
                                 <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                                     <BadgeCheck className="h-5 w-5 text-primary" />
                                     Skills
@@ -247,7 +232,7 @@ export default function ProfilePage() {
                                 <div className="flex flex-wrap gap-2">
                                     {user.skills && user.skills.length > 0 ? (
                                         user.skills.map((skill: string) => (
-                                            <Badge key={skill} variant="secondary" className="px-3 py-1 bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 cursor-default">
+                                            <Badge key={skill} variant="secondary" className="px-3 py-1 bg-primary/5 text-primary border-primary/10">
                                                 {skill}
                                             </Badge>
                                         ))
@@ -256,6 +241,39 @@ export default function ProfilePage() {
                                     )}
                                 </div>
                             </div>
+
+                            {user.languages && user.languages.length > 0 && (
+                                <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
+                                    <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                                        <Languages className="h-5 w-5 text-primary" />
+                                        Languages
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {user.languages.map((lang: string) => (
+                                            <Badge key={lang} variant="outline" className="px-3 py-1">
+                                                {lang}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {user.resumeUrl && (
+                                <div className="bg-primary/5 border border-primary/20 rounded-3xl p-6 shadow-sm">
+                                    <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                                        <FileText className="h-5 w-5 text-primary" />
+                                        Resume
+                                    </h3>
+                                    <Button
+                                        variant="default"
+                                        className="w-full rounded-xl bg-primary shadow-lg shadow-primary/20"
+                                        onClick={() => window.open(getAvatarUrl(user.resumeUrl!) || '', '_blank')}
+                                    >
+                                        <ExternalLink className="h-4 w-4 mr-2" />
+                                        View Resume
+                                    </Button>
+                                </div>
+                            )}
                         </motion.div>
 
                         {/* Main Content Area */}
@@ -272,6 +290,52 @@ export default function ProfilePage() {
                                 </p>
                             </div>
 
+                            {user.experience && user.experience.length > 0 && (
+                                <div className="bg-card border border-border rounded-3xl p-8 shadow-sm">
+                                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                                        <Briefcase className="h-6 w-6 text-primary" />
+                                        Experience
+                                    </h3>
+                                    <div className="space-y-8">
+                                        {user.experience.map((exp: Experience, index: number) => (
+                                            <div key={index} className="relative pl-8 border-l-2 border-primary/20 last:border-0 pb-8 last:pb-0">
+                                                <div className="absolute left-[-9px] top-0 h-4 w-4 rounded-full bg-primary border-4 border-background shadow-sm"></div>
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                                                    <h4 className="text-lg font-bold text-foreground">{exp.role}</h4>
+                                                    <span className="text-sm font-medium px-3 py-1 bg-muted rounded-lg text-muted-foreground">
+                                                        {exp.duration}
+                                                    </span>
+                                                </div>
+                                                <p className="text-primary font-semibold mb-2">{exp.company}</p>
+                                                <p className="text-muted-foreground text-sm leading-relaxed">
+                                                    {exp.description}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {user.education && user.education.length > 0 && (
+                                <div className="bg-card border border-border rounded-3xl p-8 shadow-sm">
+                                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                                        <GraduationCap className="h-6 w-6 text-primary" />
+                                        Education
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        {user.education.map((edu: Education, index: number) => (
+                                            <div key={index} className="p-4 rounded-2xl bg-muted/30 border border-border/50">
+                                                <h4 className="font-bold text-foreground mb-1">{edu.degree}</h4>
+                                                <p className="text-muted-foreground text-sm mb-2">{edu.school}</p>
+                                                <Badge variant="secondary" className="font-medium">
+                                                    {edu.year}
+                                                </Badge>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Recent Activity or Projects could go here */}
                             <div className="bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center space-y-4">
                                 <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -283,7 +347,11 @@ export default function ProfilePage() {
                                         View and manage your job applications, postings and messages in one place.
                                     </p>
                                 </div>
-                                <Button variant="secondary" className="rounded-xl">
+                                <Button
+                                    variant="secondary"
+                                    className="rounded-xl"
+                                    onClick={() => router.push("/dashboard")}
+                                >
                                     Go to Dashboard
                                 </Button>
                             </div>
@@ -291,13 +359,6 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </main>
-
-            <ProfileEditModal
-                user={user}
-                isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen(false)}
-                onSuccess={(updatedUser) => setUser(updatedUser)}
-            />
 
             <Toaster position="top-center" />
             <Footer />

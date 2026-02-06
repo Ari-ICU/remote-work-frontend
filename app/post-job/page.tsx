@@ -60,7 +60,7 @@ export default function PostJobPage() {
         const formData = new FormData(e.currentTarget);
         const jobData = {
             title: formData.get("title") as string,
-            company: formData.get("company") as string,
+            companyName: formData.get("company") as string,
             location: formData.get("location") as string,
             type: type || "Full-time",
             salary: formData.get("salary") as string,

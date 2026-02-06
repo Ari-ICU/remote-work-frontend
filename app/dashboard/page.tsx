@@ -206,7 +206,7 @@ export default function DashboardPage() {
                                                 <div className="space-y-1">
                                                     <h3 className="font-semibold text-lg">{app.job.title}</h3>
                                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                        <span>{app.job.poster?.firstName} {app.job.poster?.lastName}</span>
+                                                        <span>{app.job.companyName || `${app.job.poster?.firstName} ${app.job.poster?.lastName}`}</span>
                                                         <span>•</span>
                                                         <span>Applied {format(new Date(app.createdAt), 'MMM d, yyyy')}</span>
                                                     </div>
