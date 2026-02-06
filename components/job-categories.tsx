@@ -108,7 +108,7 @@ export function JobCategories({ onSelectCategory }: JobCategoriesProps) {
           <div className="flex justify-center py-20">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
           </div>
-        ) : (
+        ) : categories.length > 0 ? (
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -123,6 +123,22 @@ export function JobCategories({ onSelectCategory }: JobCategoriesProps) {
                 onClick={(name) => onSelectCategory?.(name)}
               />
             ))}
+          </motion.div>
+        ) : (
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            variants={fadeIn}
+            className="mt-12 flex flex-col items-center justify-center py-12 text-center"
+          >
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted transition-colors">
+              <Globe className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="mt-4 text-lg font-semibold text-foreground">No categories found</h3>
+            <p className="mt-2 text-muted-foreground">
+              We couldn't find any job categories at this time.
+            </p>
           </motion.div>
         )}
       </div>
