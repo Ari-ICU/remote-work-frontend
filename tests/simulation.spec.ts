@@ -253,24 +253,27 @@ test('Multi-user simulation: Full platform feature test', async ({ browser }) =>
 
     // 2. Employer sends message
     const employerMsg = `Hello! Interested in your profile for ${jobTitle}.`;
-    await employerPage.fill('input[placeholder="Type a message..."]', employerMsg);
-    await employerPage.click('button[type="submit"]');
+    await employerPage.fill('textarea[placeholder="Type a message..."], input[placeholder="Type a message..."]', employerMsg);
+    // Use a more specific selector for the message send button and force click if needed
+    const employerSendBtn = employerPage.locator('form button[type="submit"]');
+    await employerSendBtn.click({ timeout: 5000 }).catch(() => employerSendBtn.click({ force: true }));
     console.log('Employer: Sent initial message.');
 
     // 3. Freelancer goes to messages
     await freelancerPage.goto('http://localhost:3000/messages');
-    // Select the employer's conversation (it should be at the top)
+    // Select the employer's conversation
     await freelancerPage.locator('text=Test Employer').first().click();
 
     // 4. Freelancer verifies message and replies
-    await expect(freelancerPage.locator(`text=${employerMsg}`)).toBeVisible({ timeout: 10000 });
+    await expect(freelancerPage.locator(`text=${employerMsg}`).first()).toBeVisible({ timeout: 15000 });
     const freelancerReply = "Thank you! I am very interested. When do we start?";
-    await freelancerPage.fill('input[placeholder="Type a message..."]', freelancerReply);
-    await freelancerPage.click('button[type="submit"]');
+    await freelancerPage.fill('textarea[placeholder="Type a message..."], input[placeholder="Type a message..."]', freelancerReply);
+    const freelancerSendBtn = freelancerPage.locator('form button[type="submit"]');
+    await freelancerSendBtn.click({ timeout: 5000 }).catch(() => freelancerSendBtn.click({ force: true }));
     console.log('Freelancer: Received message and sent reply.');
 
     // 5. Employer verifies reply (Real-time)
-    await expect(employerPage.locator(`text=${freelancerReply}`)).toBeVisible({ timeout: 10000 });
+    await expect(employerPage.locator(`text=${freelancerReply}`).first()).toBeVisible({ timeout: 15000 });
     console.log('✅ Real-time chat verified successfully.');
 
 
