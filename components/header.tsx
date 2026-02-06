@@ -10,12 +10,14 @@ import { useRouter } from "next/navigation";
 
 import { useTranslations } from "next-intl";
 import { SettingsControl } from "@/components/settings-control";
+import { messagingService } from "@/lib/services/messaging";
 
 export function Header() {
   const t = useTranslations("common");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,6 +31,26 @@ export function Header() {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      const fetchUnread = async () => {
+        try {
+          const count = await messagingService.getUnreadCount();
+          setUnreadCount(count);
+        } catch (err) {
+          console.error("Failed to fetch unread count", err);
+        }
+      };
+      fetchUnread();
+
+      // Poll every 10 seconds for updates when not on messages page
+      const interval = setInterval(fetchUnread, 10000);
+      return () => clearInterval(interval);
+    } else {
+      setUnreadCount(0);
+    }
+  }, [user]);
 
   const handleLogout = () => {
     authService.logout();
@@ -98,6 +120,11 @@ export function Header() {
               <Link href="/messages">
                 <Button variant="ghost" size="icon" className="group rounded-xl relative" title="Messages">
                   <MessageSquare className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-black text-white ring-2 ring-background animate-in zoom-in duration-300">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
                 </Button>
               </Link>
               <Link href="/profile">
@@ -194,9 +221,14 @@ export function Header() {
                       </Button>
                     </Link>
                     <Link href="/messages" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="justify-start w-full gap-2">
+                      <Button variant="ghost" className="justify-start w-full gap-2 relative">
                         <MessageSquare className="h-4 w-4" />
                         Messages
+                        {unreadCount > 0 && (
+                          <span className="ml-auto bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                            {unreadCount}
+                          </span>
+                        )}
                       </Button>
                     </Link>
                     <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>

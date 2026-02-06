@@ -13,8 +13,10 @@ import {
     Zap,
     ShieldCheck,
     UserPlus,
-    MoreHorizontal
+    MoreHorizontal,
+    Trash2
 } from "lucide-react";
+import { toast } from "sonner";
 import {
     Card,
     CardContent,
@@ -59,20 +61,39 @@ const categoryData = [
 export default function AdminOverview() {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isCleaning, setIsCleaning] = useState(false);
+
+    const fetchStats = async () => {
+        setLoading(true);
+        try {
+            const res = await adminService.getStats();
+            setStats(res);
+        } catch (error) {
+            console.error("Failed to fetch stats", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res = await adminService.getStats();
-                setStats(res);
-            } catch (error) {
-                console.error("Failed to fetch stats", error);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchStats();
     }, []);
+
+    const handleCleanup = async () => {
+        if (!confirm("Are you sure you want to remove all Playwright test data? This will delete users with '@test.com' emails and names containing 'Test'.")) return;
+
+        setIsCleaning(true);
+        try {
+            const res = await adminService.cleanupTestData();
+            toast.success(res.message);
+            fetchStats(); // Refresh stats
+        } catch (error) {
+            console.error("Cleanup failed", error);
+            toast.error("Failed to cleanup test data");
+        } finally {
+            setIsCleaning(false);
+        }
+    };
 
     if (loading) return (
         <div className="flex flex-col gap-8 animate-in fade-in duration-500">
@@ -109,6 +130,15 @@ export default function AdminOverview() {
                     </p>
                 </div>
                 <div className="flex gap-3">
+                    <Button
+                        variant="outline"
+                        className="bg-rose-500/5 border-rose-500/10 hover:bg-rose-500/10 text-rose-500 h-11 px-6 rounded-xl font-semibold flex gap-2"
+                        onClick={handleCleanup}
+                        disabled={isCleaning}
+                    >
+                        <Trash2 size={18} />
+                        {isCleaning ? "Cleaning..." : "Cleanup Platform"}
+                    </Button>
                     <Button variant="outline" className="bg-white/5 border-white/10 hover:bg-white/10 h-11 px-6 rounded-xl font-semibold">
                         Export Report
                     </Button>

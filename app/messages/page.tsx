@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Search, MoreVertical, Phone, Video, Info, User as UserIcon, Loader2, ArrowLeft, Sparkles, Bot, Trash2, Edit2, X, MoreHorizontal, Check, CheckCheck } from "lucide-react";
+import { Send, Search, MoreVertical, Phone, Video, Info, User as UserIcon, Loader2, ArrowLeft, Sparkles, Bot, Trash2, Edit2, X, MoreHorizontal, Check, CheckCheck, Paperclip, Image as ImageIcon, File as FileIcon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,6 +37,7 @@ interface Conversation {
         read: boolean;
         senderId: string;
     };
+    unreadCount: number;
 }
 
 interface Message {
@@ -48,6 +49,8 @@ interface Message {
     sender: User;
     updatedAt?: string;
     read?: boolean;
+    type?: 'TEXT' | 'IMAGE' | 'FILE';
+    fileUrl?: string;
 }
 
 export default function MessagesPage() {
@@ -67,6 +70,9 @@ export default function MessagesPage() {
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [isSendingFile, setIsSendingFile] = useState(false);
 
     useEffect(() => {
         let socketInstance: any;
@@ -206,6 +212,47 @@ export default function MessagesPage() {
         setNewMessage("");
     };
 
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedUser || !socket) return;
+
+        setIsSendingFile(true);
+        try {
+            const { fileUrl, mimetype } = await messagingService.uploadAttachment(file);
+            const isImage = mimetype.startsWith('image/');
+            const type = isImage ? 'IMAGE' : 'FILE';
+
+            socket.emit("sendMessage", {
+                receiverId: selectedUser.id,
+                content: file.name,
+                type,
+                fileUrl
+            });
+
+            const optimisticMsg: Message = {
+                id: `temp-${Date.now()}`,
+                content: file.name,
+                senderId: currentUser.id,
+                receiverId: selectedUser.id,
+                createdAt: new Date().toISOString(),
+                sender: currentUser,
+                read: false,
+                type,
+                fileUrl
+            };
+
+            setMessages(prev => [...prev, optimisticMsg]);
+            scrollToBottom();
+            fetchConversations();
+        } catch (error) {
+            console.error("Failed to upload file", error);
+            alert("Failed to upload file. Please try again.");
+        } finally {
+            setIsSendingFile(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
     const sendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !selectedUser || !socket) return;
@@ -217,7 +264,8 @@ export default function MessagesPage() {
 
         socket.emit("sendMessage", {
             receiverId: selectedUser.id,
-            content: newMessage
+            content: newMessage,
+            type: 'TEXT'
         });
 
         const optimisticMsg: Message = {
@@ -227,7 +275,8 @@ export default function MessagesPage() {
             receiverId: selectedUser.id,
             createdAt: new Date().toISOString(),
             sender: currentUser,
-            read: false
+            read: false,
+            type: 'TEXT'
         };
 
         setMessages(prev => [...prev, optimisticMsg]);
@@ -342,7 +391,7 @@ export default function MessagesPage() {
                                                 </div>
                                                 <p className={cn(
                                                     "text-[13px] truncate leading-tight mt-0.5",
-                                                    !conv.lastMessage.read && conv.lastMessage.senderId !== currentUser.id
+                                                    conv.unreadCount > 0
                                                         ? "font-bold text-foreground"
                                                         : "text-muted-foreground"
                                                 )}>
@@ -351,23 +400,30 @@ export default function MessagesPage() {
                                                 </p>
                                             </div>
 
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted">
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-border/50">
-                                                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDeleteConversation(conv.otherUser.id, `${conv.otherUser.firstName} ${conv.otherUser.lastName}`);
-                                                        }}>
-                                                            <Trash2 className="h-4 w-4 mr-2" />
-                                                            Delete Chat
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col items-end gap-2">
+                                                {conv.unreadCount > 0 && (
+                                                    <span className="h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full bg-primary text-[10px] font-black text-white ring-2 ring-background">
+                                                        {conv.unreadCount}
+                                                    </span>
+                                                )}
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted">
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-border/50">
+                                                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeleteConversation(conv.otherUser.id, `${conv.otherUser.firstName} ${conv.otherUser.lastName}`);
+                                                            }}>
+                                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                                Delete Chat
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
                                             </div>
                                         </div>
                                     ))
@@ -474,14 +530,44 @@ export default function MessagesPage() {
                                                     )}>
                                                         <div
                                                             className={cn(
-                                                                "p-3 sm:px-4 sm:py-2.5 rounded-[18px] text-[15px] leading-snug relative transition-all duration-200",
+                                                                "p-3 rounded-[18px] text-[15px] leading-snug relative transition-all duration-200",
                                                                 isMe
                                                                     ? "bg-primary text-primary-foreground rounded-br-[4px]"
                                                                     : "bg-muted text-foreground rounded-bl-[4px]",
-                                                                editingMessageId === msg.id && "ring-2 ring-primary ring-offset-2 scale-[1.02]"
+                                                                editingMessageId === msg.id && "ring-2 ring-primary ring-offset-2 scale-[1.02]",
+                                                                msg.type === 'IMAGE' && "p-1.5"
                                                             )}
                                                         >
-                                                            <p style={{ wordBreak: 'break-word' }}>{msg.content}</p>
+                                                            {msg.type === 'IMAGE' ? (
+                                                                <div className="relative group/img max-w-sm rounded-[12px] overflow-hidden bg-muted/20">
+                                                                    <img
+                                                                        src={msg.fileUrl?.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${msg.fileUrl}` : msg.fileUrl}
+                                                                        alt="Attachment"
+                                                                        className="max-h-[300px] w-auto max-w-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                                                        onClick={() => window.open(msg.fileUrl?.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${msg.fileUrl}` : msg.fileUrl, '_blank')}
+                                                                    />
+                                                                </div>
+                                                            ) : msg.type === 'FILE' ? (
+                                                                <div className="flex items-center gap-3 p-2 bg-black/10 rounded-[12px] border border-white/10 group/file">
+                                                                    <div className="h-10 w-10 rounded-lg bg-background/20 flex items-center justify-center">
+                                                                        <FileIcon className="h-5 w-5" />
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0 pr-2">
+                                                                        <p className="text-sm font-bold truncate">{msg.content}</p>
+                                                                        <p className="text-[10px] opacity-60 uppercase font-black tracking-tighter">Attachment</p>
+                                                                    </div>
+                                                                    <Button
+                                                                        size="icon"
+                                                                        variant="ghost"
+                                                                        className="h-8 w-8 rounded-full opacity-0 group-hover/file:opacity-100 transition-opacity -mr-1"
+                                                                        onClick={() => window.open(msg.fileUrl?.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${msg.fileUrl}` : msg.fileUrl, '_blank')}
+                                                                    >
+                                                                        <Download className="h-4 w-4" />
+                                                                    </Button>
+                                                                </div>
+                                                            ) : (
+                                                                <p style={{ wordBreak: 'break-word' }}>{msg.content}</p>
+                                                            )}
 
                                                             {isMe && (
                                                                 <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -604,9 +690,56 @@ export default function MessagesPage() {
                                         </div>
                                     )}
                                     <form onSubmit={sendMessage} className="flex items-center gap-2 sm:gap-4 max-w-5xl mx-auto w-full">
-                                        <Button type="button" variant="ghost" size="icon" className="rounded-full text-primary hover:bg-primary/5 hidden sm:flex shrink-0">
-                                            <MoreVertical className="h-5 w-5" />
-                                        </Button>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            className="hidden"
+                                            onChange={handleFileSelect}
+                                            accept="image/*,.pdf,.doc,.docx"
+                                        />
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="rounded-full text-primary hover:bg-primary/5 hidden sm:flex shrink-0"
+                                                    disabled={isSendingFile}
+                                                >
+                                                    {isSendingFile ? (
+                                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                                    ) : (
+                                                        <MoreVertical className="h-5 w-5" />
+                                                    )}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="start" side="top" className="w-56 rounded-2xl p-2 shadow-2xl border-white/5 backdrop-blur-xl bg-background/80">
+                                                <DropdownMenuItem
+                                                    className="rounded-xl h-11 gap-3 font-semibold cursor-pointer"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                >
+                                                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                                                        <ImageIcon className="h-4 w-4" />
+                                                    </div>
+                                                    Photos & Videos
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="rounded-xl h-11 gap-3 font-semibold cursor-pointer"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                >
+                                                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                                        <Paperclip className="h-4 w-4" />
+                                                    </div>
+                                                    Document
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem className="rounded-xl h-11 gap-3 font-semibold cursor-pointer">
+                                                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                                                        <Sparkles className="h-4 w-4" />
+                                                    </div>
+                                                    AI Assistant
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
 
                                         <div className="relative flex-1 group">
                                             <Input

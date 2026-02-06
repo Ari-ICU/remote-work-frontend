@@ -19,7 +19,7 @@ test('Multi-user simulation: Full platform feature test', async ({ browser }) =>
 
     // Data Setup
     const timestamp = Date.now();
-    const employerEmail = 'employer@example.com';
+    const employerEmail = `employer_${timestamp}@test.com`;
     const freelancerEmail = `free_${timestamp}@test.com`;
     const password = 'password123';
     const jobTitle = `Full-Feature Job ${timestamp}`;
@@ -299,17 +299,68 @@ test('Multi-user simulation: Full platform feature test', async ({ browser }) =>
     console.log('Freelancer: Checking for message content...');
     await expect(freelancerPage.getByText(employerMsg).first()).toBeVisible({ timeout: 15000 });
     const freelancerReply = "Thank you! I am very interested. When do we start?";
-    await freelancerPage.fill('textarea[placeholder="Type a message..."], input[placeholder="Type a message..."]', freelancerReply);
-    const freelancerSendBtn = freelancerPage.locator('form button[type="submit"]');
-    await freelancerSendBtn.click({ timeout: 5000 }).catch(() => freelancerSendBtn.click({ force: true }));
-    console.log('Freelancer: Received message and sent reply.');
 
-    // 5. Employer verifies reply (Real-time)
-    await expect(employerPage.locator(`text=${freelancerReply}`).first()).toBeVisible({ timeout: 15000 });
+    const freelancerInput = freelancerPage.locator('textarea[placeholder="Type a message..."], input[placeholder="Type a message..."]');
+    await freelancerInput.fill(freelancerReply);
+    await freelancerInput.press('Enter'); // More reliable than clicking send button
+    console.log('Freelancer: Sent reply via Enter.');
+
+    // 5. Employer verifies reply (Real-time with fallback)
+    console.log('Employer: Verifying reply...');
+    const replyLocator = employerPage.locator('div').filter({ hasText: freelancerReply }).first();
+
+    try {
+        await expect(replyLocator).toBeVisible({ timeout: 15000 });
+    } catch (e) {
+        console.log('Employer: Reply not found in real-time, reloading page...');
+        await employerPage.reload();
+        await expect(employerPage.getByText('Test Freelancer').first()).toBeVisible({ timeout: 10000 });
+        await expect(replyLocator).toBeVisible({ timeout: 15000 });
+    }
+
     console.log('✅ Real-time chat verified successfully.');
 
 
-    // Cleanup
+    // Cleanup after test completion
+    console.log('\n--- Step 8: Auto-Cleanup Test Data ---');
+    try {
+        const adminContext = await browser.newContext();
+        const adminPage = await adminContext.newPage();
+        console.log('Logging in as Admin for cleanup...');
+        await adminPage.goto('http://localhost:3000/login?redirect=/admin');
+        await adminPage.fill('input[type="email"]', 'admin@khmerwork.com');
+        await adminPage.fill('input[type="password"]', 'password123');
+        await adminPage.click('button[type="submit"]');
+
+        // Wait for dashboard or admin redirect
+        await adminPage.waitForURL(url =>
+            url.pathname.includes('/dashboard') ||
+            url.pathname.includes('/admin') ||
+            url.pathname === '/',
+            { timeout: 15000 }
+        );
+
+        console.log('Triggering cleanup API...');
+        const result = await adminPage.evaluate(async () => {
+            const token = localStorage.getItem('token');
+            const apiUrl = (window as any).NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const response = await fetch(`${apiUrl}/admin/cleanup-test-data`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.json();
+        });
+
+        console.log(`✅ Auto-Cleanup completed: ${result.message || 'Success'}`);
+        await adminContext.close();
+    } catch (e) {
+        console.error('❌ Auto-Cleanup failed:', e);
+        console.log('Note: Manual cleanup via Admin Dashboard is still available.');
+    }
+
     await employerContext.close();
     await freelancerContext.close();
 

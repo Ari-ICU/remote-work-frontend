@@ -30,4 +30,9 @@ export const adminService = {
         const response = await api.patch(`/admin/jobs/${jobId}/status`, { status });
         return response.data;
     },
+
+    cleanupTestData: async () => {
+        const response = await api.delete('/admin/cleanup-test-data');
+        return response.data;
+    }
 };
