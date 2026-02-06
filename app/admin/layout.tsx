@@ -15,7 +15,10 @@ import {
     Search,
     Bell,
     ChevronRight,
-    Command as CommandIcon
+    Command as CommandIcon,
+    FileText,
+    DollarSign,
+    Star
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -43,6 +46,9 @@ const menuItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/admin", description: "Platform performance & stats" },
     { icon: Users, label: "Users", href: "/admin/users", description: "Manage members & roles" },
     { icon: Briefcase, label: "Jobs", href: "/admin/jobs", description: "Moderate job listings" },
+    { icon: FileText, label: "Applications", href: "/admin/applications", description: "Review proposals & matches" },
+    { icon: DollarSign, label: "Revenue", href: "/admin/payments", description: "Financial audit & reports" },
+    { icon: Star, label: "Reviews", href: "/admin/reviews", description: "Moderate feedback & ratings" },
     { icon: Settings, label: "Settings", href: "/admin/settings", description: "Global configuration" },
 ];
 

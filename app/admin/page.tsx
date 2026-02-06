@@ -111,10 +111,38 @@ export default function AdminOverview() {
     );
 
     const statCards = [
-        { label: "Active Talents", value: stats?.overview?.totalUsers || 0, icon: Users, color: "text-blue-400", trend: "+12.5%", growth: true },
-        { label: "Open Vacancies", value: stats?.overview?.totalJobs || 0, icon: Briefcase, color: "text-emerald-400", trend: "+5.2%", growth: true },
-        { label: "Applications", value: stats?.overview?.totalApplications || 0, icon: FileText, color: "text-indigo-400", trend: "+18.7%", growth: true },
-        { label: "Platform Revenue", value: `$${stats?.overview?.revenue?.toLocaleString() || "0"}`, icon: DollarSign, color: "text-amber-400", trend: "+8.1%", growth: true },
+        {
+            label: "Active Talents",
+            value: stats?.overview?.totalUsers || 0,
+            icon: Users,
+            color: "text-blue-400",
+            trend: stats?.overview?.growth?.users > 0 ? `+${stats.overview.growth.users}` : "Stable",
+            growth: stats?.overview?.growth?.users >= 0
+        },
+        {
+            label: "Open Vacancies",
+            value: stats?.overview?.totalJobs || 0,
+            icon: Briefcase,
+            color: "text-emerald-400",
+            trend: stats?.overview?.growth?.jobs > 0 ? `+${stats.overview.growth.jobs}` : "Stable",
+            growth: stats?.overview?.growth?.jobs >= 0
+        },
+        {
+            label: "Applications",
+            value: stats?.overview?.totalApplications || 0,
+            icon: FileText,
+            color: "text-indigo-400",
+            trend: stats?.overview?.growth?.applications > 0 ? `+${stats.overview.growth.applications}` : "Stable",
+            growth: stats?.overview?.growth?.applications >= 0
+        },
+        {
+            label: "Platform Revenue",
+            value: `$${stats?.overview?.revenue?.toLocaleString() || "0"}`,
+            icon: DollarSign,
+            color: "text-amber-400",
+            trend: "verified",
+            growth: true
+        },
     ];
 
     return (

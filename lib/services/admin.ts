@@ -6,8 +6,9 @@ export const adminService = {
         return response.data;
     },
 
-    getAllUsers: async (page = 1, limit = 10) => {
-        const response = await api.get(`/admin/users?page=${page}&limit=${limit}`);
+    getAllUsers: async (page = 1, limit = 10, search?: string) => {
+        const url = `/admin/users?page=${page}&limit=${limit}${search ? `&search=${search}` : ''}`;
+        const response = await api.get(url);
         return response.data;
     },
 
@@ -21,13 +22,39 @@ export const adminService = {
         return response.data;
     },
 
-    getAllJobs: async (page = 1, limit = 10) => {
-        const response = await api.get(`/admin/jobs?page=${page}&limit=${limit}`);
+    getAllJobs: async (page = 1, limit = 10, search?: string) => {
+        const url = `/admin/jobs?page=${page}&limit=${limit}${search ? `&search=${search}` : ''}`;
+        const response = await api.get(url);
         return response.data;
     },
 
     updateJobStatus: async (jobId: string, status: string) => {
         const response = await api.patch(`/admin/jobs/${jobId}/status`, { status });
+        return response.data;
+    },
+
+    getAllApplications: async (page = 1, limit = 10) => {
+        const response = await api.get(`/admin/applications?page=${page}&limit=${limit}`);
+        return response.data;
+    },
+
+    updateApplicationStatus: async (applicationId: string, status: string) => {
+        const response = await api.patch(`/admin/applications/${applicationId}/status`, { status });
+        return response.data;
+    },
+
+    getAllPayments: async (page = 1, limit = 10) => {
+        const response = await api.get(`/admin/payments?page=${page}&limit=${limit}`);
+        return response.data;
+    },
+
+    getAllReviews: async (page = 1, limit = 10) => {
+        const response = await api.get(`/admin/reviews?page=${page}&limit=${limit}`);
+        return response.data;
+    },
+
+    deleteReview: async (reviewId: string) => {
+        const response = await api.delete(`/admin/reviews/${reviewId}`);
         return response.data;
     },
 
