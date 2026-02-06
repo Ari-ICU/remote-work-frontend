@@ -41,6 +41,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/components/ui/use-mobile";
+import { CommandMenu } from "@/components/admin/command-menu";
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/admin", description: "Platform performance & stats" },
@@ -317,16 +318,7 @@ function AdminLayoutContent({
                                 </Button>
                             )}
                         </div>
-                        <div className="relative hidden md:flex items-center group max-w-md w-full">
-                            <Search className="absolute left-3 w-4 h-4 text-gray-500 group-focus-within:text-primary transition-colors" />
-                            <Input
-                                placeholder="Universal Search..."
-                                className="pl-10 h-10 bg-white/5 border-white/5 rounded-xl text-sm focus:bg-white/10 transition-all focus:ring-1 focus:ring-primary/30 w-full"
-                            />
-                            <div className="absolute right-3 flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[10px] text-gray-500">
-                                <CommandIcon size={10} /> K
-                            </div>
-                        </div>
+                        <CommandMenu />
                     </div>
 
                     <div className="flex items-center gap-4">

@@ -6,6 +6,11 @@ export const adminService = {
         return response.data;
     },
 
+    search: async (query: string) => {
+        const response = await api.get(`/admin/search?q=${query}`);
+        return response.data;
+    },
+
     getAllUsers: async (page = 1, limit = 10, search?: string) => {
         const url = `/admin/users?page=${page}&limit=${limit}${search ? `&search=${search}` : ''}`;
         const response = await api.get(url);

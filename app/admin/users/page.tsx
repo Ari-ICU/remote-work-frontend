@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { adminService } from "@/lib/services/admin";
 import {
     Users,
@@ -50,9 +51,18 @@ export default function AdminUsers() {
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [meta, setMeta] = useState<any>(null);
-    const [searchQuery, setSearchQuery] = useState("");
+    const searchParams = useSearchParams();
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<any>(null);
+
+    useEffect(() => {
+        const search = searchParams.get("search");
+        if (search !== null) {
+            setSearchQuery(search);
+            setPage(1);
+        }
+    }, [searchParams]);
 
     const fetchUsers = async () => {
         setLoading(true);
