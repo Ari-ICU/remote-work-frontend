@@ -18,8 +18,10 @@ import {
     Database,
     ExternalLink,
     MessageSquare,
-    Lock
+    Lock,
+    Pencil
 } from "lucide-react";
+import UserDialog from "./user-dialog";
 import {
     Table,
     TableBody,
@@ -49,11 +51,13 @@ export default function AdminUsers() {
     const [page, setPage] = useState(1);
     const [meta, setMeta] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<any>(null);
 
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const res = await adminService.getAllUsers(page);
+            const res = await adminService.getAllUsers(page, 10, searchQuery);
             setUsers(res.data);
             setMeta(res.meta);
         } catch (error) {
@@ -64,8 +68,11 @@ export default function AdminUsers() {
     };
 
     useEffect(() => {
-        fetchUsers();
-    }, [page]);
+        const timer = setTimeout(() => {
+            fetchUsers();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [page, searchQuery]);
 
     const handleUpdateRole = async (userId: string, role: string) => {
         try {
@@ -115,7 +122,7 @@ export default function AdminUsers() {
                         <RefreshCw size={18} className={`${loading ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`} />
                     </Button>
                     <Button
-                        onClick={() => toast.info("User Provisioning Protocol Initiated", { description: "User creation interface is currently being calibrated." })}
+                        onClick={() => { setSelectedUser(null); setDialogOpen(true); }}
                         className="bg-primary text-black font-bold h-11 px-6 rounded-xl hover:bg-primary/90 flex gap-2"
                     >
                         <Plus size={18} /> Add New User
@@ -131,7 +138,11 @@ export default function AdminUsers() {
                         className="pl-12 h-12 bg-black/40 border-white/[0.08] focus:border-primary/50 rounded-xl text-md transition-all placeholder:text-gray-600"
                         placeholder="Find user by identity, email or role..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setPage(1);
+                        }}
                     />
                 </div>
                 <div className="flex gap-2">
@@ -236,6 +247,10 @@ export default function AdminUsers() {
                                                             <Shield size={18} />
                                                             <span className="font-bold text-sm">{user.role === 'ADMIN' ? 'Demote to User' : 'Grant Admin Rights'}</span>
                                                         </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => { setSelectedUser(user); setDialogOpen(true); }} className="flex gap-3 px-4 py-3 cursor-pointer rounded-xl focus:bg-white/10">
+                                                            <Pencil size={18} />
+                                                            <span className="font-bold text-sm">Edit Details</span>
+                                                        </DropdownMenuItem>
                                                         <DropdownMenuItem className="flex gap-3 px-4 py-3 cursor-pointer rounded-xl focus:bg-white/10">
                                                             <Mail size={18} />
                                                             <span className="font-bold text-sm">Send Dispatch</span>
@@ -307,6 +322,13 @@ export default function AdminUsers() {
                     </Button>
                 </div>
             </div>
+
+            <UserDialog
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                user={selectedUser}
+                onSuccess={fetchUsers}
+            />
         </div>
     );
 }

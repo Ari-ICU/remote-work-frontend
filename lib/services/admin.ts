@@ -12,6 +12,16 @@ export const adminService = {
         return response.data;
     },
 
+    createUser: async (data: any) => {
+        const response = await api.post('/admin/users', data);
+        return response.data;
+    },
+
+    updateUser: async (userId: string, data: any) => {
+        const response = await api.patch(`/admin/users/${userId}`, data);
+        return response.data;
+    },
+
     updateUserRole: async (userId: string, role: string) => {
         const response = await api.patch(`/admin/users/${userId}/role`, { role });
         return response.data;
