@@ -703,7 +703,7 @@ export default function MessagesPage() {
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="rounded-full text-primary hover:bg-primary/5 hidden sm:flex shrink-0"
+                                                    className="rounded-full text-primary hover:bg-primary/5 shrink-0"
                                                     disabled={isSendingFile}
                                                 >
                                                     {isSendingFile ? (

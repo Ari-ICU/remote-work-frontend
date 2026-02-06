@@ -168,7 +168,11 @@ export default function JobApplicationsPage() {
                                                 <MessageSquare className="h-4 w-4" />
                                                 Chat
                                             </Button>
-                                            <Button variant="outline" className="w-full gap-2">
+                                            <Button
+                                                variant="outline"
+                                                className="w-full gap-2"
+                                                onClick={() => router.push(`/profile/${app.applicantId}`)}
+                                            >
                                                 <User className="h-4 w-4" />
                                                 View Profile
                                             </Button>
