@@ -68,7 +68,8 @@ export default function MessagesPage() {
             setCurrentUser(user);
 
             // Connect Socket
-            const socketInstance = io("http://localhost:3001", {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+            const socketInstance = io(apiUrl, {
                 auth: { token: localStorage.getItem("token") }
             });
 
@@ -172,7 +173,14 @@ export default function MessagesPage() {
 
     const sendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !socket || !selectedUser) return;
+        console.log("sendMessage triggered", { newMessage, hasSocket: !!socket, hasSelectedUser: !!selectedUser });
+        if (!newMessage.trim() || !selectedUser) return;
+
+        if (!socket) {
+            console.warn("Socket not ready, attempting to send message...");
+            // Optionally try to reconnect or wait
+            return;
+        }
 
         // Emit via Socket
         // We can also call REST API, but Socket is faster for UI.

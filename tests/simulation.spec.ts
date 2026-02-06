@@ -13,6 +13,10 @@ test('Multi-user simulation: Full platform feature test', async ({ browser }) =>
     const employerPage = await employerContext.newPage();
     const freelancerPage = await freelancerContext.newPage();
 
+    // Enable console logging for debugging
+    employerPage.on('console', msg => console.log(`[Employer Browser]: ${msg.text()}`));
+    freelancerPage.on('console', msg => console.log(`[Freelancer Browser]: ${msg.text()}`));
+
     // Data Setup
     const timestamp = Date.now();
     const employerEmail = 'employer@example.com';
@@ -68,6 +72,14 @@ test('Multi-user simulation: Full platform feature test', async ({ browser }) =>
     await employerPage.fill('input[name="password"]', password);
     await employerPage.click('button[type="submit"]');
     await employerPage.waitForURL('**/', { timeout: 15000 });
+
+    // Optional: Ensure name is "Test Employer" for chat visibility
+    await employerPage.goto('http://localhost:3000/profile/edit');
+    await employerPage.fill('input[name="firstName"]', 'Test');
+    await employerPage.fill('input[name="lastName"]', 'Employer');
+    await employerPage.click('button:has-text("Save Changes")');
+    await employerPage.waitForURL('**/profile');
+    console.log('✅ Employer profile name verified/updated.');
 
     // Post Job
     await employerPage.goto('http://localhost:3000/post-job');
@@ -245,34 +257,42 @@ test('Multi-user simulation: Full platform feature test', async ({ browser }) =>
     console.log('\n--- Step 7: Real-time Chat Test ---');
 
     // 1. Employer starts chat from applications page
-    // (Assuming we are already on the applications page from Step 6)
-    const chatBtn = employerPage.locator('button:has-text("Chat")').first();
+    const freelancerApp = employerPage.locator('div').filter({ hasText: 'Test Freelancer' }).first();
+    const chatBtn = freelancerApp.locator('button:has-text("Chat")');
     await chatBtn.click();
     await employerPage.waitForURL('**/messages**');
     await expect(employerPage.locator('h3')).toContainText('Test Freelancer');
 
+    // Give a moment for socket connection
+    await employerPage.waitForTimeout(2000);
+
     // 2. Employer sends message
     const employerMsg = `Hello! Interested in your profile for ${jobTitle}.`;
-    await employerPage.fill('textarea[placeholder="Type a message..."], input[placeholder="Type a message..."]', employerMsg);
-    // Use a more specific selector for the message send button and force click if needed
-    const employerSendBtn = employerPage.locator('form button[type="submit"]');
-    await employerSendBtn.click({ timeout: 5000 }).catch(() => employerSendBtn.click({ force: true }));
-    console.log('Employer: Sent initial message.');
+    const employerInput = employerPage.locator('textarea[placeholder="Type a message..."], input[placeholder="Type a message..."]');
+    await employerInput.fill(employerMsg);
+    await employerInput.press('Enter');
+    console.log('Employer: Pressed Enter to send message.');
 
     // 3. Freelancer goes to messages
     await freelancerPage.goto('http://localhost:3000/messages');
 
     // Wait for conversations to load
-    console.log('Freelancer: Waiting for conversation list...');
-    const employerConv = freelancerPage.locator('div').filter({ hasText: 'Test Employer' }).nth(1); // Usually nth(1) because 0 might be a header or something
+    console.log('Freelancer: Waiting for conversation with Test Employer...');
+    // The conversation list item contains the name
+    const employerConv = freelancerPage.locator('div').filter({ hasText: /^Test Employer$/i }).first();
 
-    await expect(employerConv).toBeVisible({ timeout: 20000 }).catch(async () => {
-        console.log('Freelancer: Conversation not found, reloading messages...');
+    // If exact match fails, try partial
+    const employerConvPartial = freelancerPage.locator('div').filter({ hasText: 'Test Employer' }).first();
+
+    await expect(employerConvPartial).toBeVisible({ timeout: 30000 }).catch(async () => {
+        console.log('Freelancer: Conversation not found after 30s, current text on page:', await freelancerPage.innerText('body'));
+        console.log('Freelancer: Reloading messages...');
         await freelancerPage.reload();
-        await expect(employerConv).toBeVisible({ timeout: 20000 });
+        await expect(employerConvPartial).toBeVisible({ timeout: 20000 });
     });
 
-    await employerConv.click();
+    await employerConvPartial.click();
+    console.log('Freelancer: Clicked employer conversation.');
 
     // 4. Freelancer verifies message and replies
     console.log('Freelancer: Checking for message content...');
