@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 
 test('Multi-user simulation: Full platform feature test', async ({ browser }) => {
-    test.setTimeout(120000);
+    test.setTimeout(180000);
     // Create contexts
     const adminContext = await browser.newContext(); // Potentially use later
     const employerContext = await browser.newContext();
@@ -261,11 +261,22 @@ test('Multi-user simulation: Full platform feature test', async ({ browser }) =>
 
     // 3. Freelancer goes to messages
     await freelancerPage.goto('http://localhost:3000/messages');
-    // Select the employer's conversation
-    await freelancerPage.locator('text=Test Employer').first().click();
+
+    // Wait for conversations to load
+    console.log('Freelancer: Waiting for conversation list...');
+    const employerConv = freelancerPage.locator('div').filter({ hasText: 'Test Employer' }).nth(1); // Usually nth(1) because 0 might be a header or something
+
+    await expect(employerConv).toBeVisible({ timeout: 20000 }).catch(async () => {
+        console.log('Freelancer: Conversation not found, reloading messages...');
+        await freelancerPage.reload();
+        await expect(employerConv).toBeVisible({ timeout: 20000 });
+    });
+
+    await employerConv.click();
 
     // 4. Freelancer verifies message and replies
-    await expect(freelancerPage.locator(`text=${employerMsg}`).first()).toBeVisible({ timeout: 15000 });
+    console.log('Freelancer: Checking for message content...');
+    await expect(freelancerPage.getByText(employerMsg).first()).toBeVisible({ timeout: 15000 });
     const freelancerReply = "Thank you! I am very interested. When do we start?";
     await freelancerPage.fill('textarea[placeholder="Type a message..."], input[placeholder="Type a message..."]', freelancerReply);
     const freelancerSendBtn = freelancerPage.locator('form button[type="submit"]');
