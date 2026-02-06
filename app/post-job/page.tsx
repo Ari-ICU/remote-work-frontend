@@ -58,17 +58,26 @@ export default function PostJobPage() {
         setIsLoading(true);
 
         const formData = new FormData(e.currentTarget);
+        const validSalary = (formData.get("salary") as string).replace(/[^0-9.]/g, '');
+        const budget = parseFloat(validSalary) || 0;
+
+        const typeMapping: Record<string, string> = {
+            "Full-time": "FIXED",
+            "Part-time": "FIXED",
+            "Freelance": "FIXED",
+            "Hourly": "HOURLY"
+        };
+
         const jobData = {
             title: formData.get("title") as string,
             companyName: formData.get("company") as string,
             location: formData.get("location") as string,
-            type: type || "Full-time",
-            salary: formData.get("salary") as string,
+            budgetType: typeMapping[type] || "FIXED",
+            budget: budget,
             description: formData.get("description") as string,
             category: category || "General",
-            tags: ["Remote"],
-            posted: "Just now",
-            featured: false
+            skills: ["Remote", category || "General"],
+            remote: true
         };
 
         try {
@@ -306,7 +315,7 @@ export default function PostJobPage() {
                                         id="description"
                                         name="description"
                                         placeholder="We're looking for a person who... 
- 
+                                        
 Expected skills:
 - Skill 1
 - Skill 2"

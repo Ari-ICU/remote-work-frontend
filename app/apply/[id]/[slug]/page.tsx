@@ -74,8 +74,8 @@ export default function ApplyPage() {
             const formData = new FormData(e.currentTarget);
             const applicationData = {
                 coverLetter: formData.get("coverLetter") as string,
-                // In a real app, we'd upload the file first and get a URL/ID
-                resumeUrl: "https://example.com/resume.pdf"
+                proposedRate: parseFloat(formData.get("proposedRate") as string),
+                estimatedTime: formData.get("estimatedTime") as string
             };
 
             await applicationService.apply(params.id as string, applicationData);
@@ -278,6 +278,16 @@ export default function ApplyPage() {
                                                 <div className="space-y-2">
                                                     <Label htmlFor="resume">Resume/CV</Label>
                                                     <Input id="resume" name="resume" type="file" required className="rounded-xl cursor-pointer" />
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="proposedRate">Proposed Rate ($)</Label>
+                                                        <Input id="proposedRate" name="proposedRate" type="number" min="0" step="0.01" placeholder="50.00" required className="rounded-xl" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="estimatedTime">Estimated Time</Label>
+                                                        <Input id="estimatedTime" name="estimatedTime" placeholder="e.g. 2 weeks" className="rounded-xl" />
+                                                    </div>
                                                 </div>
                                             </div>
 

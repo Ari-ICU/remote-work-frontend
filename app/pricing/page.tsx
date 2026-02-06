@@ -39,7 +39,7 @@ const plans = [
         ],
         highlight: true,
         cta: "Promote Your Job",
-        href: "/post-job"
+        href: "/checkout?plan=featured"
     },
     {
         name: "Premium",
@@ -56,7 +56,7 @@ const plans = [
         ],
         highlight: false,
         cta: "Get Premium",
-        href: "/post-job"
+        href: "/checkout?plan=premium"
     }
 ];
 

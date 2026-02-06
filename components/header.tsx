@@ -8,7 +8,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { authService } from "@/lib/services/auth";
 import { useRouter } from "next/navigation";
 
+import { useTranslations } from "next-intl";
+import { SettingsControl } from "@/components/settings-control";
+
 export function Header() {
+  const t = useTranslations("common");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -61,26 +65,28 @@ export function Header() {
         </div>
 
         <nav className="hidden items-center gap-8 md:flex">
-          {["Find Jobs", "Categories", "Companies", "About"].map((item) => (
+          {["home", "jobs", "categories", "companies", "about"].map((item) => (
             <Link
               key={item}
-              href={`/#${item.toLowerCase().replace(" ", "-")}`}
-              className="relative text-sm font-medium text-muted-foreground transition-colors hover:text-foreground group"
+              href={item === "home" ? "/" : `/#${item}`}
+              className="relative text-sm font-medium text-muted-foreground transition-colors hover:text-foreground group capitalize"
             >
-              {item}
+              {t(item)}
               <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all group-hover:w-full" />
             </Link>
           ))}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <SettingsControl />
+          <div className="w-px h-6 bg-border mx-1" />
           {user ? (
             <>
               {user.role?.toUpperCase() === 'ADMIN' && (
                 <Link href="/admin">
                   <Button variant="outline" size="sm" className="gap-2 border-primary/20 hover:bg-primary/10">
                     <ShieldCheck className="h-4 w-4 text-primary" />
-                    Dashboard
+                    {t("dashboard")}
                   </Button>
                 </Link>
               )}
@@ -92,7 +98,6 @@ export function Header() {
               <Link href="/messages">
                 <Button variant="ghost" size="icon" className="group rounded-xl relative" title="Messages">
                   <MessageSquare className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                  {/* Optional: <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-background" /> */}
                 </Button>
               </Link>
               <Link href="/profile">
@@ -155,19 +160,33 @@ export function Header() {
             className="border-t border-border bg-background md:hidden overflow-hidden"
           >
             <nav className="flex flex-col gap-2 px-4 py-4">
-              {["Find Jobs", "Categories", "Companies", "About"].map((item) => (
+              {["home", "jobs", "categories", "companies", "about"].map((item) => (
                 <Link
                   key={item}
-                  href={`/#${item.toLowerCase().replace(" ", "-")}`}
+                  href={item === "home" ? "/" : `/#${item}`}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground capitalize"
                 >
-                  {item}
+                  {t(item)}
                 </Link>
               ))}
+
+              <div className="px-3 py-2 flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">{t("theme")} / {t("language")}</span>
+                <SettingsControl />
+              </div>
+
               <div className="mt-2 flex flex-col gap-2 border-t border-border pt-4">
                 {user ? (
                   <>
+                    {user.role?.toUpperCase() === 'ADMIN' && (
+                      <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
+                        <Button variant="outline" className="justify-start w-full gap-2 border-primary/20 bg-primary/5">
+                          <ShieldCheck className="h-4 w-4 text-primary" />
+                          {t("dashboard")}
+                        </Button>
+                      </Link>
+                    )}
                     <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="ghost" className="justify-start w-full gap-2">
                         <ShieldCheck className="h-4 w-4" />

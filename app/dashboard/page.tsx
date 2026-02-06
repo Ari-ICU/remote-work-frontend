@@ -42,13 +42,13 @@ export default function DashboardPage() {
             setUser(currentUser);
 
             try {
-                if (currentUser.role === "EMPLOYER") {
-                    const myJobs = await jobsService.getMyJobs();
-                    setJobs(myJobs);
-                } else {
-                    const myApps = await applicationService.getMyApplications();
-                    setApplications(myApps);
-                }
+                // Fetch both - user might be both poster and applicant
+                const [myJobs, myApps] = await Promise.all([
+                    jobsService.getMyJobs().catch(() => []),
+                    applicationService.getMyApplications().catch(() => [])
+                ]);
+                setJobs(myJobs);
+                setApplications(myApps);
             } catch (error) {
                 console.error("Failed to load dashboard data", error);
             } finally {

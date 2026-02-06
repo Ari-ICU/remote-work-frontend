@@ -1,0 +1,11 @@
+{
+    "common": {
+        "home": "Home",
+        "jobs": "Jobs",
+        "categories": "Categories",
+        "companies": "Companies",
+        "about": "About",
+        "theme": "Theme",
+        "language": "Language"
+    }
+}

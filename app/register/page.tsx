@@ -78,7 +78,7 @@ export default function RegisterPage() {
                         </p>
                         <div className="flex flex-col gap-3 pt-4">
                             <Button size="lg" className="w-full shadow-lg shadow-primary/20" asChild>
-                                <Link href="/">Go to Dashboard</Link>
+                                <Link href="/dashboard">Go to Dashboard</Link>
                             </Button>
                         </div>
                     </motion.div>

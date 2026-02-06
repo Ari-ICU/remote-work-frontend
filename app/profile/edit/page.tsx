@@ -26,7 +26,9 @@ import {
     FileText,
     Upload,
     CheckCircle2,
-    ExternalLink
+    ExternalLink,
+    Eye,
+    Monitor
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +37,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter
+} from "@/components/ui/dialog";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { authService } from "@/lib/services/auth";
@@ -43,6 +53,7 @@ import { fadeIn, staggerContainer } from "@/lib/animations";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { User as UserType, Experience, Education } from "@/types/user";
+import { ResumePreview, sampleResumeData } from "@/components/resume-preview";
 
 export default function EditProfilePage() {
     const router = useRouter();
@@ -51,6 +62,8 @@ export default function EditProfilePage() {
     const [isSaving, setIsSaving] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [uploadingResume, setUploadingResume] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [useSampleData, setUseSampleData] = useState(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const resumeInputRef = useRef<HTMLInputElement>(null);
 
@@ -155,6 +168,13 @@ export default function EditProfilePage() {
         } finally {
             setUploadingResume(false);
         }
+    };
+
+    const handlePreview = (sample: boolean = false) => {
+        if (!sample) {
+            localStorage.setItem("resume_preview_data", JSON.stringify(formData));
+        }
+        window.open(`/profile/preview/resume?sample=${sample}`, "_blank");
     };
 
     const handleSubmit = async () => {
@@ -622,48 +642,59 @@ export default function EditProfilePage() {
                                     <CardHeader className="bg-muted/30">
                                         <CardTitle className="flex items-center gap-2">
                                             <FileText className="h-5 w-5 text-primary" />
-                                            Resume Templates
+                                            Professional Resume Builder
                                         </CardTitle>
-                                        <CardDescription>Select a professional template and build it here.</CardDescription>
+                                        <CardDescription>Generate a premium A4-ready resume automatically from your profile.</CardDescription>
                                     </CardHeader>
-                                    <CardContent className="pt-6 grid grid-cols-2 gap-4">
-                                        {[
-                                            { id: 'modern', name: 'Modern', color: 'bg-blue-500' },
-                                            { id: 'minimal', name: 'Minimalist', color: 'bg-slate-800' },
-                                            { id: 'creative', name: 'Creative', color: 'bg-purple-600' },
-                                            { id: 'classic', name: 'Executive', color: 'bg-amber-800' }
-                                        ].map(template => (
-                                            <div
-                                                key={template.id}
-                                                onClick={() => setFormData(prev => ({ ...prev, resumeTemplate: template.id }))}
-                                                className={`
-                                                    relative group cursor-pointer rounded-2xl border-2 transition-all p-4 flex flex-col gap-3
-                                                    ${formData.resumeTemplate === template.id ? 'border-primary bg-primary/5' : 'border-border bg-muted/20'}
-                                                `}
-                                            >
-                                                <div className={`aspect-[4/3] w-full rounded-lg ${template.color}/20 flex items-center justify-center overflow-hidden border border-border/50`}>
-                                                    <div className="w-12 h-16 bg-white overflow-hidden shadow-sm flex flex-col p-1 gap-1">
-                                                        <div className={`w-full h-2 ${template.color}`}></div>
-                                                        <div className="w-full h-1 bg-muted"></div>
-                                                        <div className="w-2/3 h-1 bg-muted"></div>
-                                                        <div className="grid grid-cols-2 gap-1 mt-1">
-                                                            <div className="h-4 bg-muted/40"></div>
-                                                            <div className="h-4 bg-muted/40"></div>
-                                                        </div>
-                                                    </div>
+                                    <CardContent className="pt-8 flex flex-col items-center justify-center space-y-8">
+                                        <div className="w-48 h-64 bg-white border-2 border-primary/20 rounded-xl shadow-xl overflow-hidden relative group transition-all hover:scale-105 hover:shadow-2xl">
+                                            <div className="absolute inset-0 bg-blue-600/5 group-hover:bg-transparent transition-colors"></div>
+                                            <div className="p-4 space-y-3">
+                                                <div className="h-3 w-3/4 bg-slate-200 rounded"></div>
+                                                <div className="h-2 w-1/2 bg-slate-100 rounded"></div>
+                                                <div className="space-y-1.5 pt-4">
+                                                    <div className="h-1.5 w-full bg-slate-50 rounded"></div>
+                                                    <div className="h-1.5 w-full bg-slate-50 rounded"></div>
+                                                    <div className="h-1.5 w-2/3 bg-slate-50 rounded"></div>
                                                 </div>
-                                                <span className="text-sm font-bold text-center">{template.name}</span>
-                                                {formData.resumeTemplate === template.id && (
-                                                    <div className="absolute top-2 right-2 h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center shadow-lg">
-                                                        <CheckCircle2 className="h-3 w-3" />
-                                                    </div>
-                                                )}
+                                                <div className="grid grid-cols-2 gap-2 pt-4">
+                                                    <div className="h-10 bg-slate-50 rounded"></div>
+                                                    <div className="h-10 bg-slate-50 rounded"></div>
+                                                </div>
                                             </div>
-                                        ))}
+                                            <div className="absolute inset-0 flex items-center justify-center bg-background/0 group-hover:bg-background/40 transition-all opacity-0 group-hover:opacity-100">
+                                                <Button
+                                                    size="sm"
+                                                    className="rounded-full shadow-lg"
+                                                    onClick={() => setIsPreviewOpen(true)}
+                                                >
+                                                    <Eye className="h-4 w-4 mr-2" />
+                                                    Preview
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col gap-3 w-full max-w-xs">
+                                            <Button
+                                                className="w-full rounded-xl h-12 text-base font-semibold shadow-lg shadow-primary/20"
+                                                onClick={() => handlePreview(false)}
+                                            >
+                                                <ExternalLink className="h-4 w-4 mr-2" />
+                                                View Full Page
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full rounded-xl"
+                                                onClick={() => handlePreview(true)}
+                                            >
+                                                <Monitor className="h-4 w-4 mr-2" />
+                                                Try with Sample Data
+                                            </Button>
+                                        </div>
                                     </CardContent>
                                     <CardFooter className="bg-muted/10 p-4 border-t border-border/50">
                                         <p className="text-xs text-muted-foreground text-center w-full">
-                                            Templates will automatically use your profile information.
+                                            Optimized for A4 paper and PDF export.
                                         </p>
                                     </CardFooter>
                                 </Card>
@@ -671,6 +702,69 @@ export default function EditProfilePage() {
                         </TabsContent>
                     </Tabs>
                 </div>
+
+                <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+                    <DialogContent className="max-w-5xl h-[90vh] overflow-hidden flex flex-col p-0 rounded-3xl border-none shadow-2xl">
+                        <DialogHeader className="p-6 bg-card border-b border-border space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <DialogTitle className="text-2xl font-bold">Resume Preview</DialogTitle>
+                                    <DialogDescription>See how your information looks in a professional A4 layout.</DialogDescription>
+                                </div>
+                                <div className="flex items-center bg-muted/50 p-1 rounded-xl gap-1">
+                                    <Button
+                                        variant={useSampleData ? "secondary" : "ghost"}
+                                        size="sm"
+                                        onClick={() => setUseSampleData(true)}
+                                        className="rounded-lg text-xs"
+                                    >
+                                        <Monitor className="h-3.5 w-3.5 mr-2" />
+                                        Sample Data
+                                    </Button>
+                                    <Button
+                                        variant={!useSampleData ? "secondary" : "ghost"}
+                                        size="sm"
+                                        onClick={() => setUseSampleData(false)}
+                                        className="rounded-lg text-xs"
+                                    >
+                                        <User className="h-3.5 w-3.5 mr-2" />
+                                        My Data
+                                    </Button>
+                                    <div className="w-px h-4 bg-border mx-1" />
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handlePreview(useSampleData)}
+                                        className="rounded-lg text-xs"
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                                        Full Page
+                                    </Button>
+                                </div>
+                            </div>
+                        </DialogHeader>
+
+                        <div className="flex-1 overflow-y-auto bg-slate-200/50 p-6 sm:p-12 scrollbar-hide">
+                            <div className="flex justify-center items-start py-4">
+                                <div className="origin-top scale-[0.45] sm:scale-[0.55] lg:scale-[0.7] xl:scale-[0.8] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] border border-slate-200 bg-white mb-[-30%] sm:mb-[-20%] lg:mb-[-15%]">
+                                    <ResumePreview
+                                        data={useSampleData ? sampleResumeData : formData}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <DialogFooter className="p-4 bg-background border-t border-border sm:justify-center">
+                            <Button
+                                className="rounded-xl px-8 h-12 text-base font-semibold shadow-lg shadow-primary/20"
+                                onClick={() => setIsPreviewOpen(false)}
+                            >
+                                <CheckCircle2 className="h-5 w-5 mr-2" />
+                                Done Previewing
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </main>
 
             <Toaster position="top-center" />
