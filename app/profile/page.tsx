@@ -15,7 +15,10 @@ import {
     Edit3,
     Clock,
     DollarSign,
-    Loader2
+    Loader2,
+    Globe,
+    Github,
+    Linkedin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -130,6 +133,11 @@ export default function ProfilePage() {
                                             {user.role?.toLowerCase()}
                                         </Badge>
                                     </div>
+                                    {user.headline && (
+                                        <p className="text-lg text-muted-foreground font-medium mt-1">
+                                            {user.headline}
+                                        </p>
+                                    )}
                                     <p className="mt-2 text-muted-foreground flex items-center gap-1.5">
                                         <MapPin className="h-4 w-4 text-primary" />
                                         {user.location || "Location not set"}
@@ -195,6 +203,36 @@ export default function ProfilePage() {
                                                 <DollarSign className="h-4 w-4" /> Hourly Rate
                                             </span>
                                             <span className="font-bold text-primary">${user.hourlyRate}/hr</span>
+                                        </div>
+                                    )}
+                                    {user.website && (
+                                        <div className="flex items-center justify-between py-2 border-b border-border/50">
+                                            <span className="text-muted-foreground flex items-center gap-2">
+                                                <Globe className="h-4 w-4" /> Website
+                                            </span>
+                                            <a href={user.website} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline truncate max-w-[150px]">
+                                                {user.website.replace(/^https?:\/\//, '')}
+                                            </a>
+                                        </div>
+                                    )}
+                                    {user.github && (
+                                        <div className="flex items-center justify-between py-2 border-b border-border/50">
+                                            <span className="text-muted-foreground flex items-center gap-2">
+                                                <Github className="h-4 w-4" /> GitHub
+                                            </span>
+                                            <a href={`https://github.com/${user.github}`} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                                                {user.github}
+                                            </a>
+                                        </div>
+                                    )}
+                                    {user.linkedin && (
+                                        <div className="flex items-center justify-between py-2 border-b border-border/50">
+                                            <span className="text-muted-foreground flex items-center gap-2">
+                                                <Linkedin className="h-4 w-4" /> LinkedIn
+                                            </span>
+                                            <a href={`https://linkedin.com/in/${user.linkedin}`} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                                                {user.linkedin}
+                                            </a>
                                         </div>
                                     )}
                                 </div>

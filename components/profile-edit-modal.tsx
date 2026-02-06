@@ -36,6 +36,10 @@ export function ProfileEditModal({ user, isOpen, onClose, onSuccess }: ProfileEd
         hourlyRate: "",
         skills: "",
         avatar: "",
+        headline: "",
+        website: "",
+        github: "",
+        linkedin: "",
     });
 
     useEffect(() => {
@@ -48,6 +52,10 @@ export function ProfileEditModal({ user, isOpen, onClose, onSuccess }: ProfileEd
                 hourlyRate: user.hourlyRate || "",
                 skills: user.skills?.join(", ") || "",
                 avatar: user.avatar || "",
+                headline: user.headline || "",
+                website: user.website || "",
+                github: user.github || "",
+                linkedin: user.linkedin || "",
             });
         }
     }, [user]);
@@ -100,6 +108,10 @@ export function ProfileEditModal({ user, isOpen, onClose, onSuccess }: ProfileEd
                 ...formData,
                 hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate.toString()) : undefined,
                 skills: formData.skills ? formData.skills.split(",").map((s: string) => s.trim()) : [],
+                headline: formData.headline,
+                website: formData.website,
+                github: formData.github,
+                linkedin: formData.linkedin,
             };
 
             const response = await api.patch("/users/profile", payload);
@@ -231,6 +243,18 @@ export function ProfileEditModal({ user, isOpen, onClose, onSuccess }: ProfileEd
                     </div>
 
                     <div className="space-y-2">
+                        <Label htmlFor="headline">Professional Headline</Label>
+                        <Input
+                            id="headline"
+                            name="headline"
+                            value={formData.headline}
+                            onChange={handleChange}
+                            placeholder="Senior Full Stack Developer"
+                            className="rounded-xl"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
                         <Label htmlFor="skills">Skills (comma separated)</Label>
                         <Input
                             id="skills"
@@ -240,6 +264,42 @@ export function ProfileEditModal({ user, isOpen, onClose, onSuccess }: ProfileEd
                             placeholder="React, TypeScript, Node.js"
                             className="rounded-xl"
                         />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="website">Website</Label>
+                            <Input
+                                id="website"
+                                name="website"
+                                value={formData.website}
+                                onChange={handleChange}
+                                placeholder="https://..."
+                                className="rounded-xl"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="github">GitHub</Label>
+                            <Input
+                                id="github"
+                                name="github"
+                                value={formData.github}
+                                onChange={handleChange}
+                                placeholder="username"
+                                className="rounded-xl"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="linkedin">LinkedIn</Label>
+                            <Input
+                                id="linkedin"
+                                name="linkedin"
+                                value={formData.linkedin}
+                                onChange={handleChange}
+                                placeholder="username"
+                                className="rounded-xl"
+                            />
+                        </div>
                     </div>
 
                     <div className="space-y-2">

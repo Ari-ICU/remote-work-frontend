@@ -76,7 +76,7 @@ export function Header() {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
-              {user.role === 'ADMIN' && (
+              {user.role?.toUpperCase() === 'ADMIN' && (
                 <Link href="/admin">
                   <Button variant="outline" size="sm" className="gap-2 border-primary/20 hover:bg-primary/10">
                     <ShieldCheck className="h-4 w-4 text-primary" />

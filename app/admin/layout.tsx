@@ -86,7 +86,7 @@ function AdminLayoutContent({
         window.addEventListener("scroll", handleScroll);
 
         const user = authService.getCurrentUser();
-        if (!user || user.role !== "ADMIN") {
+        if (!user || user.role?.toUpperCase() !== "ADMIN") {
             router.push("/login");
         } else {
             setIsAdmin(true);
