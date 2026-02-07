@@ -21,6 +21,7 @@ import { userService } from "@/lib/services/user";
 import { format, isSameDay } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { getCookie } from "@/lib/utils/cookies";
 
 interface User {
     id: string;
@@ -86,8 +87,14 @@ export default function MessagesPage() {
             setCurrentUser(user);
 
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+            const token = getCookie('ws_token');
+
             socketInstance = io(apiUrl, {
-                withCredentials: true
+                transports: ['websocket', 'polling'],
+                withCredentials: true,
+                auth: {
+                    token: token
+                }
             } as any);
 
             socketInstance.on("newMessage", (msg: Message) => {
@@ -439,7 +446,7 @@ export default function MessagesPage() {
                         <>
                             {/* Modern Chat Header - Clean Responsive */}
                             <div
-                                className="w-full flex-none min-h-[64px] md:min-h-[72px] h-auto py-2 border-b border-border flex items-center justify-between px-3 md:px-6 bg-card text-card-foreground shadow-sm relative z-40"
+                                className="w-full flex-none mt-22 min-h-[64px] md:min-h-[72px] h-auto py-2 border-b border-border flex items-center justify-between px-3 md:px-6 bg-card text-card-foreground shadow-sm relative z-40"
                             >
                                 <div className="flex items-center gap-3">
                                     <Button
