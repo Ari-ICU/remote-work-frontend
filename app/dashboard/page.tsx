@@ -47,8 +47,8 @@ export default function DashboardPage() {
                     jobsService.getMyJobs().catch(() => []),
                     applicationService.getMyApplications().catch(() => [])
                 ]);
-                setJobs(myJobs);
-                setApplications(myApps);
+                setJobs(myJobs || []);
+                setApplications(myApps || []);
             } catch (error) {
                 console.error("Failed to load dashboard data", error);
             } finally {
@@ -59,6 +59,16 @@ export default function DashboardPage() {
         init();
     }, [router]);
 
+    const safeDate = (dateString: string | Date) => {
+        try {
+            const d = new Date(dateString);
+            if (isNaN(d.getTime())) return "N/A";
+            return format(d, 'MMM d, yyyy');
+        } catch (e) {
+            return "N/A";
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -66,6 +76,8 @@ export default function DashboardPage() {
             </div>
         );
     }
+
+    if (!user) return null;
 
     return (
         <div className="flex flex-col min-h-screen bg-background">
@@ -76,7 +88,7 @@ export default function DashboardPage() {
                         <div>
                             <h1 className="text-3xl font-bold">Dashboard</h1>
                             <p className="text-muted-foreground mt-1">
-                                Welcome back, {user.firstName}.
+                                Welcome back, {user?.firstName || 'User'}.
                             </p>
                         </div>
                         {user.role === "EMPLOYER" && (
@@ -108,7 +120,7 @@ export default function DashboardPage() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="text-2xl font-bold">
-                                            {jobs.filter(j => j.status === 'OPEN').length}
+                                            {jobs.filter(j => j?.status === 'OPEN').length}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -119,7 +131,7 @@ export default function DashboardPage() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="text-2xl font-bold">
-                                            {jobs.reduce((acc, job) => acc + (job._count?.applications || 0), 0)}
+                                            {jobs.reduce((acc, job) => acc + (job?._count?.applications || 0), 0)}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -148,7 +160,7 @@ export default function DashboardPage() {
                                                     </div>
                                                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                                         <span className="flex items-center gap-1">
-                                                            <Clock className="h-4 w-4" /> Posted {format(new Date(job.createdAt), 'MMM d, yyyy')}
+                                                            <Clock className="h-4 w-4" /> Posted {safeDate(job.createdAt)}
                                                         </span>
                                                         <span className="flex items-center gap-1">
                                                             <DollarSign className="h-4 w-4" /> {job.budgetType}
@@ -188,7 +200,6 @@ export default function DashboardPage() {
                                         <div className="text-2xl font-bold">{applications.length}</div>
                                     </CardContent>
                                 </Card>
-                                {/* Add more freelancer stats here if needed */}
                             </div>
 
                             <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -204,11 +215,11 @@ export default function DashboardPage() {
                                         applications.map((app) => (
                                             <div key={app.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                 <div className="space-y-1">
-                                                    <h3 className="font-semibold text-lg">{app.job.title}</h3>
+                                                    <h3 className="font-semibold text-lg">{app.job?.title || 'Unknown Job'}</h3>
                                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                        <span>{app.job.companyName || `${app.job.poster?.firstName} ${app.job.poster?.lastName}`}</span>
+                                                        <span>{app.job?.companyName || app.job?.posterRef?.firstName || 'Unknown Company'}</span>
                                                         <span>•</span>
-                                                        <span>Applied {format(new Date(app.createdAt), 'MMM d, yyyy')}</span>
+                                                        <span>Applied {safeDate(app.createdAt)}</span>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-4">
@@ -219,7 +230,7 @@ export default function DashboardPage() {
                                                     }>
                                                         {app.status}
                                                     </Badge>
-                                                    <Link href={`/messages?userId=${app.job.poster?.id}`}>
+                                                    <Link href={`/messages?userId=${app.job?.poster?.id}`}>
                                                         {/* This link assumes messaging the employer is allowed */}
                                                         {/* Ideally we check if a conversation exists or if it's allowed */}
                                                     </Link>

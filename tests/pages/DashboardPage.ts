@@ -23,8 +23,8 @@ export class DashboardPage extends BasePage {
             await expect(this.page.locator(`text=${jobTitle}`)).toBeVisible({ timeout: 10000 });
         } catch (e) {
             console.log(`Job title "${jobTitle}" not found on dashboard.`);
-            const bodyText = await this.page.textContent('body');
-            console.log('Page text snippet:', bodyText?.substring(0, 500));
+            const bodyHtml = await this.page.innerHTML('body');
+            console.log('Page HTML snippet:', bodyHtml.substring(0, 1000));
 
             if (await this.page.locator('text=You haven\'t posted any jobs yet').isVisible()) {
                 console.log('Dashboard shows "You haven\'t posted any jobs yet".');

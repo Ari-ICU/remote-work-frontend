@@ -4,7 +4,9 @@ export const authService = {
     register: async (userData: any) => {
         const response = await api.post('/auth/register', userData);
         if (response.data) {
-            localStorage.setItem('user', JSON.stringify(response.data));
+            // Check if response contains nested user object (common in JWT auth)
+            const userToStore = response.data.user || response.data;
+            localStorage.setItem('user', JSON.stringify(userToStore));
         }
         return response.data;
     },
