@@ -85,7 +85,16 @@ export default function PostJobPage() {
             setIsSubmitted(true);
         } catch (err: any) {
             console.error("Failed to post job:", err);
-            setError(err.response?.data?.message || "Failed to publish job listing. Please try again.");
+            const errorMessage = err.response?.data?.message || "Failed to publish job listing. Please try again.";
+
+            // Check if error is about payment method requirement
+            if (errorMessage.includes("payment method")) {
+                // Redirect to checkout page
+                router.push("/checkout?plan=featured&redirect=post-job");
+                return;
+            }
+
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
