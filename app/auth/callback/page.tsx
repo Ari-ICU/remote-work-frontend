@@ -9,12 +9,10 @@ export default function AuthCallback() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
-        const token = searchParams.get("token");
         const userStr = searchParams.get("user");
 
-        if (token && userStr) {
+        if (userStr) {
             try {
-                localStorage.setItem("token", token);
                 // Validate if it's already a JSON string or needs parsing
                 const user = decodeURIComponent(userStr);
                 localStorage.setItem("user", user);

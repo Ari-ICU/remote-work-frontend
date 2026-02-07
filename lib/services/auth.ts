@@ -8,15 +8,18 @@ export const authService = {
 
     login: async (credentials: any) => {
         const response = await api.post('/auth/login', credentials);
-        if (response.data.accessToken) {
-            localStorage.setItem('token', response.data.accessToken);
+        if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
         }
         return response.data;
     },
 
-    logout: () => {
-        localStorage.removeItem('token');
+    logout: async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (error) {
+            console.error("Logout error:", error);
+        }
         localStorage.removeItem('user');
     },
 

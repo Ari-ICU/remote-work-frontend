@@ -2,372 +2,149 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
+import { RegisterPage } from './pages/RegisterPage';
+import { LoginPage } from './pages/LoginPage';
+import { JobPage } from './pages/JobPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { MessagingPage } from './pages/MessagingPage';
+import { AdminPage } from './pages/AdminPage';
 
-test('Multi-user simulation: Full platform feature test', async ({ browser }) => {
+test.describe('Multi-user Simulation', () => {
     test.setTimeout(180000);
-    // Create contexts
-    const adminContext = await browser.newContext(); // Potentially use later
-    const employerContext = await browser.newContext();
-    const freelancerContext = await browser.newContext();
 
-    const employerPage = await employerContext.newPage();
-    const freelancerPage = await freelancerContext.newPage();
-
-    // Enable console logging for debugging
-    employerPage.on('console', msg => console.log(`[Employer Browser]: ${msg.text()}`));
-    freelancerPage.on('console', msg => console.log(`[Freelancer Browser]: ${msg.text()}`));
-
-    // Data Setup
     const timestamp = Date.now();
     const employerEmail = `employer_${timestamp}@test.com`;
     const freelancerEmail = `free_${timestamp}@test.com`;
     const password = 'password123';
     const jobTitle = `Full-Feature Job ${timestamp}`;
     const companyName = `AutoTest Corp ${timestamp}`;
-
-    console.log(`--- STARTING FULL FEATURE SIMULATION ---`);
-    console.log(`Job Title: ${jobTitle}`);
-    console.log(`Employer: ${employerEmail}`);
-    console.log(`Freelancer: ${freelancerEmail}`);
-
-    // Create a dummy resume file for upload test
     const dummyResumePath = path.resolve(__dirname, 'dummy_resume.pdf');
-    if (!fs.existsSync(dummyResumePath)) {
-        fs.writeFileSync(dummyResumePath, 'Dummy Resume Content');
-    }
 
-    // ==========================================
-    // STEP 1: EMPLOYER REGISTRATION & JOB POSTING
-    // ==========================================
-    console.log('\n--- Step 1: Employer Registration & Posting ---');
-
-    // Register Employer
-    await employerPage.goto('http://localhost:3000/register');
-    await employerPage.click('button:has-text("Employer")'); // Select Employer role
-    await employerPage.fill('input[name="fullname"]', 'Test Employer');
-    await employerPage.fill('input[name="email"]', employerEmail);
-    await employerPage.fill('input[name="password"]', password);
-    await employerPage.click('button[type="submit"]');
-
-    // Wait for success OR a "conflict" error
-    const successMsg = employerPage.locator('text=Welcome Aboard!');
-    const errorMsg = employerPage.locator('text=Email already exists');
-
-    await Promise.race([
-        successMsg.waitFor({ timeout: 10000 }).catch(() => { }),
-        errorMsg.waitFor({ timeout: 10000 }).catch(() => { })
-    ]);
-
-    if (await successMsg.isVisible()) {
-        console.log('✅ Employer registered successfully.');
-    } else if (await errorMsg.isVisible()) {
-        console.log('ℹ️ Employer already registered, proceeding to login.');
-    } else {
-        console.log('⚠️ Registration state unclear, attempting login anyway.');
-    }
-
-    // Login Employer
-    await employerPage.goto('http://localhost:3000/login');
-    await employerPage.fill('input[name="email"]', employerEmail);
-    await employerPage.fill('input[name="password"]', password);
-    await employerPage.click('button[type="submit"]');
-    await employerPage.waitForURL('**/', { timeout: 15000 });
-
-    // Optional: Ensure name is "Test Employer" for chat visibility
-    await employerPage.goto('http://localhost:3000/profile/edit');
-    await employerPage.fill('input[name="firstName"]', 'Test');
-    await employerPage.fill('input[name="lastName"]', 'Employer');
-    await employerPage.click('button:has-text("Save Changes")');
-    await employerPage.waitForURL('**/profile');
-    console.log('✅ Employer profile name verified/updated.');
-
-    // Post Job
-    await employerPage.goto('http://localhost:3000/post-job');
-    await employerPage.fill('input[name="title"]', jobTitle);
-
-    // Select dropdowns (using more robust selection if needed)
-    await employerPage.click('button:has-text("Select talent area")');
-    await employerPage.click('div[role="option"]:has-text("Software Engineering")');
-
-    await employerPage.fill('input[name="company"]', companyName);
-    await employerPage.fill('input[name="location"]', 'Remote');
-
-    await employerPage.click('button:has-text("How will they work?")');
-    await employerPage.click('div[role="option"]:has-text("Freelance / Contract")');
-
-    await employerPage.fill('input[name="salary"]', '50-100');
-    await employerPage.fill('textarea[name="description"]', 'This is a description for the full feature test.');
-    await employerPage.click('button[type="submit"]');
-
-    await expect(employerPage.locator('h1')).toContainText('Listing Published!', { timeout: 15000 });
-    console.log('✅ Employer posted job successfully.');
-
-
-    // ==========================================
-    // STEP 2: FREELANCER REGISTRATION & JOB SEARCH
-    // ==========================================
-    console.log('\n--- Step 2: Freelancer Registration & Search ---');
-
-    // Register Freelancer
-    await freelancerPage.goto('http://localhost:3000/register');
-    await freelancerPage.click('button:has-text("Freelancer")'); // Select Freelancer role
-    await freelancerPage.fill('input[name="fullname"]', 'Test Freelancer');
-    await freelancerPage.fill('input[name="email"]', freelancerEmail);
-    await freelancerPage.fill('input[name="password"]', password);
-    await freelancerPage.click('button[type="submit"]');
-    await expect(freelancerPage.getByText('Welcome Aboard!')).toBeVisible({ timeout: 15000 });
-
-    // Login Freelancer
-    await freelancerPage.goto('http://localhost:3000/login');
-    await freelancerPage.fill('input[name="email"]', freelancerEmail);
-    await freelancerPage.fill('input[name="password"]', password);
-    await freelancerPage.click('button[type="submit"]');
-    await freelancerPage.waitForURL('**/', { timeout: 15000 });
-
-    // Search for Job
-    await freelancerPage.goto('http://localhost:3000/jobs');
-
-    // Search loop
-    let found = false;
-    for (let i = 0; i < 5; i++) {
-        console.log(`Checking for job... attempt ${i + 1}`);
-        const jobCard = freelancerPage.locator('article').filter({ hasText: jobTitle }).first();
-        const applyLink = jobCard.getByRole('link', { name: /Apply Now/i });
-
-        if (await applyLink.isVisible()) {
-            found = true;
-            console.log('Freelancer: Found the new job listing.');
-            await applyLink.click();
-            break;
-        } else {
-            if (i < 4) {
-                console.log('Job not found yet, reloading...');
-                await freelancerPage.reload();
-                await freelancerPage.waitForTimeout(2000);
-            }
+    test.beforeAll(() => {
+        if (!fs.existsSync(dummyResumePath)) {
+            fs.writeFileSync(dummyResumePath, 'Dummy Resume Content');
         }
-    }
-
-    if (!found) throw new Error(`Job ${jobTitle} not found after retries`);
-
-    await expect(freelancerPage.locator('h1')).toContainText(jobTitle);
-    console.log('✅ Freelancer found and viewed job.');
-
-
-    // ==========================================
-    // STEP 3: FREELANCER APPLICATION
-    // ==========================================
-    console.log('\n--- Step 3: Freelancer Application ---');
-
-    // Fill application form (on /apply/... page)
-    await freelancerPage.fill('input[name="fullname"]', 'Test Freelancer');
-    await freelancerPage.fill('input[name="email"]', freelancerEmail);
-    await freelancerPage.fill('input[name="phone"]', '+1234567890');
-    await freelancerPage.fill('textarea[name="coverLetter"]', 'I am the perfect candidate for this automated test.');
-
-    // Fill new required fields
-    await freelancerPage.fill('input[name="proposedRate"]', '75');
-    await freelancerPage.fill('input[name="estimatedTime"]', '1 week');
-
-    // Upload Resume
-    await freelancerPage.setInputFiles('input[type="file"]', dummyResumePath);
-
-    // Submit
-    await freelancerPage.click('button[type="submit"]');
-
-    // Verify Success
-    await expect(freelancerPage.locator('text=Application Sent!')).toBeVisible({ timeout: 10000 });
-    console.log('✅ Freelancer submitted application successfully.');
-
-
-    // ==========================================
-    // STEP 4: FREELANCER DASHBOARD
-    // ==========================================
-    console.log('\n--- Step 4: Freelancer Dashboard Verification ---');
-    await freelancerPage.goto('http://localhost:3000/dashboard');
-
-    // Check if the applied job appears
-    // The dashboard shows "Applied Jobs"
-    await expect(freelancerPage.locator('text=Applied Jobs')).toBeVisible();
-    await expect(freelancerPage.locator(`text=${jobTitle}`)).toBeVisible();
-    // Verify status is "PENDING" (based on default assumption or badge color)
-    await expect(freelancerPage.getByText('PENDING')).toBeVisible();
-    console.log('✅ Freelancer dashboard shows applied job.');
-
-
-    // ==========================================
-    // STEP 5: PROFILE UPDATE
-    // ==========================================
-    console.log('\n--- Step 5: Profile Update ---');
-    await freelancerPage.goto('http://localhost:3000/profile/edit');
-
-    // Update Headline and Bio
-    const newHeadline = `Expert Automator ${timestamp}`;
-    await freelancerPage.fill('input[name="headline"]', newHeadline);
-    await freelancerPage.fill('textarea[name="bio"]', 'I love testing full stack applications.');
-
-    // Switch to Skills tab (Fixed selector)
-    await freelancerPage.getByRole('tab', { name: 'Skills & Langs' }).click();
-
-    // Add a skill
-    const skillInput = freelancerPage.locator('input[placeholder="Type and press Enter..."]');
-    await expect(skillInput).toBeVisible(); // Ensure it's visible before interacting
-    await skillInput.fill('Playwright');
-    await skillInput.press('Enter');
-
-    // Save
-    await freelancerPage.click('button:has-text("Save Changes")');
-
-    // Should redirect to profile or show toast? (Code says router.push("/profile"))
-    await freelancerPage.waitForURL('**/profile');
-
-    // Verify changes on profile page
-    await expect(freelancerPage.locator(`text=${newHeadline}`)).toBeVisible();
-    // await expect(freelancerPage.locator('text=Playwright')).toBeVisible(); // Might be in a badge
-    console.log('✅ Profile updated successfully.');
-
-
-    // ==========================================
-    // STEP 6: EMPLOYER DASHBOARD (View Application)
-    // ==========================================
-    console.log('\n--- Step 6: Employer Dashboard & Application Review ---');
-
-    // Go to dashboard
-    await employerPage.goto('http://localhost:3000/dashboard');
-    await expect(employerPage.locator('h1')).toContainText('Dashboard');
-    await expect(employerPage.locator('.animate-spin')).not.toBeVisible();
-
-    // Check "Your Job Postings" has the job
-    await expect(employerPage.locator(`text=${jobTitle}`)).toBeVisible({ timeout: 10000 });
-
-    // Check Applicant Count (Should be 1)
-    const viewApplicantsBtn = employerPage.locator(`a[href*="/applications"]`).first(); // Assuming topmost is newest
-    await viewApplicantsBtn.click();
-
-    // If successful, we should see the Freelancer's name.
-    await expect(employerPage.getByText('Test Freelancer')).toBeVisible({ timeout: 5000 }).catch(() => {
-        console.log("Could not find freelancer on applicants page. Page might not be fully implemented.");
     });
 
-    console.log('✅ Employer dashboard verification complete.');
-
-    // ==========================================
-    // STEP 7: REAL-TIME CHAT TEST
-    // ==========================================
-    console.log('\n--- Step 7: Real-time Chat Test ---');
-
-    // 1. Employer starts chat from applications page
-    const freelancerApp = employerPage.locator('div').filter({ hasText: 'Test Freelancer' }).first();
-    const chatBtn = freelancerApp.locator('button:has-text("Chat")');
-    await chatBtn.click();
-    await employerPage.waitForURL('**/messages**');
-
-    // Wait for the recipient name to appear anywhere in the messages view
-    await expect(employerPage.getByText('Test Freelancer').first()).toBeVisible({ timeout: 20000 });
-
-    // Give a moment for socket connection
-    await employerPage.waitForTimeout(2000);
-
-    // 2. Employer sends message
-    const employerMsg = `Hello! Interested in your profile for ${jobTitle}.`;
-    const employerInput = employerPage.locator('textarea[placeholder="Type a message..."], input[placeholder="Type a message..."]');
-    await employerInput.fill(employerMsg);
-    await employerInput.press('Enter');
-    console.log('Employer: Pressed Enter to send message.');
-
-    // 3. Freelancer goes to messages
-    await freelancerPage.goto('http://localhost:3000/messages');
-
-    // Wait for conversations to load
-    console.log('Freelancer: Waiting for conversation with Test Employer...');
-    // The conversation list item contains the name
-    // Use a more specific selector for the conversation item
-    const employerConv = freelancerPage.locator('div').filter({ hasText: /^Test Employer$/i }).first();
-    const employerConvMoreSpecific = freelancerPage.locator('div.cursor-pointer').filter({ hasText: 'Test Employer' }).first();
-
-    await expect(employerConvMoreSpecific).toBeVisible({ timeout: 30000 }).catch(async () => {
-        console.log('Freelancer: Conversation not found after 30s, current text on page:', await freelancerPage.innerText('body'));
-        console.log('Freelancer: Reloading messages...');
-        await freelancerPage.reload();
-        await expect(employerConvMoreSpecific).toBeVisible({ timeout: 20000 });
+    test.afterAll(() => {
+        if (fs.existsSync(dummyResumePath)) {
+            fs.unlinkSync(dummyResumePath);
+        }
     });
 
-    await employerConvMoreSpecific.click();
-    console.log('Freelancer: Clicked employer conversation.');
+    test('Full platform feature journey', async ({ browser }) => {
+        // --- 1. SET UP CONTEXTS ---
+        const employerContext = await browser.newContext();
+        const freelancerContext = await browser.newContext();
+        const employerPageObj = new JobPage(await employerContext.newPage());
+        const employerReg = new RegisterPage(employerPageObj['page']);
+        const employerLogin = new LoginPage(employerPageObj['page']);
+        const employerProfile = new ProfilePage(employerPageObj['page']);
+        const employerDash = new DashboardPage(employerPageObj['page']);
+        const employerChat = new MessagingPage(employerPageObj['page']);
 
-    // 4. Freelancer verifies message and replies
-    console.log('Freelancer: Checking for message content...');
-    await expect(freelancerPage.getByText(employerMsg).first()).toBeVisible({ timeout: 15000 });
-    const freelancerReply = "Thank you! I am very interested. When do we start?";
+        const freelancerPageObj = new JobPage(await freelancerContext.newPage());
+        const freelancerReg = new RegisterPage(freelancerPageObj['page']);
+        const freelancerLogin = new LoginPage(freelancerPageObj['page']);
+        const freelancerDash = new DashboardPage(freelancerPageObj['page']);
+        const freelancerProfile = new ProfilePage(freelancerPageObj['page']);
+        const freelancerChat = new MessagingPage(freelancerPageObj['page']);
 
-    const freelancerInput = freelancerPage.locator('textarea[placeholder="Type a message..."], input[placeholder="Type a message..."]');
-    await freelancerInput.fill(freelancerReply);
-    await freelancerInput.press('Enter'); // More reliable than clicking send button
-    console.log('Freelancer: Sent reply via Enter.');
+        // --- 2. EMPLOYER: REGISTER & POST JOB ---
+        console.log('\n--- Step 1: Employer Registration & Posting ---');
+        await employerReg.register('Employer', 'Test Employer', employerEmail, password);
+        if (await employerReg.isRegistrationSuccessful()) {
+            console.log('✅ Employer registered successfully.');
+        } else {
+            console.log('ℹ️ Attempting login (account might exist).');
+        }
+        await employerLogin.login(employerEmail, password);
 
-    // 5. Employer verifies reply (Real-time with fallback)
-    console.log('Employer: Verifying reply...');
-    const replyLocator = employerPage.locator('div').filter({ hasText: freelancerReply }).first();
+        await employerProfile.updateBasicInfo('Test', 'Employer');
+        console.log('✅ Employer profile name verified/updated.');
 
-    try {
-        await expect(replyLocator).toBeVisible({ timeout: 15000 });
-    } catch (e) {
-        console.log('Employer: Reply not found in real-time, reloading page...');
-        await employerPage.reload();
-        await expect(employerPage.getByText('Test Freelancer').first()).toBeVisible({ timeout: 10000 });
-        await expect(replyLocator).toBeVisible({ timeout: 15000 });
-    }
-
-    console.log('✅ Real-time chat verified successfully.');
-
-
-    // Cleanup after test completion
-    console.log('\n--- Step 8: Auto-Cleanup Test Data ---');
-    try {
-        const adminContext = await browser.newContext();
-        const adminPage = await adminContext.newPage();
-        console.log('Logging in as Admin for cleanup...');
-        await adminPage.goto('http://localhost:3000/login?redirect=/admin');
-        await adminPage.fill('input[type="email"]', 'admin@khmerwork.com');
-        await adminPage.fill('input[type="password"]', 'password123');
-        await adminPage.click('button[type="submit"]');
-
-        // Wait for dashboard or admin redirect
-        await adminPage.waitForURL(url =>
-            url.pathname.includes('/dashboard') ||
-            url.pathname.includes('/admin') ||
-            url.pathname === '/',
-            { timeout: 15000 }
-        );
-
-        console.log('Triggering cleanup API...');
-        const result = await adminPage.evaluate(async () => {
-            const token = localStorage.getItem('token');
-            const apiUrl = (window as any).NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-            const response = await fetch(`${apiUrl}/admin/cleanup-test-data`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            return response.json();
+        await employerPageObj.postJob({
+            title: jobTitle,
+            category: 'Software Engineering',
+            company: companyName,
+            location: 'Remote',
+            type: 'Freelance / Contract',
+            salary: '50-100',
+            description: 'This is a description for the full feature test.'
         });
+        console.log('✅ Employer posted job successfully.');
 
-        console.log(`✅ Auto-Cleanup completed: ${result.message || 'Success'}`);
-        await adminContext.close();
-    } catch (e) {
-        console.error('❌ Auto-Cleanup failed:', e);
-        console.log('Note: Manual cleanup via Admin Dashboard is still available.');
-    }
+        // --- 3. FREELANCER: REGISTER & APPLY ---
+        console.log('\n--- Step 2: Freelancer Registration & Search ---');
+        await freelancerReg.register('Freelancer', 'Test Freelancer', freelancerEmail, password);
+        await freelancerLogin.login(freelancerEmail, password);
 
-    await employerContext.close();
-    await freelancerContext.close();
+        const found = await freelancerPageObj.searchAndSelectJob(jobTitle);
+        if (!found) throw new Error(`Job ${jobTitle} not found after retries`);
+        console.log('✅ Freelancer found and viewed job.');
 
-    // Remove dummy file
-    if (fs.existsSync(dummyResumePath)) {
-        fs.unlinkSync(dummyResumePath);
-    }
+        console.log('\n--- Step 3: Freelancer Application ---');
+        await freelancerPageObj.applyToJob({
+            fullName: 'Test Freelancer',
+            email: freelancerEmail,
+            phone: '+1234567890',
+            coverLetter: 'I am the perfect candidate for this automated test.',
+            proposedRate: '75',
+            estimatedTime: '1 week',
+            resumePath: dummyResumePath
+        });
+        console.log('✅ Freelancer submitted application successfully.');
 
-    console.log('\n--- TEST COMPLETED SUCCESSFULLY ---');
+        // --- 4. VERIFICATIONS & UPDATES ---
+        console.log('\n--- Step 4: Freelancer Dashboard Verification ---');
+        await freelancerDash.verifyAppliedJob(jobTitle);
+        console.log('✅ Freelancer dashboard shows applied job.');
+
+        console.log('\n--- Step 5: Profile Update ---');
+        const newHeadline = `Expert Automator ${timestamp}`;
+        await freelancerProfile.updateHeadlineAndBio(newHeadline, 'I love testing full stack applications.');
+        await freelancerProfile.addSkill('Playwright');
+        await freelancerProfile.saveChanges();
+        await freelancerProfile.verifyHeadline(newHeadline);
+        console.log('✅ Profile updated successfully.');
+
+        // --- 5. EMPLOYER: REVIEW & CHAT ---
+        console.log('\n--- Step 6: Employer Dashboard & Application Review ---');
+        await employerDash.openJobApplications(jobTitle);
+        await employerDash.verifyApplicantExists('Test Freelancer');
+        console.log('✅ Employer dashboard verification complete.');
+
+        console.log('\n--- Step 7: Real-time Chat Test ---');
+        const chatBtn = employerPageObj['page'].locator('div').filter({ hasText: 'Test Freelancer' }).first().locator('button:has-text("Chat")');
+        await chatBtn.click();
+
+        await employerChat.sendMessage(`Hello! Interested in your profile for ${jobTitle}.`);
+        console.log('Employer: Sent message.');
+
+        await freelancerChat.navigateTo('/messages');
+        await freelancerChat.openChatWith('Test Employer');
+        await freelancerChat.verifyMessageReceived(`Hello! Interested in your profile for ${jobTitle}.`);
+
+        const freelancerReply = "Thank you! I am very interested.";
+        await freelancerChat.sendMessage(freelancerReply);
+        console.log('Freelancer: Sent reply.');
+
+        await employerChat.verifyMessageReceived(freelancerReply);
+        console.log('✅ Real-time chat verified successfully.');
+
+        // --- 6. CLEANUP ---
+        console.log('\n--- Step 8: Auto-Cleanup Test Data ---');
+        const adminPage = new AdminPage(await browser.newPage());
+        try {
+            await adminPage.loginAsAdmin('admin@khmerwork.com', 'password123');
+            const result = await adminPage.triggerCleanup();
+            console.log(`✅ Auto-Cleanup completed: ${result.message}`);
+        } catch (e) {
+            console.error('❌ Auto-Cleanup failed:', e);
+        }
+
+        await employerContext.close();
+        await freelancerContext.close();
+    });
 });

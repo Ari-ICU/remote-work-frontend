@@ -109,50 +109,62 @@ export default function JobApplicationsPage() {
                                         <div className="flex-1">
                                             <div className="flex items-start justify-between mb-4">
                                                 <div className="flex items-center gap-4">
-                                                    <Avatar className="h-14 w-14 border-2 border-background shadow-sm">
+                                                    <Avatar className="h-16 w-16 border-2 border-background shadow-md group-hover:scale-105 transition-transform">
                                                         <AvatarImage src={app.applicant.avatar} />
-                                                        <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                                                        <AvatarFallback className="text-xl bg-primary/10 text-primary">
                                                             {app.applicant.firstName[0]}
                                                         </AvatarFallback>
                                                     </Avatar>
                                                     <div>
-                                                        <h3 className="text-xl font-bold flex items-center gap-2">
-                                                            {app.applicant.firstName} {app.applicant.lastName}
+                                                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                            <h3 className="text-xl font-bold tracking-tight">
+                                                                {app.applicant.firstName} {app.applicant.lastName}
+                                                            </h3>
                                                             {app.aiMatchScore && app.aiMatchScore > 80 && (
-                                                                <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20">
+                                                                <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20 px-2 py-0.5 whitespace-nowrap">
                                                                     <Star className="w-3 h-3 mr-1 fill-current" />
                                                                     {app.aiMatchScore}% Match
                                                                 </Badge>
                                                             )}
-                                                        </h3>
-                                                        <p className="text-muted-foreground text-sm line-clamp-1">
+                                                        </div>
+                                                        <p className="text-muted-foreground text-sm line-clamp-1 max-w-sm">
                                                             {app.applicant.bio || "No bio provided"}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="text-right hidden sm:block">
-                                                    <div className="font-bold text-lg text-primary">
+                                                <div className="text-right hidden sm:block bg-muted/20 px-4 py-2 rounded-2xl border border-border/50">
+                                                    <div className="font-bold text-xl text-primary">
                                                         ${app.proposedRate}/hr
                                                     </div>
-                                                    <div className="text-xs text-muted-foreground">
+                                                    <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
                                                         Proposed Rate
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="bg-muted/30 rounded-xl p-4 mb-4">
-                                                <h4 className="text-sm font-semibold mb-2 text-foreground/80">Cover Letter</h4>
-                                                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap line-clamp-3 group-hover:line-clamp-none transition-all">
+                                            {/* Proposed Rate for Mobile */}
+                                            <div className="sm:hidden mb-4 flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/10">
+                                                <span className="text-sm font-medium text-muted-foreground">Proposed Rate</span>
+                                                <span className="text-lg font-bold text-primary">${app.proposedRate}/hr</span>
+                                            </div>
+
+                                            <div className="bg-muted/30 rounded-2xl p-5 mb-4 border border-border/40 relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 w-1 h-full bg-primary/20" />
+                                                <h4 className="text-xs font-bold uppercase tracking-widest mb-2 text-muted-foreground">Cover Letter</h4>
+                                                <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap line-clamp-3 group-hover:line-clamp-none transition-all duration-300">
                                                     {app.coverLetter}
                                                 </p>
                                             </div>
 
                                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                                <span>Applied on {format(new Date(app.createdAt), "MMM d, yyyy")}</span>
+                                                <span className="flex items-center gap-1">
+                                                    <Loader2 className="h-3 w-3 animate-none" /> {/* Placeholder for calendar icon if needed */}
+                                                    Applied {format(new Date(app.createdAt), "MMM d, yyyy")}
+                                                </span>
                                                 {app.status !== 'PENDING' && (
                                                     <Badge variant={
                                                         app.status === 'ACCEPTED' ? 'default' : 'destructive'
-                                                    } className="uppercase text-[10px]">
+                                                    } className="uppercase text-[10px] font-bold px-2 py-0">
                                                         {app.status}
                                                     </Badge>
                                                 )}
@@ -160,9 +172,9 @@ export default function JobApplicationsPage() {
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="flex md:flex-col items-center justify-center gap-3 md:border-l md:border-border md:pl-6 md:w-48">
+                                        <div className="flex flex-col sm:flex-row md:flex-col items-stretch justify-center gap-3 md:border-l md:border-border md:pl-8 md:w-56 mt-4 md:mt-0">
                                             <Button
-                                                className="w-full gap-2 shadow-sm"
+                                                className="flex-1 md:w-full h-11 gap-2 shadow-md hover:shadow-lg transition-all font-semibold active:scale-[0.98]"
                                                 onClick={() => handleStartChat(app.applicantId)}
                                             >
                                                 <MessageSquare className="h-4 w-4" />
@@ -170,20 +182,12 @@ export default function JobApplicationsPage() {
                                             </Button>
                                             <Button
                                                 variant="outline"
-                                                className="w-full gap-2"
+                                                className="flex-1 md:w-full h-11 gap-2 border-2 hover:bg-muted/50 transition-all font-semibold active:scale-[0.98]"
                                                 onClick={() => router.push(`/profile/${app.applicantId}`)}
                                             >
                                                 <User className="h-4 w-4" />
                                                 View Profile
                                             </Button>
-                                            {/* <div className="flex gap-2 w-full mt-2">
-                                                <Button variant="ghost" size="icon" className="flex-1 text-green-600 hover:text-green-700 hover:bg-green-50" title="Shortlist">
-                                                    <CheckCircle2 className="h-5 w-5" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50" title="Reject">
-                                                    <XCircle className="h-5 w-5" />
-                                                </Button>
-                                            </div> */}
                                         </div>
                                     </div>
                                 </motion.div>
@@ -191,7 +195,7 @@ export default function JobApplicationsPage() {
                         )}
                     </div>
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }

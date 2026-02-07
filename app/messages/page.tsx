@@ -87,8 +87,8 @@ export default function MessagesPage() {
 
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
             socketInstance = io(apiUrl, {
-                auth: { token: localStorage.getItem("token") }
-            });
+                withCredentials: true
+            } as any);
 
             socketInstance.on("newMessage", (msg: Message) => {
                 handleIncomingMessage(msg);
