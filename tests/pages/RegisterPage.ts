@@ -9,6 +9,7 @@ export class RegisterPage extends BasePage {
         await this.page.fill('input[name="email"]', email);
         await this.page.fill('input[name="password"]', pass);
         await this.page.click('button[type="submit"]');
+        await this.page.waitForSelector('text=Welcome Aboard!', { timeout: 15000 });
     }
 
     async isRegistrationSuccessful() {

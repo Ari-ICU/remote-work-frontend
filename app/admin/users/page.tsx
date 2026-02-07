@@ -102,8 +102,9 @@ export default function AdminUsers() {
             await adminService.deleteUser(userId);
             toast.success("Identity purged from ecosystem");
             fetchUsers();
-        } catch (error) {
-            toast.error("Deletion protocol failed");
+        } catch (error: any) {
+            const message = error.response?.data?.message || "Deletion protocol failed";
+            toast.error(message);
         }
     };
 

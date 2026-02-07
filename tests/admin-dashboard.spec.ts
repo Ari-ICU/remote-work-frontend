@@ -13,6 +13,7 @@ test.describe('Admin Dashboard Features', () => {
     const testFreelancerEmail = `test_freelancer_${timestamp}@test.com`;
 
     test('Test all admin dashboard features', async ({ page, browser }) => {
+        page.on('console', msg => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
         const adminPage = new AdminPage(page);
 
         // 1. Initial Cleanup to have a clean state for deterministic search
@@ -27,10 +28,10 @@ test.describe('Admin Dashboard Features', () => {
 
         // Add User
         await adminPage.addUser({
-            firstName: 'Admin',
-            lastName: 'TestUser',
+            firstName: 'AdminTest',
+            lastName: 'User',
             email: testUserEmail,
-            role: 'EMPLOYER'
+            role: 'FREELANCER'
         });
         console.log('✅ Added new user.');
 
@@ -68,7 +69,7 @@ test.describe('Admin Dashboard Features', () => {
         const freePage = await freelancerContext.newPage();
         const freeRegister = new RegisterPage(freePage);
         const freeJob = new JobPage(freePage);
-        await freeRegister.register('Freelancer', 'AdminTest', testFreelancerEmail, 'password123');
+        await freeRegister.register('Freelancer', 'Freelancer AdminTest', testFreelancerEmail, 'password123');
         await freeJob.searchAndSelectJob(testJobTitle);
         // We'll need a dummy file for application
         const path = require('path');
