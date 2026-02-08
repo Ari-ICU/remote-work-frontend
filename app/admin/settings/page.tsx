@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { adminService } from "@/lib/services/admin";
 import {
     Save,
     Bell,
@@ -27,7 +28,9 @@ import {
     CheckCircle,
     DollarSign,
     AlertCircle,
-    ShieldCheck
+    ShieldCheck,
+    Plus,
+    Trash
 } from "lucide-react";
 import {
     Card,
@@ -38,6 +41,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -97,6 +101,11 @@ export default function AdminSettings() {
                     <TabsTrigger value="branding" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-black font-bold transition-all">
                         <div className="flex items-center gap-2">
                             <Palette size={16} /> Brand & Theme
+                        </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="pricing" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-black font-bold transition-all">
+                        <div className="flex items-center gap-2">
+                            <DollarSign size={16} /> Pricing Plans
                         </div>
                     </TabsTrigger>
                 </TabsList>
@@ -382,8 +391,194 @@ export default function AdminSettings() {
                             </Card>
                         </div>
                     </TabsContent>
+                    <TabsContent value="pricing" className="space-y-6">
+                        <PricingSettings />
+                    </TabsContent>
                 </motion.div>
             </Tabs>
+        </div>
+    );
+}
+
+function PricingSettings() {
+    const [plans, setPlans] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isCreating, setIsCreating] = useState(false);
+    const plansEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        fetchPlans();
+    }, []);
+
+    const fetchPlans = async () => {
+        try {
+            const data = await adminService.getPricingPlans();
+            setPlans(data);
+        } catch (error) {
+            toast.error("Failed to load plans");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdatePlan = async (id: string, field: string, value: any) => {
+        try {
+            await adminService.updatePricingPlan(id, { [field]: value });
+            toast.success("Plan updated successfully");
+            fetchPlans();
+        } catch (error) {
+            toast.error("Update failed");
+        }
+    };
+
+    const handleDeletePlan = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this plan? This will affect the frontend pricing page.")) return;
+        try {
+            await adminService.deletePricingPlan(id);
+            toast.success("Plan deleted");
+            fetchPlans();
+        } catch (error) {
+            toast.error("Deletion failed");
+        }
+    };
+
+    const handleCreatePlan = async () => {
+        setIsCreating(true);
+        try {
+            const newPlan = {
+                name: `New Tier ${Math.floor(Math.random() * 1000)}`,
+                price: 0,
+                description: "New subscription level description",
+                features: ["Basic Feature"],
+                highlight: false,
+                cta: "Subscribe",
+                href: "/checkout?plan=new",
+                order: plans.length + 1
+            };
+            await adminService.createPricingPlan(newPlan);
+            toast.success("New tier initialized", {
+                description: "Scrolling you to the new plan matrix."
+            });
+            await fetchPlans();
+            setTimeout(() => {
+                plansEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 100);
+        } catch (error) {
+            toast.error("Creation failed");
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
+    if (loading) return (
+        <div className="p-12 flex flex-col items-center justify-center space-y-4">
+            <RefreshCw className="h-8 w-8 text-primary animate-spin" />
+            <p className="text-sm font-medium text-gray-400 animate-pulse uppercase tracking-widest">Synchronizing Market Matrix...</p>
+        </div>
+    );
+
+    return (
+        <div className="grid grid-cols-1 gap-8">
+            <Card className="bg-white/[0.03] border-white/[0.08] backdrop-blur-xl rounded-3xl overflow-hidden">
+                <CardHeader className="p-8 border-b border-white/5 bg-white/[0.02]">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="text-xl font-bold flex items-center gap-3">
+                                <DollarSign size={24} className="text-primary" />
+                                Dynamic Market Plans
+                            </CardTitle>
+                            <CardDescription>Configure the subscription tiers and features available to employers.</CardDescription>
+                        </div>
+                        <Button
+                            onClick={handleCreatePlan}
+                            disabled={isCreating}
+                            className="bg-primary text-black hover:bg-primary/90 font-bold rounded-xl px-6 disabled:opacity-50"
+                        >
+                            {isCreating ? (
+                                <RefreshCw size={18} className="mr-2 animate-spin" />
+                            ) : (
+                                <Plus size={18} className="mr-2" />
+                            )}
+                            {isCreating ? "Initializing..." : "Launch New Tier"}
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-8">
+                    <div className="space-y-12">
+                        {plans.map((plan) => (
+                            <div key={plan.id} className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-primary/20 transition-all group relative">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeletePlan(plan.id)}
+                                    className="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                >
+                                    <Trash size={18} />
+                                </Button>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                    <div className="space-y-3">
+                                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Tier Name</Label>
+                                        <Input
+                                            defaultValue={plan.name}
+                                            onBlur={(e) => handleUpdatePlan(plan.id, 'name', e.target.value)}
+                                            className="h-12 bg-black/40 border-white/10 rounded-xl font-bold focus:border-primary"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Unit Price ($)</Label>
+                                        <div className="relative">
+                                            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                                            <Input
+                                                type="number"
+                                                defaultValue={plan.price}
+                                                onBlur={(e) => handleUpdatePlan(plan.id, 'price', parseFloat(e.target.value))}
+                                                className="h-12 bg-black/40 border-white/10 rounded-xl pl-10 font-bold focus:border-primary"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Highlight State</Label>
+                                        <div className="flex items-center h-12 px-4 bg-black/40 border border-white/10 rounded-xl">
+                                            <Switch
+                                                defaultChecked={plan.highlight}
+                                                onCheckedChange={(checked) => handleUpdatePlan(plan.id, 'highlight', checked)}
+                                                className="data-[state=checked]:bg-primary"
+                                            />
+                                            <span className="ml-3 text-xs font-bold text-gray-400">Featured Tier</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Listing Badge</Label>
+                                        <Input
+                                            defaultValue={plan.badge || ""}
+                                            placeholder="e.g. Most Popular"
+                                            onBlur={(e) => handleUpdatePlan(plan.id, 'badge', e.target.value)}
+                                            className="h-12 bg-black/40 border-white/10 rounded-xl font-bold focus:border-primary"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="mt-8 space-y-3">
+                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Proposition Summary</Label>
+                                    <Input
+                                        defaultValue={plan.description}
+                                        onBlur={(e) => handleUpdatePlan(plan.id, 'description', e.target.value)}
+                                        className="h-12 bg-black/40 border-white/10 rounded-xl font-medium focus:border-primary"
+                                    />
+                                </div>
+                                <div className="mt-8 space-y-3">
+                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Feature Matrix (Comma Separated)</Label>
+                                    <Textarea
+                                        defaultValue={plan.features?.join(", ") || ""}
+                                        onBlur={(e) => handleUpdatePlan(plan.id, 'features', e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean))}
+                                        className="min-h-[100px] bg-black/40 border-white/10 rounded-2xl p-4 font-medium focus:border-primary resize-none text-sm"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        <div ref={plansEndRef} />
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

@@ -76,5 +76,26 @@ export const adminService = {
     cleanupTestData: async () => {
         const response = await api.delete('/admin/cleanup-test-data');
         return response.data;
+    },
+
+    // Pricing Management
+    getPricingPlans: async () => {
+        const response = await api.get('/pricing/plans');
+        return response.data;
+    },
+
+    createPricingPlan: async (data: any) => {
+        const response = await api.post('/pricing/admin/plans', data);
+        return response.data;
+    },
+
+    updatePricingPlan: async (id: string, data: any) => {
+        const response = await api.patch(`/pricing/admin/plans/${id}`, data);
+        return response.data;
+    },
+
+    deletePricingPlan: async (id: string) => {
+        const response = await api.delete(`/pricing/admin/plans/${id}`);
+        return response.data;
     }
 };

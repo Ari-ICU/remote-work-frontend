@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -32,18 +32,79 @@ import { fadeIn, scaleUp, staggerContainer } from "@/lib/animations";
 
 import { jobsService } from "@/lib/services/jobs";
 import { authService } from "@/lib/services/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import api from "@/lib/api";
+
+interface Plan {
+    id: string;
+    name: string;
+    price: number | string;
+    description: string;
+    features: string[];
+}
 
 export default function PostJobPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [activeStep, setActiveStep] = useState(1);
     const [error, setError] = useState<string | null>(null);
+    const [plans, setPlans] = useState<Plan[]>([]);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const plan = searchParams.get("plan") || "free";
+
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                const response = await api.get("/pricing/plans");
+                setPlans(response.data);
+            } catch (error) {
+                console.error("Failed to fetch plans:", error);
+            }
+        };
+        fetchPlans();
+    }, []);
 
     const [category, setCategory] = useState("");
     const [type, setType] = useState("");
+
+    const sectionRefs = {
+        1: useRef<HTMLDivElement>(null),
+        2: useRef<HTMLDivElement>(null),
+        3: useRef<HTMLDivElement>(null),
+        4: useRef<HTMLDivElement>(null),
+    };
+
+    const scrollToSection = (step: number) => {
+        const ref = sectionRefs[step as keyof typeof sectionRefs];
+        if (ref.current) {
+            const yOffset = -120; // Account for sticky header and spacing
+            const y = ref.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+            setActiveStep(step);
+        }
+    };
+
+    useEffect(() => {
+        const observers = Object.entries(sectionRefs).map(([step, ref]) => {
+            const observer = new IntersectionObserver(
+                ([entry]) => {
+                    if (entry.isIntersecting) {
+                        setActiveStep(parseInt(step));
+                    }
+                },
+                { threshold: 0.3, rootMargin: "-100px 0px -40% 0px" }
+            );
+
+            if (ref.current) observer.observe(ref.current);
+            return observer;
+        });
+
+        return () => {
+            observers.forEach(o => o.disconnect());
+        };
+    }, [plans]); // Re-run when plans load as content height changes
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -77,24 +138,26 @@ export default function PostJobPage() {
             description: formData.get("description") as string,
             category: category || "General",
             skills: ["Remote", category || "General"],
-            remote: true
+            remote: true,
+            featured: plan !== "free"
         };
 
         try {
             await jobsService.create(jobData);
             setIsSubmitted(true);
         } catch (err: any) {
+            const responseData = err.response?.data;
+            const message = responseData?.message;
+
+            // Normalize message to string
+            const errorMessageString = Array.isArray(message)
+                ? message.join(", ")
+                : typeof message === 'string'
+                    ? message
+                    : "Failed to publish job listing. Please try again.";
+
             console.error("Failed to post job:", err);
-            const errorMessage = err.response?.data?.message || "Failed to publish job listing. Please try again.";
-
-            // Check if error is about payment method requirement
-            if (errorMessage.includes("payment method")) {
-                // Redirect to checkout page
-                router.push("/checkout?plan=featured&redirect=post-job");
-                return;
-            }
-
-            setError(errorMessage);
+            setError(errorMessageString);
         } finally {
             setIsLoading(false);
         }
@@ -115,9 +178,13 @@ export default function PostJobPage() {
                         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 mb-2">
                             <CheckCircle2 className="h-10 w-10 text-primary" />
                         </div>
-                        <h1 className="text-3xl font-bold text-foreground">Listing Published!</h1>
+                        <h1 className="text-3xl font-bold text-foreground">
+                            {plan === "free" ? "Listing Published!" : `${plan.charAt(0).toUpperCase() + plan.slice(1)} Listing Published!`}
+                        </h1>
                         <p className="text-muted-foreground leading-relaxed">
-                            Your remote job listing is now live. We&apos;ve sent a confirmation email with details on how to manage your post.
+                            {plan === "free"
+                                ? "Your remote job listing is now live. We've sent a confirmation email with details on how to manage your post."
+                                : `Your ${plan} job listing is now live with enhanced visibility. We've sent a confirmation email with your receipt and post details.`}
                         </p>
                         <div className="flex flex-col gap-3 pt-4">
                             <Button size="lg" className="w-full shadow-lg shadow-primary/20" asChild>
@@ -187,22 +254,28 @@ export default function PostJobPage() {
                     >
                         <form onSubmit={handleSubmit} className="space-y-12">
 
-                            {/* Step Navigation - Visual Only */}
-                            <div className="hidden md:flex items-center justify-between mb-12 px-4">
+                            {/* Step Navigation - Interactive */}
+                            <div className="hidden md:flex items-center justify-between mb-12 px-4 sticky top-0 py-4 bg-card/80 backdrop-blur-md z-30 -mx-6 md:-mx-12 px-12 border-b border-border/50">
                                 {[
                                     { n: 1, label: "Job Details" },
                                     { n: 2, label: "Rates & Type" },
-                                    { n: 3, label: "Description" }
+                                    { n: 3, label: "Description" },
+                                    { n: 4, label: "Visibility" }
                                 ].map((s) => (
-                                    <div key={s.n} className="flex items-center gap-3">
-                                        <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${activeStep >= s.n ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                                            {s.n}
+                                    <button
+                                        key={s.n}
+                                        type="button"
+                                        onClick={() => scrollToSection(s.n)}
+                                        className="flex items-center gap-3 group transition-all"
+                                    >
+                                        <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${activeStep === s.n ? 'bg-primary text-primary-foreground scale-110 ring-4 ring-primary/20' : activeStep > s.n ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground group-hover:bg-muted-foreground/20'}`}>
+                                            {activeStep > s.n ? <CheckCircle2 className="h-4 w-4" /> : s.n}
                                         </div>
-                                        <span className={`text-sm font-medium ${activeStep >= s.n ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                        <span className={`text-xs font-bold uppercase tracking-wider transition-colors ${activeStep === s.n ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>
                                             {s.label}
                                         </span>
-                                        {s.n < 3 && <div className="w-12 h-px bg-border mx-2" />}
-                                    </div>
+                                        {s.n < 4 && <div className="w-8 lg:w-16 h-px bg-border mx-2" />}
+                                    </button>
                                 ))}
                             </div>
 
@@ -217,7 +290,7 @@ export default function PostJobPage() {
                             )}
 
                             {/* Section 1: Core Info */}
-                            <div className="space-y-8">
+                            <div className="space-y-8 scroll-mt-32" ref={sectionRefs[1]}>
                                 <div className="flex items-center gap-3 pb-4 border-b border-border/50">
                                     <div className="p-2 bg-primary/10 rounded-lg text-primary">
                                         <Briefcase className="h-5 w-5" />
@@ -269,7 +342,7 @@ export default function PostJobPage() {
                             </div>
 
                             {/* Section 2: Type & Pay */}
-                            <div className="space-y-8">
+                            <div className="space-y-8 scroll-mt-32" ref={sectionRefs[2]}>
                                 <div className="flex items-center gap-3 pb-4 border-b border-border/50">
                                     <div className="p-2 bg-primary/10 rounded-lg text-primary">
                                         <DollarSign className="h-5 w-5" />
@@ -307,7 +380,7 @@ export default function PostJobPage() {
                             </div>
 
                             {/* Section 3: Detailed Desc */}
-                            <div className="space-y-8">
+                            <div className="space-y-8 scroll-mt-32" ref={sectionRefs[3]}>
                                 <div className="flex items-center gap-3 pb-4 border-b border-border/50">
                                     <div className="p-2 bg-primary/10 rounded-lg text-primary">
                                         <Sparkles className="h-5 w-5" />
@@ -340,12 +413,71 @@ Expected skills:
                                 </div>
                             </div>
 
+                            {/* Section 4: Visibility Plan */}
+                            <div className="space-y-8 scroll-mt-32" ref={sectionRefs[4]}>
+                                <div className="flex items-center gap-3 pb-4 border-b border-border/50">
+                                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                        <Sparkles className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold text-foreground">Visibility Plan</h2>
+                                        <p className="text-sm text-muted-foreground">Boost your listing to reach more candidates</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 md:grid-cols-3">
+                                    {plans.map((p) => (
+                                        <button
+                                            key={p.id}
+                                            type="button"
+                                            onClick={() => {
+                                                const params = new URLSearchParams(searchParams.toString());
+                                                params.set('plan', p.name.toLowerCase() === 'free' ? 'free' : p.name.toLowerCase());
+                                                router.replace(`?${params.toString()}`, { scroll: false });
+                                            }}
+                                            className={`flex flex-col p-5 rounded-2xl border-2 transition-all text-left group ${plan === (p.name.toLowerCase() === 'free' ? 'free' : p.name.toLowerCase())
+                                                ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+                                                : 'border-border hover:border-primary/30 hover:bg-muted/30'
+                                                }`}
+                                        >
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className={`text-sm font-bold ${plan === (p.name.toLowerCase() === 'free' ? 'free' : p.name.toLowerCase()) ? 'text-primary' : 'text-muted-foreground'}`}>
+                                                    {p.name}
+                                                </span>
+                                                {plan === (p.name.toLowerCase() === 'free' ? 'free' : p.name.toLowerCase()) && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                                            </div>
+                                            <div className="text-2xl font-black mb-1">{typeof p.price === 'number' ? `$${p.price}` : p.price}</div>
+                                            <div className="text-xs text-muted-foreground leading-snug">{p.description}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                                {plan !== 'free' && (
+                                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center gap-3">
+                                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                                        <p className="text-sm font-medium text-primary">
+                                            {plan === 'featured'
+                                                ? "Featured badge, 2x visibility in search, and priority support included."
+                                                : "Homepage spot, top of category, extended duration, and dedicated account manager included."
+                                            }
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Submit Section */}
                             <div className="pt-8 border-t border-border mt-12">
                                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                                     <div className="text-center md:text-left">
-                                        <p className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-4">Free for limited time</p>
-                                        <p className="text-sm text-muted-foreground mt-1">Your listing will be live for 30 days.</p>
+                                        <p className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-4">
+                                            {plan === "free" ? "Free for limited time" : `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            {plan === "free"
+                                                ? "Your listing will be live for 30 days."
+                                                : plan === "featured"
+                                                    ? "Boost visibility and get more quality applicants."
+                                                    : "Maximum exposure for critical hires."}
+                                        </p>
                                     </div>
                                     <Button
                                         type="submit"
