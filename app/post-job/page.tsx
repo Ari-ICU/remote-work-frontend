@@ -64,7 +64,14 @@ export default function PostJobPage() {
             }
         };
         fetchPlans();
-    }, []);
+
+        // Check if redirected from successful payment
+        const success = searchParams.get("success");
+        if (success === "true") {
+            setIsSubmitted(true);
+        }
+    }, [searchParams]);
+
 
     const [category, setCategory] = useState("");
     const [type, setType] = useState("Full-time");
@@ -164,6 +171,28 @@ export default function PostJobPage() {
         };
 
         try {
+            // Check if user selected a paid plan
+            if (plan !== "free") {
+                // Get the selected plan details
+                const selectedPlan = plans.find(p =>
+                    p.name.toLowerCase() === plan.toLowerCase()
+                );
+
+                if (!selectedPlan) {
+                    setError("Selected plan not found. Please try again.");
+                    return;
+                }
+
+                // Save job data to sessionStorage for after payment
+                sessionStorage.setItem('pendingJobData', JSON.stringify(jobData));
+                sessionStorage.setItem('selectedPlan', JSON.stringify(selectedPlan));
+
+                // Redirect to payment page
+                router.push(`/checkout?plan=${plan}&amount=${selectedPlan.price}`);
+                return;
+            }
+
+            // For free plan, post immediately
             await jobsService.create(jobData);
             setIsSubmitted(true);
         } catch (err: any) {
@@ -368,12 +397,13 @@ export default function PostJobPage() {
                                         </div>
                                         <p className="text-[10px] text-muted-foreground ml-1">Separate skills with commas</p>
                                     </div>
-                                    <div className="space-y-3">
-                                        <Label htmlFor="location" className="text-sm font-semibold">Remote Location</Label>
-                                        <div className="relative group">
-                                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                            <Input id="location" name="location" placeholder="e.g. Remote (Global)" required className="pl-11 h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
-                                        </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <Label htmlFor="location" className="text-sm font-semibold">Remote Location</Label>
+                                    <div className="relative group">
+                                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                        <Input id="location" name="location" placeholder="e.g. Remote (Global)" required className="pl-11 h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
                                     </div>
                                 </div>
                             </div>

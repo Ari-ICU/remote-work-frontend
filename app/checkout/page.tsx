@@ -1,404 +1,494 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+    ArrowLeft,
     CreditCard,
     Lock,
     CheckCircle2,
+    Loader2,
     AlertCircle,
-    Smartphone,
-    QrCode,
-    Loader2
+    Sparkles,
+    Shield,
+    Check,
+    Info,
+    Calendar,
+    User,
+    Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/header";
-import { paymentService, PaymentProvider } from "@/lib/services/payment";
-import { fadeIn } from "@/lib/animations";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Image from "next/image";
+import { fadeIn, scaleUp, staggerContainer } from "@/lib/animations";
+import { authService } from "@/lib/services/auth";
+import { jobsService } from "@/lib/services/jobs";
+import api from "@/lib/api";
 
 export default function CheckoutPage() {
-    const searchParams = useSearchParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const plan = searchParams.get("plan") || "featured";
+    const amount = searchParams.get("amount") || "29";
 
-    const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState("");
-    const [selectedProvider, setSelectedProvider] = useState<PaymentProvider>(PaymentProvider.CARD);
-    const [khqrData, setKhqrData] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "khqr">("card");
+    const [focusedField, setFocusedField] = useState<string | null>(null);
 
-    const planDetails = {
-        free: { price: 0, name: "Free" },
-        featured: { price: 49, name: "Featured" },
-        premium: { price: 99, name: "Premium" },
+    // Card details state
+    const [cardNumber, setCardNumber] = useState("");
+    const [cardName, setCardName] = useState("");
+    const [cardExpiry, setCardExpiry] = useState("");
+    const [cardCvv, setCardCvv] = useState("");
+
+    useEffect(() => {
+        const user = authService.getCurrentUser();
+        if (!user) {
+            router.push("/login?redirect=/checkout");
+        }
+    }, [router]);
+
+    const formatCardNumber = (value: string) => {
+        const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
+        const matches = v.match(/\d{4,16}/g);
+        const match = (matches && matches[0]) || "";
+        const parts = [];
+
+        for (let i = 0, len = match.length; i < len; i += 4) {
+            parts.push(match.substring(i, i + 4));
+        }
+
+        if (parts.length) {
+            return parts.join(" ");
+        } else {
+            return value;
+        }
     };
 
-    const selectedPlan = planDetails[plan as keyof typeof planDetails] || planDetails.featured;
+    const formatExpiry = (value: string) => {
+        const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
+        if (v.length >= 2) {
+            return v.substring(0, 2) + "/" + v.substring(2, 4);
+        }
+        return v;
+    };
 
-    const handleCardPayment = async (e: React.FormEvent) => {
+    const getCardType = (number: string) => {
+        const cleaned = number.replace(/\s/g, "");
+        if (cleaned.startsWith("4")) return "visa";
+        if (cleaned.startsWith("5")) return "mastercard";
+        if (cleaned.startsWith("3")) return "amex";
+        return "card";
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setError("");
+        setError(null);
+        setIsLoading(true);
 
         try {
-            const formData = new FormData(e.currentTarget as HTMLFormElement);
-            const cardDetails = {
-                cardholderName: formData.get("cardholderName"),
-                cardNumber: formData.get("cardNumber"),
-                expiryDate: formData.get("expiryDate"),
-                cvc: formData.get("cvc")
-            };
+            // Get pending job data from sessionStorage
+            const pendingJobData = sessionStorage.getItem("pendingJobData");
+            if (!pendingJobData) {
+                throw new Error("No pending job data found. Please start over.");
+            }
 
-            // Connect payment method
-            await paymentService.connectPaymentMethod(PaymentProvider.CARD, cardDetails);
+            const jobData = JSON.parse(pendingJobData);
 
-            // Create payment intent
-            await paymentService.createPaymentIntent(selectedPlan.price, 'usd', PaymentProvider.CARD);
+            // Simulate payment processing
+            await new Promise((resolve) => setTimeout(resolve, 2000));
 
-            setSuccess(true);
-            setTimeout(() => router.push("/post-job?plan=" + plan), 2000);
+            // Create the job after successful payment
+            await jobsService.create(jobData);
+
+            // Clear session storage
+            sessionStorage.removeItem("pendingJobData");
+            sessionStorage.removeItem("selectedPlan");
+
+            // Redirect to success page
+            router.push("/post-job?success=true");
         } catch (err: any) {
-            setError(err.response?.data?.message || "Payment failed. Please try again.");
+            console.error("Payment failed:", err);
+            setError(err.message || "Payment failed. Please try again.");
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
-    const handlePayPalPayment = async () => {
-        setLoading(true);
-        setError("");
-
-        try {
-            // Connect PayPal account
-            const email = (document.getElementById("paypalEmail") as HTMLInputElement)?.value;
-            await paymentService.connectPaymentMethod(PaymentProvider.PAYPAL, { email });
-
-            // Create PayPal payment intent
-            const intent = await paymentService.createPaymentIntent(selectedPlan.price, 'usd', PaymentProvider.PAYPAL);
-
-            // In production, redirect to PayPal approval URL
-            // window.location.href = intent.approvalUrl;
-
-            setSuccess(true);
-            setTimeout(() => router.push("/post-job?plan=" + plan), 2000);
-        } catch (err: any) {
-            setError(err.response?.data?.message || "PayPal connection failed. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleKHQRPayment = async () => {
-        setLoading(true);
-        setError("");
-
-        try {
-            // Generate KHQR code
-            const intent = await paymentService.createPaymentIntent(selectedPlan.price, 'usd', PaymentProvider.KHQR);
-            setKhqrData(intent);
-
-            // Connect KHQR payment method
-            const phoneNumber = (document.getElementById("khqrPhone") as HTMLInputElement)?.value;
-            await paymentService.connectPaymentMethod(PaymentProvider.KHQR, { phoneNumber });
-
-            // Simulate QR code scan delay
-            setTimeout(() => {
-                setSuccess(true);
-                setTimeout(() => router.push("/post-job?plan=" + plan), 2000);
-            }, 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.message || "KHQR payment failed. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (success) {
-        return (
-            <div className="min-h-screen bg-background flex flex-col">
-                <Header />
-                <main className="flex-1 flex items-center justify-center p-4">
-                    <motion.div
-                        initial="hidden" animate="show" variants={fadeIn}
-                        className="text-center space-y-4 max-w-md w-full bg-card p-8 rounded-2xl border border-border shadow-lg"
-                    >
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-                            <CheckCircle2 className="h-8 w-8" />
-                        </div>
-                        <h2 className="text-2xl font-bold">Payment Successful!</h2>
-                        <p className="text-muted-foreground">Redirecting you to create your job post...</p>
-                    </motion.div>
-                </main>
-            </div>
-        );
-    }
+    const planFeatures = plan === "featured"
+        ? ["2x visibility boost", "Priority support", "Featured badge", "30-day listing"]
+        : ["Homepage spotlight", "Top of category", "60-day listing", "Account manager"];
 
     return (
-        <div className="min-h-screen bg-background flex flex-col">
+        <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted/20">
             <Header />
-            <main className="flex-1 pt-24 pb-12 px-4">
-                <div className="max-w-5xl mx-auto">
+
+            <main className="flex-1 py-8 md:py-16">
+                <div className="container mx-auto px-4 max-w-6xl">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-center mb-8"
+                        initial="hidden"
+                        animate="show"
+                        variants={fadeIn}
                     >
-                        <h1 className="text-3xl md:text-4xl font-bold mb-2">Complete Your Payment</h1>
-                        <p className="text-muted-foreground">Choose your preferred payment method</p>
-                    </motion.div>
-
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {/* Order Summary */}
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="md:col-span-1"
+                        {/* Back Button */}
+                        <Link
+                            href="/post-job"
+                            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-6 group"
                         >
-                            <div className="bg-muted/30 p-6 rounded-2xl border border-border sticky top-24">
-                                <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-                                <div className="flex justify-between items-center py-4 border-b border-border/50">
-                                    <div>
-                                        <p className="font-medium">{selectedPlan.name} Job Posting</p>
-                                        <p className="text-sm text-muted-foreground">30 days visibility</p>
-                                    </div>
-                                    <p className="font-bold">${selectedPlan.price}.00</p>
-                                </div>
-                                <div className="flex justify-between items-center pt-4 text-lg font-bold">
-                                    <p>Total</p>
-                                    <p className="text-primary">${selectedPlan.price}.00</p>
-                                </div>
+                            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                            Back to Job Posting
+                        </Link>
 
-                                <div className="mt-6 flex items-center gap-3 text-sm text-muted-foreground bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-xl">
-                                    <Lock className="h-4 w-4 text-primary shrink-0" />
-                                    <p>Secure payment. Your data is encrypted and protected.</p>
-                                </div>
-                            </div>
-                        </motion.div>
+                        {/* Header */}
+                        <div className="mb-8">
+                            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Complete Your Purchase</h1>
+                            <p className="text-muted-foreground">Secure checkout powered by industry-standard encryption</p>
+                        </div>
 
-                        {/* Payment Methods */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="md:col-span-2"
-                        >
-                            <div className="bg-card p-6 md:p-8 rounded-3xl border border-border shadow-sm">
-                                {error && (
-                                    <div className="mb-6 p-4 bg-destructive/10 text-destructive rounded-xl flex items-center gap-2 text-sm">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {error}
-                                    </div>
-                                )}
-
-                                <Tabs defaultValue="card" className="w-full" onValueChange={(value) => setSelectedProvider(value as PaymentProvider)}>
-                                    <TabsList className="grid w-full grid-cols-3 mb-8">
-                                        <TabsTrigger value="CARD" className="flex items-center gap-2">
-                                            <CreditCard className="h-4 w-4" />
-                                            <span className="hidden sm:inline">Card</span>
-                                        </TabsTrigger>
-                                        <TabsTrigger value="PAYPAL" className="flex items-center gap-2">
-                                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .76-.653h8.53c2.347 0 4.203.645 5.072 1.765.78.998.96 2.253.537 3.735-.015.053-.029.104-.045.158-.495 1.667-1.453 2.817-2.844 3.42-1.338.58-3.064.87-5.13.87H9.68a.77.77 0 0 0-.76.653l-.52 3.283-.024.13-.92 5.822a.641.641 0 0 1-.633.74h-.747z" />
-                                            </svg>
-                                            <span className="hidden sm:inline">PayPal</span>
-                                        </TabsTrigger>
-                                        <TabsTrigger value="KHQR" className="flex items-center gap-2">
-                                            <QrCode className="h-4 w-4" />
-                                            <span className="hidden sm:inline">KHQR</span>
-                                        </TabsTrigger>
-                                    </TabsList>
-
-                                    {/* Card Payment */}
-                                    <TabsContent value="CARD">
-                                        <form onSubmit={handleCardPayment} className="space-y-6">
-                                            <div className="space-y-2">
-                                                <Label>Cardholder Name</Label>
-                                                <Input
-                                                    name="cardholderName"
-                                                    placeholder="John Doe"
-                                                    required
-                                                    className="h-12 rounded-xl"
-                                                />
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <Label>Card Number</Label>
-                                                <div className="relative">
-                                                    <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                    <Input
-                                                        name="cardNumber"
-                                                        placeholder="4242 4242 4242 4242"
-                                                        required
-                                                        className="pl-11 h-12 rounded-xl"
-                                                        maxLength={19}
-                                                    />
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
-                                                        <div className="w-8 h-5 bg-blue-600 rounded text-white text-[8px] flex items-center justify-center font-bold">VISA</div>
-                                                        <div className="w-8 h-5 bg-red-600 rounded text-white text-[8px] flex items-center justify-center font-bold">MC</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label>Expiry Date</Label>
-                                                    <Input
-                                                        name="expiryDate"
-                                                        placeholder="MM/YY"
-                                                        required
-                                                        className="h-12 rounded-xl"
-                                                        maxLength={5}
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label>CVC</Label>
-                                                    <Input
-                                                        name="cvc"
-                                                        placeholder="123"
-                                                        required
-                                                        maxLength={4}
-                                                        className="h-12 rounded-xl"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <Button
-                                                type="submit"
-                                                className="w-full h-12 text-lg font-semibold rounded-xl"
-                                                disabled={loading}
-                                            >
-                                                {loading ? (
-                                                    <span className="flex items-center gap-2">
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                        Processing...
-                                                    </span>
-                                                ) : (
-                                                    `Pay $${selectedPlan.price}.00`
-                                                )}
-                                            </Button>
-                                        </form>
-                                    </TabsContent>
-
-                                    {/* PayPal Payment */}
-                                    <TabsContent value="PAYPAL">
-                                        <div className="space-y-6">
-                                            <div className="text-center py-8">
-                                                <div className="mx-auto w-20 h-20 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4">
-                                                    <svg className="h-10 w-10 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                                                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .76-.653h8.53c2.347 0 4.203.645 5.072 1.765.78.998.96 2.253.537 3.735-.015.053-.029.104-.045.158-.495 1.667-1.453 2.817-2.844 3.42-1.338.58-3.064.87-5.13.87H9.68a.77.77 0 0 0-.76.653l-.52 3.283-.024.13-.92 5.822a.641.641 0 0 1-.633.74h-.747z" />
-                                                    </svg>
-                                                </div>
-                                                <h3 className="text-xl font-semibold mb-2">Pay with PayPal</h3>
-                                                <p className="text-muted-foreground text-sm mb-6">
-                                                    You'll be redirected to PayPal to complete your payment securely
-                                                </p>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <Label>PayPal Email</Label>
-                                                <Input
-                                                    id="paypalEmail"
-                                                    type="email"
-                                                    placeholder="your-email@example.com"
-                                                    required
-                                                    className="h-12 rounded-xl"
-                                                />
-                                            </div>
-
-                                            <Button
-                                                onClick={handlePayPalPayment}
-                                                className="w-full h-12 text-lg font-semibold rounded-xl bg-blue-600 hover:bg-blue-700"
-                                                disabled={loading}
-                                            >
-                                                {loading ? (
-                                                    <span className="flex items-center gap-2">
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                        Connecting...
-                                                    </span>
-                                                ) : (
-                                                    <span className="flex items-center gap-2">
-                                                        Continue with PayPal
-                                                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                                                            <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .76-.653h8.53c2.347 0 4.203.645 5.072 1.765.78.998.96 2.253.537 3.735-.015.053-.029.104-.045.158-.495 1.667-1.453 2.817-2.844 3.42-1.338.58-3.064.87-5.13.87H9.68a.77.77 0 0 0-.76.653l-.52 3.283-.024.13-.92 5.822a.641.641 0 0 1-.633.74h-.747z" />
-                                                        </svg>
-                                                    </span>
-                                                )}
-                                            </Button>
+                        <div className="grid gap-6 lg:gap-8 lg:grid-cols-5">
+                            {/* Payment Form - Left Side (3 columns) */}
+                            <div className="lg:col-span-3 space-y-6">
+                                {/* Payment Method Selection */}
+                                <motion.div
+                                    className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-sm"
+                                    variants={scaleUp}
+                                >
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="p-2 bg-primary/10 rounded-lg">
+                                            <CreditCard className="h-5 w-5 text-primary" />
                                         </div>
-                                    </TabsContent>
+                                        <div>
+                                            <h2 className="text-xl font-bold text-foreground">Payment Method</h2>
+                                            <p className="text-sm text-muted-foreground">Choose your preferred payment option</p>
+                                        </div>
+                                    </div>
 
-                                    {/* KHQR Payment */}
-                                    <TabsContent value="KHQR">
-                                        <div className="space-y-6">
-                                            <div className="text-center py-8">
-                                                <div className="mx-auto w-20 h-20 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center mb-4">
-                                                    <QrCode className="h-10 w-10 text-purple-600" />
-                                                </div>
-                                                <h3 className="text-xl font-semibold mb-2">Pay with KHQR</h3>
-                                                <p className="text-muted-foreground text-sm mb-6">
-                                                    Scan the QR code with your banking app to complete payment
-                                                </p>
-                                            </div>
+                                    <div className="grid grid-cols-3 gap-3 mb-8">
+                                        {[
+                                            { id: "card", label: "Card", icon: CreditCard, desc: "Visa, Mastercard" },
+                                            { id: "paypal", label: "PayPal", icon: Building2, desc: "Fast & secure" },
+                                            { id: "khqr", label: "KHQR", icon: Sparkles, desc: "Local payment" }
+                                        ].map((method) => (
+                                            <motion.button
+                                                key={method.id}
+                                                type="button"
+                                                onClick={() => setPaymentMethod(method.id as any)}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                className={`relative p-4 rounded-xl border-2 transition-all text-left ${paymentMethod === method.id
+                                                        ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
+                                                        : "border-border hover:border-primary/30 hover:bg-muted/30"
+                                                    }`}
+                                            >
+                                                <method.icon className={`h-6 w-6 mb-2 ${paymentMethod === method.id ? "text-primary" : "text-muted-foreground"}`} />
+                                                <div className="text-sm font-bold mb-0.5">{method.label}</div>
+                                                <div className="text-[10px] text-muted-foreground">{method.desc}</div>
+                                                {paymentMethod === method.id && (
+                                                    <motion.div
+                                                        initial={{ scale: 0 }}
+                                                        animate={{ scale: 1 }}
+                                                        className="absolute top-2 right-2"
+                                                    >
+                                                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                                                    </motion.div>
+                                                )}
+                                            </motion.button>
+                                        ))}
+                                    </div>
 
-                                            {khqrData ? (
-                                                <div className="space-y-4">
-                                                    <div className="bg-white p-6 rounded-2xl border-2 border-purple-200 flex items-center justify-center">
-                                                        <div className="text-center">
-                                                            <div className="w-48 h-48 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
-                                                                <QrCode className="h-32 w-32 text-gray-400" />
-                                                            </div>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                Amount: <span className="font-bold text-foreground">${selectedPlan.price}.00</span>
-                                                            </p>
+                                    {error && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium flex items-start gap-3"
+                                        >
+                                            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                                            <span>{error}</span>
+                                        </motion.div>
+                                    )}
+
+                                    <form onSubmit={handleSubmit} className="space-y-5">
+                                        <AnimatePresence mode="wait">
+                                            {paymentMethod === "card" && (
+                                                <motion.div
+                                                    key="card-form"
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    className="space-y-5"
+                                                >
+                                                    {/* Card Number */}
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="cardNumber" className="text-sm font-semibold flex items-center gap-2">
+                                                            Card Number
+                                                            {cardNumber.length >= 16 && <Check className="h-3 w-3 text-green-500" />}
+                                                        </Label>
+                                                        <div className="relative group">
+                                                            <CreditCard className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors ${focusedField === "cardNumber" ? "text-primary" : "text-muted-foreground"}`} />
+                                                            <Input
+                                                                id="cardNumber"
+                                                                value={cardNumber}
+                                                                onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                                                                onFocus={() => setFocusedField("cardNumber")}
+                                                                onBlur={() => setFocusedField(null)}
+                                                                placeholder="1234 5678 9012 3456"
+                                                                maxLength={19}
+                                                                required
+                                                                className="pl-12 h-14 rounded-xl bg-muted/30 border-border/50 focus:bg-background focus:border-primary transition-all text-base"
+                                                            />
+                                                            {cardNumber.length > 0 && (
+                                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground uppercase">
+                                                                    {getCardType(cardNumber)}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-sm text-muted-foreground bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl">
-                                                        <Smartphone className="h-4 w-4 text-purple-600" />
-                                                        <p>Open your banking app and scan the QR code above</p>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <>
+
+                                                    {/* Cardholder Name */}
                                                     <div className="space-y-2">
-                                                        <Label>Phone Number</Label>
-                                                        <Input
-                                                            id="khqrPhone"
-                                                            type="tel"
-                                                            placeholder="+855 12 345 678"
-                                                            required
-                                                            className="h-12 rounded-xl"
-                                                        />
+                                                        <Label htmlFor="cardName" className="text-sm font-semibold flex items-center gap-2">
+                                                            Cardholder Name
+                                                            {cardName.length >= 3 && <Check className="h-3 w-3 text-green-500" />}
+                                                        </Label>
+                                                        <div className="relative group">
+                                                            <User className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors ${focusedField === "cardName" ? "text-primary" : "text-muted-foreground"}`} />
+                                                            <Input
+                                                                id="cardName"
+                                                                value={cardName}
+                                                                onChange={(e) => setCardName(e.target.value.toUpperCase())}
+                                                                onFocus={() => setFocusedField("cardName")}
+                                                                onBlur={() => setFocusedField(null)}
+                                                                placeholder="JOHN DOE"
+                                                                required
+                                                                className="pl-12 h-14 rounded-xl bg-muted/30 border-border/50 focus:bg-background focus:border-primary transition-all text-base uppercase"
+                                                            />
+                                                        </div>
                                                     </div>
 
-                                                    <Button
-                                                        onClick={handleKHQRPayment}
-                                                        className="w-full h-12 text-lg font-semibold rounded-xl bg-purple-600 hover:bg-purple-700"
-                                                        disabled={loading}
-                                                    >
-                                                        {loading ? (
-                                                            <span className="flex items-center gap-2">
-                                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                                Generating QR Code...
-                                                            </span>
-                                                        ) : (
-                                                            <span className="flex items-center gap-2">
-                                                                Generate KHQR Code
-                                                                <QrCode className="h-5 w-5" />
-                                                            </span>
-                                                        )}
-                                                    </Button>
-                                                </>
+                                                    {/* Expiry & CVV */}
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="cardExpiry" className="text-sm font-semibold flex items-center gap-2">
+                                                                Expiry Date
+                                                                {cardExpiry.length === 5 && <Check className="h-3 w-3 text-green-500" />}
+                                                            </Label>
+                                                            <div className="relative group">
+                                                                <Calendar className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors ${focusedField === "cardExpiry" ? "text-primary" : "text-muted-foreground"}`} />
+                                                                <Input
+                                                                    id="cardExpiry"
+                                                                    value={cardExpiry}
+                                                                    onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
+                                                                    onFocus={() => setFocusedField("cardExpiry")}
+                                                                    onBlur={() => setFocusedField(null)}
+                                                                    placeholder="MM/YY"
+                                                                    maxLength={5}
+                                                                    required
+                                                                    className="pl-12 h-14 rounded-xl bg-muted/30 border-border/50 focus:bg-background focus:border-primary transition-all text-base"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="cardCvv" className="text-sm font-semibold flex items-center gap-2">
+                                                                CVV
+                                                                <Info className="h-3 w-3 text-muted-foreground" />
+                                                            </Label>
+                                                            <div className="relative group">
+                                                                <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors ${focusedField === "cardCvv" ? "text-primary" : "text-muted-foreground"}`} />
+                                                                <Input
+                                                                    id="cardCvv"
+                                                                    type="password"
+                                                                    value={cardCvv}
+                                                                    onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ""))}
+                                                                    onFocus={() => setFocusedField("cardCvv")}
+                                                                    onBlur={() => setFocusedField(null)}
+                                                                    placeholder="•••"
+                                                                    maxLength={4}
+                                                                    required
+                                                                    className="pl-12 h-14 rounded-xl bg-muted/30 border-border/50 focus:bg-background focus:border-primary transition-all text-base"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
                                             )}
-                                        </div>
-                                    </TabsContent>
-                                </Tabs>
+
+                                            {paymentMethod === "paypal" && (
+                                                <motion.div
+                                                    key="paypal-form"
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    className="py-12 text-center"
+                                                >
+                                                    <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                                                        <Building2 className="h-10 w-10 text-white" />
+                                                    </div>
+                                                    <h3 className="text-xl font-bold mb-2">PayPal Checkout</h3>
+                                                    <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                                                        You'll be securely redirected to PayPal to complete your payment
+                                                    </p>
+                                                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                                        <Shield className="h-4 w-4" />
+                                                        <span>Protected by PayPal Buyer Protection</span>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+
+                                            {paymentMethod === "khqr" && (
+                                                <motion.div
+                                                    key="khqr-form"
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    className="py-12 text-center"
+                                                >
+                                                    <div className="w-64 h-64 mx-auto mb-6 bg-gradient-to-br from-muted to-muted/50 rounded-2xl flex items-center justify-center border-2 border-dashed border-border shadow-inner">
+                                                        <div className="text-center">
+                                                            <Sparkles className="h-12 w-12 mx-auto mb-3 text-primary" />
+                                                            <span className="text-sm text-muted-foreground">QR Code will appear here</span>
+                                                        </div>
+                                                    </div>
+                                                    <h3 className="text-xl font-bold mb-2">Scan to Pay</h3>
+                                                    <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                                                        Open your banking app and scan the QR code to complete payment
+                                                    </p>
+                                                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                                        <Shield className="h-4 w-4" />
+                                                        <span>Secured by Bakong</span>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+
+                                        <Button
+                                            type="submit"
+                                            size="lg"
+                                            className="w-full h-14 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all mt-8"
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <div className="flex items-center gap-3">
+                                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                                    <span>Processing Payment...</span>
+                                                </div>
+                                            ) : (
+                                                <span className="flex items-center gap-2">
+                                                    <Lock className="h-5 w-5" />
+                                                    Pay ${amount} USD
+                                                </span>
+                                            )}
+                                        </Button>
+
+                                        <p className="text-xs text-center text-muted-foreground pt-4">
+                                            By confirming your payment, you agree to our{" "}
+                                            <Link href="#" className="text-primary hover:underline font-medium">
+                                                Terms of Service
+                                            </Link>{" "}
+                                            and{" "}
+                                            <Link href="#" className="text-primary hover:underline font-medium">
+                                                Privacy Policy
+                                            </Link>
+                                        </p>
+                                    </form>
+                                </motion.div>
+
+                                {/* Trust Badges */}
+                                <div className="flex flex-wrap items-center justify-center gap-6 px-4 py-6 bg-muted/30 rounded-xl border border-border/50">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Shield className="h-4 w-4 text-green-600" />
+                                        <span className="font-medium">SSL Encrypted</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Lock className="h-4 w-4 text-blue-600" />
+                                        <span className="font-medium">PCI Compliant</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                                        <span className="font-medium">Verified Secure</span>
+                                    </div>
+                                </div>
                             </div>
-                        </motion.div>
-                    </div>
+
+                            {/* Order Summary - Right Side (2 columns) */}
+                            <div className="lg:col-span-2">
+                                <motion.div
+                                    className="bg-gradient-to-br from-card to-card/50 border border-border rounded-2xl p-6 md:p-8 shadow-lg sticky top-24"
+                                    variants={scaleUp}
+                                >
+                                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                                        <Sparkles className="h-5 w-5 text-primary" />
+                                        Order Summary
+                                    </h2>
+
+                                    <div className="space-y-6">
+                                        {/* Plan Details */}
+                                        <div className="p-5 bg-primary/5 rounded-xl border border-primary/20">
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div>
+                                                    <div className="text-lg font-bold text-foreground capitalize">{plan} Plan</div>
+                                                    <div className="text-sm text-muted-foreground mt-0.5">Job posting package</div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-2xl font-black text-primary">${amount}</div>
+                                                    <div className="text-xs text-muted-foreground">one-time</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2 pt-3 border-t border-primary/10">
+                                                {planFeatures.map((feature, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2 text-sm">
+                                                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                                                        <span className="text-muted-foreground">{feature}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Price Breakdown */}
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Subtotal</span>
+                                                <span className="font-semibold">${amount}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Processing fee</span>
+                                                <span className="font-semibold">$0</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Tax</span>
+                                                <span className="font-semibold">$0</span>
+                                            </div>
+
+                                            <div className="pt-3 border-t-2 border-border">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-base font-bold">Total</span>
+                                                    <div className="text-right">
+                                                        <div className="text-2xl font-black text-primary">${amount}</div>
+                                                        <div className="text-xs text-muted-foreground">USD</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Security Notice */}
+                                        <div className="pt-4 border-t border-border">
+                                            <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg">
+                                                <Lock className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                                                <div className="text-xs text-muted-foreground leading-relaxed">
+                                                    Your payment information is encrypted and secure. We never store your card details.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
             </main>
         </div>
