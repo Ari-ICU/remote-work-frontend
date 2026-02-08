@@ -67,7 +67,26 @@ export default function PostJobPage() {
     }, []);
 
     const [category, setCategory] = useState("");
-    const [type, setType] = useState("");
+    const [type, setType] = useState("Full-time");
+    const [responsibilities, setResponsibilities] = useState<string[]>([""]);
+    const [requirements, setRequirements] = useState<string[]>([""]);
+    const [skills, setSkills] = useState("");
+
+    const addListItem = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+        setter(prev => [...prev, ""]);
+    };
+
+    const removeListItem = (index: number, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+        setter(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const updateListItem = (index: number, value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+        setter(prev => {
+            const next = [...prev];
+            next[index] = value;
+            return next;
+        });
+    };
 
     const sectionRefs = {
         1: useRef<HTMLDivElement>(null),
@@ -136,8 +155,10 @@ export default function PostJobPage() {
             budgetType: typeMapping[type] || "FIXED",
             budget: budget,
             description: formData.get("description") as string,
+            responsibilities: responsibilities.filter(r => r.trim() !== ""),
+            requirements: requirements.filter(r => r.trim() !== ""),
             category: category || "General",
-            skills: ["Remote", category || "General"],
+            skills: skills.split(",").map(s => s.trim()).filter(s => s !== ""),
             remote: true,
             featured: plan !== "free"
         };
@@ -332,6 +353,22 @@ export default function PostJobPage() {
                                         </div>
                                     </div>
                                     <div className="space-y-3">
+                                        <Label htmlFor="skills" className="text-sm font-semibold">Key Skills</Label>
+                                        <div className="relative group">
+                                            <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                            <Input
+                                                id="skills"
+                                                name="skills"
+                                                value={skills}
+                                                onChange={(e) => setSkills(e.target.value)}
+                                                placeholder="e.g. React, TypeScript, Figma"
+                                                required
+                                                className="pl-11 h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all"
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground ml-1">Separate skills with commas</p>
+                                    </div>
+                                    <div className="space-y-3">
                                         <Label htmlFor="location" className="text-sm font-semibold">Remote Location</Label>
                                         <div className="relative group">
                                             <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -355,18 +392,30 @@ export default function PostJobPage() {
 
                                 <div className="grid gap-8 md:grid-cols-2">
                                     <div className="space-y-3">
-                                        <Label htmlFor="type" className="text-sm font-semibold">Contract Style</Label>
-                                        <Select onValueChange={setType} required>
-                                            <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-border/50">
-                                                <SelectValue placeholder="How will they work?" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Full-time">Full-time Remote</SelectItem>
-                                                <SelectItem value="Part-time">Part-time Remote</SelectItem>
-                                                <SelectItem value="Freelance">Freelance / Contract</SelectItem>
-                                                <SelectItem value="Hourly">Hourly Billing</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <Label className="text-sm font-semibold">Contract Style</Label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                { id: "Full-time", label: "Full-time", icon: "FT" },
+                                                { id: "Part-time", label: "Part-time", icon: "PT" },
+                                                { id: "Freelance", label: "Freelance", icon: "FL" },
+                                                { id: "Hourly", label: "Hourly", icon: "HR" }
+                                            ].map((style) => (
+                                                <button
+                                                    key={style.id}
+                                                    type="button"
+                                                    onClick={() => setType(style.id)}
+                                                    className={`h-14 px-4 rounded-xl border-2 transition-all flex items-center gap-3 overflow-hidden ${type === style.id
+                                                        ? 'border-primary bg-primary/5 text-primary'
+                                                        : 'border-border/50 bg-muted/10 text-muted-foreground hover:border-primary/30'
+                                                        }`}
+                                                >
+                                                    <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black ${type === style.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+                                                        {style.icon}
+                                                    </div>
+                                                    <span className="text-sm font-bold truncate">{style.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                     <div className="space-y-3">
                                         <Label htmlFor="salary" className="text-sm font-semibold">Salary / Rate Range</Label>
@@ -391,23 +440,102 @@ export default function PostJobPage() {
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <Label htmlFor="description" className="text-sm font-semibold">Role & Requirements</Label>
-                                    <Textarea
-                                        id="description"
-                                        name="description"
-                                        placeholder="We're looking for a person who... 
-                                        
-Expected skills:
-- Skill 1
-- Skill 2"
-                                        className="min-h-[250px] rounded-2xl bg-muted/30 border-border/50 focus:bg-background transition-all p-6 resize-none leading-relaxed"
-                                        required
-                                    />
-                                    <div className="flex items-start gap-2 p-4 bg-muted/20 border border-border/30 rounded-xl">
+                                <div className="space-y-6">
+                                    <div className="space-y-4">
+                                        <Label htmlFor="description" className="text-sm font-semibold">Overview & Context</Label>
+                                        <Textarea
+                                            id="description"
+                                            name="description"
+                                            placeholder="Introduce your company and the core mission of this role..."
+                                            className="min-h-[150px] rounded-2xl bg-muted/30 border-border/50 focus:bg-background transition-all p-6 resize-none leading-relaxed"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="grid gap-8 md:grid-cols-2">
+                                        {/* Responsibilities */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <Label className="text-sm font-semibold">Key Responsibilities</Label>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 text-[10px] font-black uppercase text-primary"
+                                                    onClick={() => addListItem(setResponsibilities)}
+                                                >
+                                                    + Add Task
+                                                </Button>
+                                            </div>
+                                            <div className="space-y-3">
+                                                {responsibilities.map((item, idx) => (
+                                                    <div key={idx} className="flex gap-2">
+                                                        <Input
+                                                            value={item}
+                                                            onChange={(e) => updateListItem(idx, e.target.value, setResponsibilities)}
+                                                            placeholder="e.g. Architect the next version of..."
+                                                            className="h-10 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all"
+                                                        />
+                                                        {responsibilities.length > 1 && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-10 w-10 shrink-0 text-muted-foreground hover:text-destructive"
+                                                                onClick={() => removeListItem(idx, setResponsibilities)}
+                                                            >
+                                                                <Info className="h-4 w-4 rotate-45" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Requirements */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <Label className="text-sm font-semibold">Candidate Requirements</Label>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 text-[10px] font-black uppercase text-primary"
+                                                    onClick={() => addListItem(setRequirements)}
+                                                >
+                                                    + Add Req
+                                                </Button>
+                                            </div>
+                                            <div className="space-y-3">
+                                                {requirements.map((item, idx) => (
+                                                    <div key={idx} className="flex gap-2">
+                                                        <Input
+                                                            value={item}
+                                                            onChange={(e) => updateListItem(idx, e.target.value, setRequirements)}
+                                                            placeholder="e.g. 5+ years experience in..."
+                                                            className="h-10 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all"
+                                                        />
+                                                        {requirements.length > 1 && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-10 w-10 shrink-0 text-muted-foreground hover:text-destructive"
+                                                                onClick={() => removeListItem(idx, setRequirements)}
+                                                            >
+                                                                <Info className="h-4 w-4 rotate-45" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-2 p-4 bg-muted/20 border border-border/30 rounded-xl mt-4">
                                         <Loader2 className="h-5 w-5 text-primary shrink-0 mt-0.5 animate-pulse" />
                                         <p className="text-xs text-muted-foreground leading-relaxed">
-                                            Tip: Clear and detailed descriptions get 3x more relevant applicants. Be specific about the tools you use and your company culture.
+                                            Tip: Clear lists for responsibilities and requirements help candidates self-filter, saving you time in the long run.
                                         </p>
                                     </div>
                                 </div>
