@@ -52,11 +52,27 @@ export default function SavedJobsPage() {
                 const jobPromises = uniqueIds.map(id => jobsService.getById(id).catch(() => null));
                 const projects = await Promise.all(jobPromises);
 
-                // Filter out null values and deduplicate by job ID
-                const validJobs = projects.filter((job): job is Job => job !== null);
+                // Filter out null values and ensure jobs have required fields
+                const validJobs = projects.filter((job): job is Job =>
+                    job !== null &&
+                    job.id != null &&
+                    job.title != null &&
+                    job.category != null
+                );
+
+                // Deduplicate by job ID
                 const uniqueJobs = validJobs.filter((job, index, self) =>
                     index === self.findIndex(j => j.id === job.id)
                 );
+
+                // Clean up localStorage - remove IDs that failed to load
+                const validIds = uniqueJobs.map(j => j.id.toString());
+                const invalidIds = uniqueIds.filter(id => !validIds.includes(id));
+                if (invalidIds.length > 0) {
+                    console.log(`Removing ${invalidIds.length} invalid job IDs from wishlist`);
+                    // Remove invalid IDs using the wishlist service
+                    invalidIds.forEach(id => wishlistService.removeJob(id));
+                }
 
                 setSavedJobs(uniqueJobs);
             } catch (err) {

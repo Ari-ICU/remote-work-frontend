@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Search, MoreVertical, Phone, Video, Info, User as UserIcon, Loader2, ArrowLeft, Sparkles, Bot, Trash2, Edit2, X, MoreHorizontal, Check, CheckCheck, Paperclip, Image as ImageIcon, File as FileIcon, Download } from "lucide-react";
+import { Send, Search, MoreVertical, Phone, Video, Info, User as UserIcon, Loader2, ArrowLeft, Sparkles, Bot, Trash2, Edit2, X, MoreHorizontal, Check, CheckCheck, Paperclip, Image as ImageIcon, File as FileIcon, Download, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -331,497 +331,503 @@ export default function MessagesPage() {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-[#F0F2F5] dark:bg-background">
-            <div className="flex-none z-50 relative h-16">
+        <div className="flex flex-col h-[100dvh] bg-background overflow-hidden">
+            <div className="h-16 flex-none bg-background relative z-50">
                 <Header />
             </div>
-            <div className="flex flex-1 overflow-hidden relative max-w-[1600px] mx-auto w-full border-x border-border/50 bg-background shadow-2xl ">
-                {/* Sidebar - Telegram/Messenger Style */}
-                <div
-                    className={cn(
-                        "absolute inset-0 z-20 bg-background md:static md:w-80 lg:w-[350px] border-r border-border flex flex-col transition-all duration-300 min-h-0 overflow-hidden",
-                        selectedUser ? "-translate-x-full md:translate-x-0" : "translate-x-0"
-                    )}
-                >
-                    <div className="p-4 space-y-4 shrink-0">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-bold">Chats</h2>
-                            <Button variant="ghost" size="icon" className="rounded-full">
-                                <Edit2 className="h-5 w-5" />
-                            </Button>
+            <div className="flex-1 overflow-hidden relative">
+                <div className="flex h-full max-w-[1600px] mx-auto w-full border-x border-border/40 bg-background shadow-2xl relative">
+                    {/* Sidebar - Telegram/Messenger Style */}
+                    <div
+                        className={cn(
+                            "absolute inset-0 z-20 bg-card md:static md:w-[320px] lg:w-[380px] border-r border-border/50 flex flex-col transition-all duration-300 ease-in-out min-h-0 overflow-hidden",
+                            selectedUser ? "-translate-x-full md:translate-x-0" : "translate-x-0"
+                        )}
+                    >
+                        <div className="p-4 space-y-4 shrink-0 bg-card/50 backdrop-blur-md">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-bold tracking-tight">Messages</h2>
+                                <Button variant="ghost" size="icon" className="rounded-xl hover:bg-primary/5 hover:text-primary transition-colors">
+                                    <Edit2 className="h-5 w-5" />
+                                </Button>
+                            </div>
+                            <div className="relative group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                <Input placeholder="Search messages..." className="pl-9 rounded-2xl bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 h-10 transition-all" />
+                            </div>
                         </div>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Search Messenger" className="pl-9 rounded-full bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary/20" />
-                        </div>
-                    </div>
 
-                    <div className="flex-1 min-h-0 relative">
-                        <ScrollArea className="h-full w-full absolute inset-0">
-                            <div className="px-2 pb-4 space-y-1">
-                                {conversations.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-10 text-center px-4">
-                                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                                            <MessageSquare className="h-8 w-8 text-muted-foreground/50" />
+                        <div className="flex-1 min-h-0 relative">
+                            <ScrollArea className="h-full w-full absolute inset-0">
+                                <div className="px-2 pb-4 space-y-1">
+                                    {conversations.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                                            <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center mb-6 ring-8 ring-primary/[0.02]">
+                                                <MessageSquare className="h-10 w-10 text-primary/40" />
+                                            </div>
+                                            <h3 className="text-base font-bold mb-1">No conversations yet</h3>
+                                            <p className="text-sm text-muted-foreground max-w-[200px]">Start a new chat to connect with others.</p>
                                         </div>
-                                        <p className="text-sm font-medium text-muted-foreground">No messages yet</p>
-                                    </div>
-                                ) : (
-                                    conversations.map((conv) => (
-                                        <div
-                                            key={conv.otherUser.id}
-                                            className={cn(
-                                                "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all group relative",
-                                                selectedUser?.id === conv.otherUser.id
-                                                    ? "bg-primary/10"
-                                                    : "hover:bg-muted/80"
-                                            )}
-                                            onClick={() => setSelectedUser(conv.otherUser)}
-                                        >
-                                            <div className="relative shrink-0">
-                                                <Avatar className="h-12 w-12 border border-border/50">
-                                                    <AvatarImage src={conv.otherUser.avatar} />
-                                                    <AvatarFallback className="bg-primary/5 text-primary">
-                                                        {conv.otherUser.firstName[0]}{conv.otherUser.lastName[0]}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-background bg-green-500 rounded-full" />
-                                            </div>
-                                            <div className="flex-1 min-w-0 pr-6">
-                                                <div className="flex items-center justify-between gap-1">
-                                                    <span className="font-semibold truncate text-[15px]">
-                                                        {conv.otherUser.firstName} {conv.otherUser.lastName}
-                                                    </span>
-                                                    <span className="text-[11px] text-muted-foreground shrink-0">
-                                                        {formatConversationDate(conv.lastMessage.createdAt)}
-                                                    </span>
-                                                </div>
-                                                <p className={cn(
-                                                    "text-[13px] truncate leading-tight mt-0.5",
-                                                    conv.unreadCount > 0
-                                                        ? "font-bold text-foreground"
-                                                        : "text-muted-foreground"
-                                                )}>
-                                                    {conv.lastMessage.senderId === currentUser.id && "You: "}
-                                                    {conv.lastMessage.content}
-                                                </p>
-                                            </div>
-
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col items-end gap-2">
-                                                {conv.unreadCount > 0 && (
-                                                    <span className="h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full bg-primary text-[10px] font-black text-white ring-2 ring-background">
-                                                        {conv.unreadCount}
-                                                    </span>
+                                    ) : (
+                                        conversations.map((conv) => (
+                                            <div
+                                                key={conv.otherUser.id}
+                                                className={cn(
+                                                    "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all group relative",
+                                                    selectedUser?.id === conv.otherUser.id
+                                                        ? "bg-primary/10"
+                                                        : "hover:bg-muted/80"
                                                 )}
-                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted">
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-border/50">
-                                                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleDeleteConversation(conv.otherUser.id, `${conv.otherUser.firstName} ${conv.otherUser.lastName}`);
-                                                            }}>
-                                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                                Delete Chat
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                onClick={() => setSelectedUser(conv.otherUser)}
+                                            >
+                                                <div className="relative shrink-0">
+                                                    <Avatar className="h-12 w-12 border border-border/50">
+                                                        <AvatarImage src={conv.otherUser.avatar} />
+                                                        <AvatarFallback className="bg-primary/5 text-primary">
+                                                            {conv.otherUser.firstName[0]}{conv.otherUser.lastName[0]}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-background bg-green-500 rounded-full" />
+                                                </div>
+                                                <div className="flex-1 min-w-0 pr-6">
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <span className="font-semibold truncate text-[15px]">
+                                                            {conv.otherUser.firstName} {conv.otherUser.lastName}
+                                                        </span>
+                                                        <span className="text-[11px] text-muted-foreground shrink-0">
+                                                            {formatConversationDate(conv.lastMessage.createdAt)}
+                                                        </span>
+                                                    </div>
+                                                    <p className={cn(
+                                                        "text-[13px] truncate leading-tight mt-0.5",
+                                                        conv.unreadCount > 0
+                                                            ? "font-bold text-foreground"
+                                                            : "text-muted-foreground"
+                                                    )}>
+                                                        {currentUser && conv.lastMessage.senderId === currentUser.id && "You: "}
+                                                        {conv.lastMessage.content}
+                                                    </p>
+                                                </div>
+
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col items-end gap-2">
+                                                    {conv.unreadCount > 0 && (
+                                                        <span className="h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full bg-primary text-[10px] font-black text-white ring-2 ring-background">
+                                                            {conv.unreadCount}
+                                                        </span>
+                                                    )}
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-muted opacity-0 group-hover:opacity-100 transition-all">
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-2xl border-border/50 p-2">
+                                                                <DropdownMenuItem className="rounded-xl text-destructive focus:text-destructive focus:bg-destructive/5 font-medium py-2" onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteConversation(conv.otherUser.id, `${conv.otherUser.firstName} ${conv.otherUser.lastName}`);
+                                                                }}>
+                                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                                    Delete Chat
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </ScrollArea>
+                                        ))
+                                    )}
+                                </div>
+                            </ScrollArea>
+                        </div>
                     </div>
-                </div>
 
-                {/* Main Chat Area - Clean & Premium */}
-                <div className="flex-1 flex flex-col bg-background relative w-full border-l border-border/50 overflow-hidden">
-                    {selectedUser ? (
-                        <>
-                            {/* Modern Chat Header - Clean Responsive */}
-                            <div
-                                className="w-full flex-none mt-22 min-h-[64px] md:min-h-[72px] h-auto py-2 border-b border-border flex items-center justify-between px-3 md:px-6 bg-card text-card-foreground shadow-sm relative z-40"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="md:hidden -ml-2 rounded-full"
-                                        onClick={() => setSelectedUser(null)}
-                                    >
-                                        <ArrowLeft className="h-5 w-5" />
-                                    </Button>
-                                    <Avatar className="h-10 w-10 sm:h-11 sm:w-11 ring-2 ring-primary/5">
-                                        <AvatarImage src={selectedUser.avatar} />
-                                        <AvatarFallback className="bg-primary/5 text-primary text-base">
-                                            {selectedUser.firstName[0]}{selectedUser.lastName[0]}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col">
-                                        <h3 className="font-bold text-[15px] sm:text-[16px] leading-tight cursor-pointer hover:underline">
-                                            {selectedUser.firstName} {selectedUser.lastName}
-                                        </h3>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <span className="w-2 h-2 rounded-full bg-green-500" />
-                                            <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Active now</span>
+                    {/* Main Chat Area - Clean & Premium */}
+                    <div className="flex-1 flex flex-col bg-background relative w-full border-l border-border/50 overflow-hidden">
+                        {selectedUser ? (
+                            <>
+                                {/* Modern Chat Header - Clean Responsive */}
+                                <div
+                                    className="w-full flex-none h-[64px] md:h-[72px] border-b border-border flex items-center justify-between px-4 md:px-6 bg-card/80 backdrop-blur-md text-card-foreground shadow-sm relative z-20"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="md:hidden -ml-2 rounded-full"
+                                            onClick={() => setSelectedUser(null)}
+                                        >
+                                            <ArrowLeft className="h-5 w-5" />
+                                        </Button>
+                                        <Avatar className="h-10 w-10 sm:h-11 sm:w-11 ring-2 ring-primary/5">
+                                            <AvatarImage src={selectedUser.avatar} />
+                                            <AvatarFallback className="bg-primary/5 text-primary text-base">
+                                                {selectedUser.firstName?.[0] || '?'}{selectedUser.lastName?.[0] || ''}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex flex-col">
+                                            <h3 className="font-bold text-[16px] leading-tight cursor-pointer hover:text-primary transition-colors">
+                                                {selectedUser.firstName} {selectedUser.lastName}
+                                            </h3>
+                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                <div className="relative flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                                </div>
+                                                <span className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">Online</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div className="flex items-center gap-1 sm:gap-3">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-9 w-9 rounded-xl text-primary border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all active:scale-95"
+                                            onClick={() => alert(`Simulating call to ${selectedUser.firstName}... Functionality coming soon.`)}
+                                        >
+                                            <Phone className="h-[18px] w-[18px]" />
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-9 w-9 rounded-xl text-primary border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all active:scale-95"
+                                            onClick={() => alert(`Simulating video call to ${selectedUser.firstName}... Functionality coming soon.`)}
+                                        >
+                                            <Video className="h-[18px] w-[18px]" />
+                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
+                                                    <Info className="h-[18px] w-[18px]" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-border/50">
+                                                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDeleteConversation(selectedUser.id, selectedUser.firstName)}>
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    Delete Entire Chat
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-1 sm:gap-2">
-                                    <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
-                                        <Phone className="h-[18px] w-[18px]" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
-                                        <Video className="h-[18px] w-[18px]" />
-                                    </Button>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
-                                                <Info className="h-[18px] w-[18px]" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-border/50">
-                                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDeleteConversation(selectedUser.id, selectedUser.firstName)}>
-                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                Delete Entire Chat
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                            </div>
 
-                            {/* Chat Messages - Telegram Layout */}
-                            <div className="flex-1 relative min-h-0">
-                                <ScrollArea className="h-full w-full absolute inset-0">
-                                    <div className="p-4 sm:p-6 space-y-4 max-w-4xl mx-auto w-full">
-                                        {/* Date Separator Placeholder */}
-                                        <div className="flex justify-center my-6">
-                                            <span className="text-[10px] font-bold text-muted-foreground/60 bg-muted/30 px-3 py-1 rounded-full uppercase tracking-widest">Today</span>
-                                        </div>
+                                {/* Chat Messages - Telegram Layout */}
+                                <div className="flex-1 relative min-h-0 bg-[#f8f9fa] dark:bg-background/20">
+                                    <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/cubes.png")` }}></div>
+                                    <ScrollArea className="h-full w-full absolute inset-0">
+                                        <div className="p-4 sm:p-6 space-y-4 max-w-4xl mx-auto w-full relative z-10">
+                                            {/* Date Separator Placeholder */}
+                                            <div className="flex justify-center my-6">
+                                                <span className="text-[10px] font-bold text-muted-foreground/60 bg-background/50 backdrop-blur-sm border border-border/50 px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">Today</span>
+                                            </div>
 
-                                        {messages.map((msg, idx) => {
-                                            const isMe = msg.senderId === currentUser.id;
-                                            const nextMsg = messages[idx + 1];
-                                            const isLastInGroup = !nextMsg || nextMsg.senderId !== msg.senderId;
-                                            const showAvatar = !isMe && isLastInGroup;
+                                            {messages.map((msg, idx) => {
+                                                const isMe = msg.senderId === currentUser.id;
+                                                const nextMsg = messages[idx + 1];
+                                                const isLastInGroup = !nextMsg || nextMsg.senderId !== msg.senderId;
+                                                const showAvatar = !isMe && isLastInGroup;
 
-                                            return (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 5 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    key={msg.id}
-                                                    className={cn(
-                                                        "flex items-end gap-2 group",
-                                                        isMe ? "justify-end" : "justify-start",
-                                                        isLastInGroup ? "mb-4" : "mb-1"
-                                                    )}
-                                                >
-                                                    {!isMe && (
-                                                        <div className="w-8 shrink-0">
-                                                            {showAvatar && (
-                                                                <Avatar className="w-8 h-8">
-                                                                    <AvatarImage src={msg.sender.avatar} />
-                                                                    <AvatarFallback className="text-[10px]">{msg.sender.firstName[0]}</AvatarFallback>
-                                                                </Avatar>
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                    <div className={cn(
-                                                        "flex flex-col max-w-[80%] sm:max-w-[70%] relative",
-                                                        isMe ? "items-end" : "items-start"
-                                                    )}>
-                                                        <div
-                                                            className={cn(
-                                                                "p-3 rounded-[18px] text-[15px] leading-snug relative transition-all duration-200",
-                                                                isMe
-                                                                    ? "bg-primary text-primary-foreground rounded-br-[4px]"
-                                                                    : "bg-muted text-foreground rounded-bl-[4px]",
-                                                                editingMessageId === msg.id && "ring-2 ring-primary ring-offset-2 scale-[1.02]",
-                                                                msg.type === 'IMAGE' && "p-1.5"
-                                                            )}
-                                                        >
-                                                            {msg.type === 'IMAGE' ? (
-                                                                <div className="relative group/img max-w-sm rounded-[12px] overflow-hidden bg-muted/20">
-                                                                    <img
-                                                                        src={msg.fileUrl?.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${msg.fileUrl}` : msg.fileUrl}
-                                                                        alt="Attachment"
-                                                                        className="max-h-[300px] w-auto max-w-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                                                        onClick={() => window.open(msg.fileUrl?.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${msg.fileUrl}` : msg.fileUrl, '_blank')}
-                                                                    />
-                                                                </div>
-                                                            ) : msg.type === 'FILE' ? (
-                                                                <div className="flex items-center gap-3 p-2 bg-black/10 rounded-[12px] border border-white/10 group/file">
-                                                                    <div className="h-10 w-10 rounded-lg bg-background/20 flex items-center justify-center">
-                                                                        <FileIcon className="h-5 w-5" />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0 pr-2">
-                                                                        <p className="text-sm font-bold truncate">{msg.content}</p>
-                                                                        <p className="text-[10px] opacity-60 uppercase font-black tracking-tighter">Attachment</p>
-                                                                    </div>
-                                                                    <Button
-                                                                        size="icon"
-                                                                        variant="ghost"
-                                                                        className="h-8 w-8 rounded-full opacity-0 group-hover/file:opacity-100 transition-opacity -mr-1"
-                                                                        onClick={() => window.open(msg.fileUrl?.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${msg.fileUrl}` : msg.fileUrl, '_blank')}
-                                                                    >
-                                                                        <Download className="h-4 w-4" />
-                                                                    </Button>
-                                                                </div>
-                                                            ) : (
-                                                                <p style={{ wordBreak: 'break-word' }}>{msg.content}</p>
-                                                            )}
-
-                                                            {isMe && (
-                                                                <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <DropdownMenu>
-                                                                        <DropdownMenuTrigger asChild>
-                                                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-muted-foreground hover:bg-muted/50">
-                                                                                <MoreHorizontal className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </DropdownMenuTrigger>
-                                                                        <DropdownMenuContent align="end" className="rounded-xl shadow-xl border-border/50">
-                                                                            <DropdownMenuItem onClick={() => {
-                                                                                setEditingMessageId(msg.id);
-                                                                                setNewMessage(msg.content);
-                                                                            }}>
-                                                                                <Edit2 className="h-3.5 w-3.5 mr-2" />
-                                                                                Edit
-                                                                            </DropdownMenuItem>
-                                                                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteMessage(msg.id)}>
-                                                                                <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                                                                Delete
-                                                                            </DropdownMenuItem>
-                                                                        </DropdownMenuContent>
-                                                                    </DropdownMenu>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                return (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 5 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        key={msg.id}
+                                                        className={cn(
+                                                            "flex items-end gap-2 group",
+                                                            isMe ? "justify-end" : "justify-start",
+                                                            isLastInGroup ? "mb-4" : "mb-1"
+                                                        )}
+                                                    >
+                                                        {!isMe && (
+                                                            <div className="w-8 shrink-0">
+                                                                {showAvatar && (
+                                                                    <Avatar className="w-8 h-8">
+                                                                        <AvatarImage src={msg.sender.avatar} />
+                                                                        <AvatarFallback className="text-[10px]">{msg.sender.firstName[0]}</AvatarFallback>
+                                                                    </Avatar>
+                                                                )}
+                                                            </div>
+                                                        )}
 
                                                         <div className={cn(
-                                                            "flex items-center gap-1.5 mt-1 px-1",
-                                                            isMe ? "flex-row-reverse" : "flex-row"
+                                                            "flex flex-col max-w-[80%] sm:max-w-[70%] relative",
+                                                            isMe ? "items-end" : "items-start"
                                                         )}>
-                                                            <span className="text-[10px] text-muted-foreground/70 font-medium">
-                                                                {formatMessageTime(msg.createdAt)}
-                                                            </span>
-                                                            {msg.updatedAt && msg.updatedAt !== msg.createdAt && (
-                                                                <span className="text-[9px] text-muted-foreground/60 italic font-medium">
-                                                                    edited
-                                                                </span>
-                                                            )}
-                                                            {isMe && (
-                                                                <span className="text-primary">
-                                                                    {msg.read ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            );
-                                        })}
-                                        <div ref={scrollRef} className="h-2" />
-                                    </div>
-                                </ScrollArea>
+                                                            <div
+                                                                className={cn(
+                                                                    "p-3 rounded-[20px] text-[15px] leading-relaxed relative transition-all duration-200 shadow-sm",
+                                                                    isMe
+                                                                        ? "bg-primary text-primary-foreground rounded-br-[4px] shadow-primary/10"
+                                                                        : "bg-card text-foreground rounded-bl-[4px] border border-border/50",
+                                                                    editingMessageId === msg.id && "ring-2 ring-primary ring-offset-2 scale-[1.02]",
+                                                                    msg.type === 'IMAGE' && "p-1.5"
+                                                                )}
+                                                            >
+                                                                {msg.type === 'IMAGE' ? (
+                                                                    <div className="relative group/img max-w-sm rounded-[12px] overflow-hidden bg-muted/20">
+                                                                        <img
+                                                                            src={msg.fileUrl?.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${msg.fileUrl}` : msg.fileUrl}
+                                                                            alt="Attachment"
+                                                                            className="max-h-[300px] w-auto max-w-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                                                            onClick={() => window.open(msg.fileUrl?.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${msg.fileUrl}` : msg.fileUrl, '_blank')}
+                                                                        />
+                                                                    </div>
+                                                                ) : msg.type === 'FILE' ? (
+                                                                    <div className="flex items-center gap-3 p-2 bg-black/10 rounded-[12px] border border-white/10 group/file">
+                                                                        <div className="h-10 w-10 rounded-lg bg-background/20 flex items-center justify-center">
+                                                                            <FileIcon className="h-5 w-5" />
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0 pr-2">
+                                                                            <p className="text-sm font-bold truncate">{msg.content}</p>
+                                                                            <p className="text-[10px] opacity-60 uppercase font-black tracking-tighter">Attachment</p>
+                                                                        </div>
+                                                                        <Button
+                                                                            size="icon"
+                                                                            variant="ghost"
+                                                                            className="h-8 w-8 rounded-full opacity-0 group-hover/file:opacity-100 transition-opacity -mr-1"
+                                                                            onClick={() => window.open(msg.fileUrl?.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${msg.fileUrl}` : msg.fileUrl, '_blank')}
+                                                                        >
+                                                                            <Download className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                                                                )}
 
-                                {/* Modern Suggestions */}
-                                <AnimatePresence>
-                                    {showAiSuggestions && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                                            className="absolute bottom-20 left-1/2 -translate-x-1/2 w-[90%] sm:w-[500px] bg-background border border-border/50 shadow-2xl rounded-2xl p-4 z-20 overflow-hidden"
-                                        >
-                                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-primary to-blue-500" />
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2.5 text-primary font-bold text-sm">
-                                                    <div className="p-1.5 bg-primary/10 rounded-lg">
-                                                        <Sparkles className="h-4 w-4" />
+                                                                {isMe && (
+                                                                    <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <DropdownMenu>
+                                                                            <DropdownMenuTrigger asChild>
+                                                                                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-muted-foreground hover:bg-muted/50">
+                                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </DropdownMenuTrigger>
+                                                                            <DropdownMenuContent align="end" className="rounded-xl shadow-xl border-border/50">
+                                                                                <DropdownMenuItem onClick={() => {
+                                                                                    setEditingMessageId(msg.id);
+                                                                                    setNewMessage(msg.content);
+                                                                                }}>
+                                                                                    <Edit2 className="h-3.5 w-3.5 mr-2" />
+                                                                                    Edit
+                                                                                </DropdownMenuItem>
+                                                                                <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteMessage(msg.id)}>
+                                                                                    <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                                                                    Delete
+                                                                                </DropdownMenuItem>
+                                                                            </DropdownMenuContent>
+                                                                        </DropdownMenu>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className={cn(
+                                                                "flex items-center gap-1.5 mt-1 px-1",
+                                                                isMe ? "flex-row-reverse" : "flex-row"
+                                                            )}>
+                                                                <span className="text-[10px] text-muted-foreground/70 font-medium">
+                                                                    {formatMessageTime(msg.createdAt)}
+                                                                </span>
+                                                                {msg.updatedAt && msg.updatedAt !== msg.createdAt && (
+                                                                    <span className="text-[9px] text-muted-foreground/60 italic font-medium">
+                                                                        edited
+                                                                    </span>
+                                                                )}
+                                                                {isMe && (
+                                                                    <span className="text-primary">
+                                                                        {msg.read ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+                                                );
+                                            })}
+                                            <div ref={scrollRef} className="h-2" />
+                                        </div>
+                                    </ScrollArea>
+
+                                    {/* Modern Suggestions */}
+                                    <AnimatePresence>
+                                        {showAiSuggestions && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                                                className="absolute bottom-20 left-1/2 -translate-x-1/2 w-[90%] sm:w-[500px] bg-background border border-border/50 shadow-2xl rounded-2xl p-4 z-20 overflow-hidden"
+                                            >
+                                                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-primary to-blue-500" />
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center gap-2.5 text-primary font-bold text-sm">
+                                                        <div className="p-1.5 bg-primary/10 rounded-lg">
+                                                            <Sparkles className="h-4 w-4" />
+                                                        </div>
+                                                        Smart Replies
                                                     </div>
-                                                    Smart Replies
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 rounded-full"
+                                                        onClick={() => setShowAiSuggestions(false)}
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="grid gap-2.5">
+                                                    {["I'm interested! When can we chat?", "Could you share the project details?", "My schedule is open tomorrow morning.", "Thanks! Looking forward to working together."].map((suggestion, i) => (
+                                                        <Button
+                                                            key={i}
+                                                            variant="outline"
+                                                            className="justify-start h-auto py-2.5 px-4 text-left whitespace-normal text-[13px] border-border/40 hover:border-primary/50 hover:bg-primary/5 transition-all rounded-xl"
+                                                            onClick={() => {
+                                                                setNewMessage(suggestion);
+                                                                setShowAiSuggestions(false);
+                                                            }}
+                                                        >
+                                                            {suggestion}
+                                                        </Button>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
+                                    {/* Premium Messenger Style Input */}
+                                    <div className="p-3 sm:p-5 border-t border-border/50 bg-background relative shrink-0">
+                                        {editingMessageId && (
+                                            <div className="absolute bottom-full left-0 right-0 bg-primary/5 border-t border-primary/20 px-6 py-2.5 flex items-center justify-between text-[12px] backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                                <div className="flex items-center gap-3 text-primary font-bold">
+                                                    <div className="p-1 bg-primary/10 rounded">
+                                                        <Edit2 className="h-3 w-3" />
+                                                    </div>
+                                                    Editing message
                                                 </div>
                                                 <Button
                                                     variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 rounded-full"
-                                                    onClick={() => setShowAiSuggestions(false)}
+                                                    size="sm"
+                                                    className="h-7 px-3 text-muted-foreground hover:text-foreground hover:bg-background/50 rounded-full font-bold"
+                                                    onClick={() => {
+                                                        setEditingMessageId(null);
+                                                        setNewMessage("");
+                                                    }}
                                                 >
-                                                    <X className="h-4 w-4" />
+                                                    Cancel
                                                 </Button>
                                             </div>
-                                            <div className="grid gap-2.5">
-                                                {["I'm interested! When can we chat?", "Could you share the project details?", "My schedule is open tomorrow morning.", "Thanks! Looking forward to working together."].map((suggestion, i) => (
+                                        )}
+                                        <form onSubmit={sendMessage} className="flex items-center gap-2 sm:gap-4 max-w-5xl mx-auto w-full">
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                className="hidden"
+                                                onChange={handleFileSelect}
+                                                accept="image/*,.pdf,.doc,.docx"
+                                            />
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
                                                     <Button
-                                                        key={i}
-                                                        variant="outline"
-                                                        className="justify-start h-auto py-2.5 px-4 text-left whitespace-normal text-[13px] border-border/40 hover:border-primary/50 hover:bg-primary/5 transition-all rounded-xl"
-                                                        onClick={() => {
-                                                            setNewMessage(suggestion);
-                                                            setShowAiSuggestions(false);
-                                                        }}
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="rounded-full text-primary hover:bg-primary/5 shrink-0"
+                                                        disabled={isSendingFile}
                                                     >
-                                                        {suggestion}
+                                                        {isSendingFile ? (
+                                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                                        ) : (
+                                                            <MoreVertical className="h-5 w-5" />
+                                                        )}
                                                     </Button>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="start" side="top" className="w-56 rounded-2xl p-2 shadow-2xl border-white/5 backdrop-blur-xl bg-background/80">
+                                                    <DropdownMenuItem
+                                                        className="rounded-xl h-11 gap-3 font-semibold cursor-pointer"
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                    >
+                                                        <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                                                            <ImageIcon className="h-4 w-4" />
+                                                        </div>
+                                                        Photos & Videos
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="rounded-xl h-11 gap-3 font-semibold cursor-pointer"
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                    >
+                                                        <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                                            <Paperclip className="h-4 w-4" />
+                                                        </div>
+                                                        Document
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="rounded-xl h-11 gap-3 font-semibold cursor-pointer">
+                                                        <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                                                            <Sparkles className="h-4 w-4" />
+                                                        </div>
+                                                        AI Assistant
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
 
-                                {/* Premium Messenger Style Input */}
-                                <div className="p-3 sm:p-5 border-t border-border/50 bg-background relative shrink-0">
-                                    {editingMessageId && (
-                                        <div className="absolute bottom-full left-0 right-0 bg-primary/5 border-t border-primary/20 px-6 py-2.5 flex items-center justify-between text-[12px] backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                            <div className="flex items-center gap-3 text-primary font-bold">
-                                                <div className="p-1 bg-primary/10 rounded">
-                                                    <Edit2 className="h-3 w-3" />
-                                                </div>
-                                                Editing message
-                                            </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 px-3 text-muted-foreground hover:text-foreground hover:bg-background/50 rounded-full font-bold"
-                                                onClick={() => {
-                                                    setEditingMessageId(null);
-                                                    setNewMessage("");
-                                                }}
-                                            >
-                                                Cancel
-                                            </Button>
-                                        </div>
-                                    )}
-                                    <form onSubmit={sendMessage} className="flex items-center gap-2 sm:gap-4 max-w-5xl mx-auto w-full">
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            className="hidden"
-                                            onChange={handleFileSelect}
-                                            accept="image/*,.pdf,.doc,.docx"
-                                        />
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
+                                            <div className="relative flex-1 group">
+                                                <Input
+                                                    ref={inputRef}
+                                                    value={newMessage}
+                                                    onChange={(e) => setNewMessage(e.target.value)}
+                                                    placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
+                                                    className="w-full rounded-[24px] h-11 sm:h-12 bg-muted/40 border-none px-5 pr-14 focus-visible:ring-1 focus-visible:ring-primary/20 text-[15px]"
+                                                />
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="rounded-full text-primary hover:bg-primary/5 shrink-0"
-                                                    disabled={isSendingFile}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full text-primary hover:bg-primary/10 transition-colors"
+                                                    onClick={() => setShowAiSuggestions(!showAiSuggestions)}
                                                 >
-                                                    {isSendingFile ? (
-                                                        <Loader2 className="h-5 w-5 animate-spin" />
-                                                    ) : (
-                                                        <MoreVertical className="h-5 w-5" />
-                                                    )}
+                                                    <Sparkles className="h-4 w-4" />
                                                 </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="start" side="top" className="w-56 rounded-2xl p-2 shadow-2xl border-white/5 backdrop-blur-xl bg-background/80">
-                                                <DropdownMenuItem
-                                                    className="rounded-xl h-11 gap-3 font-semibold cursor-pointer"
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                >
-                                                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                                                        <ImageIcon className="h-4 w-4" />
-                                                    </div>
-                                                    Photos & Videos
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="rounded-xl h-11 gap-3 font-semibold cursor-pointer"
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                >
-                                                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                                                        <Paperclip className="h-4 w-4" />
-                                                    </div>
-                                                    Document
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem className="rounded-xl h-11 gap-3 font-semibold cursor-pointer">
-                                                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                                                        <Sparkles className="h-4 w-4" />
-                                                    </div>
-                                                    AI Assistant
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                            </div>
 
-                                        <div className="relative flex-1 group">
-                                            <Input
-                                                ref={inputRef}
-                                                value={newMessage}
-                                                onChange={(e) => setNewMessage(e.target.value)}
-                                                placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
-                                                className="w-full rounded-[24px] h-11 sm:h-12 bg-muted/40 border-none px-5 pr-14 focus-visible:ring-1 focus-visible:ring-primary/20 text-[15px]"
-                                            />
                                             <Button
-                                                type="button"
-                                                variant="ghost"
+                                                type="submit"
                                                 size="icon"
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full text-primary hover:bg-primary/10 transition-colors"
-                                                onClick={() => setShowAiSuggestions(!showAiSuggestions)}
+                                                className={cn(
+                                                    "h-11 w-11 sm:h-12 sm:w-12 rounded-full shadow-lg transition-all transform shrink-0",
+                                                    !newMessage.trim() ? "bg-muted shadow-none scale-95" : "bg-primary hover:shadow-primary/20 active:scale-90"
+                                                )}
+                                                disabled={!newMessage.trim()}
                                             >
-                                                <Sparkles className="h-4 w-4" />
+                                                {editingMessageId ? (
+                                                    <Check className="h-5 w-5" />
+                                                ) : (
+                                                    <Send className="h-5 w-5" />
+                                                )}
                                             </Button>
-                                        </div>
-
-                                        <Button
-                                            type="submit"
-                                            size="icon"
-                                            className={cn(
-                                                "h-11 w-11 sm:h-12 sm:w-12 rounded-full shadow-lg transition-all transform shrink-0",
-                                                !newMessage.trim() ? "bg-muted shadow-none scale-95" : "bg-primary hover:shadow-primary/20 active:scale-90"
-                                            )}
-                                            disabled={!newMessage.trim()}
-                                        >
-                                            {editingMessageId ? (
-                                                <Check className="h-5 w-5" />
-                                            ) : (
-                                                <Send className="h-5 w-5" />
-                                            )}
-                                        </Button>
-                                    </form>
+                                        </form>
+                                    </div>
                                 </div>
+                            </>
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 hidden md:flex bg-muted/10 dark:bg-background/50">
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="flex flex-col items-center"
+                                >
+                                    <div className="w-24 h-24 bg-card rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-primary/10 border border-border/50">
+                                        <MessageSquare className="h-10 w-10 text-primary" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold mb-3 tracking-tight">Your Messages</h2>
+                                    <p className="text-muted-foreground max-w-[320px] text-[15px] leading-relaxed">
+                                        Select a conversation from the sidebar to start chatting with freelancers or employers.
+                                    </p>
+                                    <Button className="mt-8 rounded-2xl px-8 h-12 font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
+                                        Start a New Chat
+                                    </Button>
+                                </motion.div>
                             </div>
-                        </>
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 hidden md:flex bg-[#F0F2F5] dark:bg-background/50">
-                            <div className="w-28 h-28 bg-white dark:bg-muted/30 rounded-full flex items-center justify-center mb-8 shadow-xl shadow-black/5 animate-bounce-slow">
-                                <UserIcon className="h-12 w-12 text-primary" />
-                            </div>
-                            <h2 className="text-2xl font-black mb-3 tracking-tight">Select a Chat</h2>
-                            <p className="text-muted-foreground max-w-[300px] text-[15px] leading-relaxed">
-                                Pick a conversation from the list to start messaging or view your history.
-                            </p>
-                            <Button className="mt-8 rounded-full px-8 h-12 font-bold shadow-lg">New Conversation</Button>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
-}
-
-interface MessageSquareProps extends React.SVGProps<SVGSVGElement> { }
-function MessageSquare(props: MessageSquareProps) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-    )
 }
