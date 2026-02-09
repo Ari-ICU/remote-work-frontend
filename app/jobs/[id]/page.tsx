@@ -27,6 +27,7 @@ import {
     ExternalLink,
     Mail,
     Copy,
+    Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,7 @@ export default function JobDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isSaved, setIsSaved] = useState(false);
+    const [similarJobs, setSimilarJobs] = useState<Job[]>([]);
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
@@ -94,6 +96,16 @@ export default function JobDetailPage() {
                     setIsLoading(true);
                     const foundJob = await jobsService.getById(params.id as string);
                     setJob(foundJob);
+
+                    // Fetch similar jobs
+                    const allJobs = await jobsService.getAll();
+                    const filtered = allJobs
+                        .filter((j: Job) =>
+                            j.id.toString() !== params.id &&
+                            (j.category === foundJob.category || j.tags.some((t: string) => foundJob.tags.includes(t)))
+                        )
+                        .slice(0, 3);
+                    setSimilarJobs(filtered);
 
                     // Check if job is saved
                     setIsSaved(wishlistService.isJobSaved(params.id as string));
@@ -454,10 +466,10 @@ export default function JobDetailPage() {
                                             </div>
                                             <div className="w-px h-10 bg-white/20" />
                                             <div className="text-center">
-                                                <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-1.5">Vetting</p>
+                                                <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-1.5">Social Proof</p>
                                                 <div className="flex items-center gap-1.5 justify-center">
-                                                    <ShieldCheck className="h-3.5 w-3.5 text-white" />
-                                                    <p className="text-xs text-white font-black tracking-wide">Verified</p>
+                                                    <Eye className="h-3.5 w-3.5 text-white" />
+                                                    <p className="text-xs text-white font-black tracking-wide">12 others looking</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -533,6 +545,68 @@ export default function JobDetailPage() {
                             </motion.div>
                         </aside>
                     </div>
+
+                    {/* Similar Positions Section */}
+                    {similarJobs.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 40 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="mt-32 pt-20 border-t border-border/50"
+                        >
+                            <div className="flex items-end justify-between mb-12">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mb-4">Curated Selections</p>
+                                    <h2 className="text-4xl font-black tracking-tight">Similar <span className="text-primary italic">Positions</span></h2>
+                                </div>
+                                <Link href="/jobs">
+                                    <Button variant="ghost" className="font-bold gap-2 group">
+                                        View All
+                                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                </Link>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {similarJobs.map((similarJob, index) => (
+                                    <motion.div
+                                        key={similarJob.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className="bg-card border border-border/50 rounded-[2rem] p-8 hover:border-primary/30 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="h-12 w-12 rounded-xl bg-muted/50 flex items-center justify-center group-hover:bg-primary/5 transition-colors">
+                                                <Building2 className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold line-clamp-1 group-hover:text-primary transition-colors">{similarJob.title}</h4>
+                                                <p className="text-xs text-muted-foreground font-medium">{similarJob.company}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4 text-xs text-muted-foreground mb-8">
+                                            <div className="flex items-center gap-1">
+                                                <MapPin className="h-3.5 w-3.5 text-primary" />
+                                                {similarJob.location}
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <DollarSign className="h-3.5 w-3.5 text-primary" />
+                                                {similarJob.salary}
+                                            </div>
+                                        </div>
+                                        <Link href={`/jobs/${similarJob.id}`}>
+                                            <Button className="w-full rounded-xl font-bold gap-2">
+                                                View Details
+                                                <ArrowRight className="h-4 w-4" />
+                                            </Button>
+                                        </Link>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
             </main>
 

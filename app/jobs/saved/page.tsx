@@ -31,6 +31,7 @@ import { toast } from "sonner";
 
 export default function SavedJobsPage() {
     const [savedJobs, setSavedJobs] = useState<Job[]>([]);
+    const [recommendations, setRecommendations] = useState<Job[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -58,6 +59,25 @@ export default function SavedJobsPage() {
 
         fetchSavedJobs();
     }, []);
+
+    useEffect(() => {
+        const fetchRecommendations = async () => {
+            if (savedJobs.length > 0) {
+                try {
+                    const allJobs = await jobsService.getAll();
+                    const savedIds = savedJobs.map(j => j.id.toString());
+                    const reco = allJobs.filter((j: Job) =>
+                        !savedIds.includes(j.id.toString()) &&
+                        savedJobs.some(sj => sj.category === j.category)
+                    ).slice(0, 3);
+                    setRecommendations(reco);
+                } catch (err) {
+                    console.error("Failed to fetch recommendations", err);
+                }
+            }
+        };
+        fetchRecommendations();
+    }, [savedJobs]);
 
     const removeJob = (id: string) => {
         wishlistService.removeJob(id);
@@ -210,6 +230,60 @@ export default function SavedJobsPage() {
                                 ))}
                             </AnimatePresence>
                         </div>
+                    )}
+
+                    {/* Recommendations Section */}
+                    {recommendations.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 40 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="mt-32 pt-20 border-t border-border/50"
+                        >
+                            <div className="flex flex-col gap-2 mb-12 text-center md:text-left">
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Intelligent Discovery</p>
+                                <h2 className="text-4xl font-black tracking-tight">Recommended <span className="text-primary italic">Opportunities</span></h2>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {recommendations.map((job, index) => (
+                                    <motion.div
+                                        key={job.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className="bg-card border border-border/50 rounded-[2.5rem] p-8 hover:border-primary/20 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="h-12 w-12 rounded-xl bg-muted/50 flex items-center justify-center group-hover:bg-primary/5 transition-colors">
+                                                <Building2 className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="font-bold line-clamp-1 group-hover:text-primary transition-colors">{job.title}</h4>
+                                                <p className="text-xs text-muted-foreground font-medium">{job.company}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mb-8 font-bold">
+                                            <div className="flex items-center gap-1">
+                                                <MapPin className="h-3.5 w-3.5 text-primary" />
+                                                {job.location}
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <DollarSign className="h-3.5 w-3.5 text-primary" />
+                                                {job.salary}
+                                            </div>
+                                        </div>
+                                        <Link href={`/jobs/${job.id}`}>
+                                            <Button className="w-full rounded-2xl h-12 font-black uppercase tracking-widest text-[10px] gap-2 shadow-lg shadow-primary/10">
+                                                View Position
+                                                <ChevronRight className="h-3 w-3" />
+                                            </Button>
+                                        </Link>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </motion.div>
                     )}
                 </div>
             </main>
