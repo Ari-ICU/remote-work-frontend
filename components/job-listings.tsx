@@ -8,6 +8,8 @@ import Link from "next/link";
 import { JobCard } from "./jobs/job-card";
 import { Job } from "@/types/job";
 import { staggerContainer, slideInLeft, slideInRight } from "@/lib/animations";
+import { wishlistService } from "@/lib/services/wishlist";
+import { toast } from "sonner";
 
 interface JobListingsProps {
   jobs: Job[];
@@ -23,12 +25,20 @@ export function JobListings({ jobs, searchQuery, locationQuery, filterCount = 0,
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
 
+  useEffect(() => {
+    // Initial load of saved jobs
+    setSavedJobs(wishlistService.getSavedJobIds());
+  }, []);
+
   const toggleSaveJob = (jobId: string) => {
-    setSavedJobs((prev) =>
-      prev.includes(jobId)
-        ? prev.filter((id) => id !== jobId)
-        : [...prev, jobId]
-    );
+    const isNowSaved = wishlistService.toggleJob(jobId);
+    setSavedJobs(wishlistService.getSavedJobIds());
+
+    if (isNowSaved) {
+      toast.success("Saved to your wishlist!");
+    } else {
+      toast.info("Removed from wishlist");
+    }
   };
 
   // Reset page when filters change

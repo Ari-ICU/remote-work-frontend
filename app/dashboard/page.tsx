@@ -15,7 +15,9 @@ import {
     Eye,
     Plus,
     Loader2,
-    MoreHorizontal
+    MoreHorizontal,
+    Bookmark,
+    ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +35,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui/tabs";
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -296,6 +304,22 @@ export default function DashboardPage() {
                                         <div className="text-2xl font-bold">{applications.length}</div>
                                     </CardContent>
                                 </Card>
+                                <Link href="/jobs/saved" className="block group">
+                                    <Card className="h-full group-hover:border-primary/50 transition-colors cursor-pointer">
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Saved Jobs</CardTitle>
+                                            <Bookmark className="h-4 w-4 text-primary" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-2xl font-bold">Wishlist</div>
+                                                <div className="text-xs text-primary font-black uppercase tracking-widest flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                                    View All <ChevronRight className="h-3 w-3" />
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </Link>
                             </div>
 
                             <div className="bg-card border border-border rounded-xl overflow-hidden">

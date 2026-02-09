@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Briefcase, User, LogOut, ShieldCheck, MessageSquare } from "lucide-react";
+import { Menu, X, Briefcase, User, LogOut, ShieldCheck, MessageSquare, Bookmark } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { authService } from "@/lib/services/auth";
 import { useRouter } from "next/navigation";
@@ -117,6 +117,11 @@ export function Header() {
                   <ShieldCheck className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </Button>
               </Link>
+              <Link href="/jobs/saved">
+                <Button variant="ghost" size="icon" className="group rounded-xl relative" title="Saved Jobs">
+                  <Bookmark className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </Button>
+              </Link>
               <Link href="/messages">
                 <Button variant="ghost" size="icon" className="group rounded-xl relative" title="Messages">
                   <MessageSquare className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -218,6 +223,12 @@ export function Header() {
                       <Button variant="ghost" className="justify-start w-full gap-2">
                         <ShieldCheck className="h-4 w-4" />
                         Dashboard
+                      </Button>
+                    </Link>
+                    <Link href="/jobs/saved" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="justify-start w-full gap-2">
+                        <Bookmark className="h-4 w-4" />
+                        Saved Jobs
                       </Button>
                     </Link>
                     <Link href="/messages" onClick={() => setMobileMenuOpen(false)}>
