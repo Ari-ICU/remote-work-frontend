@@ -14,5 +14,15 @@ export const applicationService = {
     getMyApplications: async () => {
         const response = await api.get('/applications/me');
         return response.data;
+    },
+
+    accept: async (id: string) => {
+        const response = await api.post(`/applications/${id}/accept`);
+        return response.data;
+    },
+
+    reject: async (id: string) => {
+        const response = await api.post(`/applications/${id}/reject`);
+        return response.data;
     }
 };

@@ -14,7 +14,8 @@ import {
     XCircle,
     Eye,
     Plus,
-    Loader2
+    Loader2,
+    MoreHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,14 @@ import { jobsService } from "@/lib/services/jobs";
 import { applicationService } from "@/lib/services/application";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -137,49 +146,136 @@ export default function DashboardPage() {
                                 </Card>
                             </div>
 
-                            <div className="bg-card border border-border rounded-xl overflow-hidden">
-                                <div className="p-6 border-b border-border">
-                                    <h2 className="text-lg font-semibold">Your Job Postings</h2>
+                            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                                <div className="p-6 border-b border-border bg-muted/30">
+                                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                                        <Briefcase className="h-5 w-5 text-primary" />
+                                        Your Job Postings
+                                    </h2>
                                 </div>
-                                <div className="divide-y divide-border">
+                                <div className="divide-y divide-border/50">
                                     {jobs.length === 0 ? (
-                                        <div className="p-8 text-center text-muted-foreground">
-                                            You haven't posted any jobs yet.
+                                        <div className="p-12 text-center flex flex-col items-center justify-center text-muted-foreground gap-4">
+                                            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                                                <Briefcase className="h-6 w-6 text-muted-foreground/50" />
+                                            </div>
+                                            <p>You haven't posted any jobs yet.</p>
+                                            <Link href="/post-job">
+                                                <Button variant="outline" className="mt-2">Post your first job</Button>
+                                            </Link>
                                         </div>
                                     ) : (
                                         jobs.map((job) => (
-                                            <div key={job.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-muted/50 transition-colors">
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <Link href={`/jobs/${job.id}`} className="font-semibold text-lg hover:underline hover:text-primary">
-                                                            {job.title}
-                                                        </Link>
-                                                        <Badge variant={job.status === 'OPEN' ? 'default' : 'secondary'}>
-                                                            {job.status}
-                                                        </Badge>
+                                            <div key={job.id} className="p-6 transition-colors hover:bg-muted/30 group">
+                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                                    {/* Job Info */}
+                                                    <div className="space-y-3 flex-1">
+                                                        <div className="flex items-start justify-between md:justify-start gap-4">
+                                                            <Link href={`/jobs/${job.id}`} className="font-semibold text-lg hover:text-primary transition-colors line-clamp-1">
+                                                                {job.title}
+                                                            </Link>
+                                                            <Badge variant={
+                                                                job.status === 'OPEN' ? 'default' :
+                                                                    job.status === 'COMPLETED' ? 'secondary' :
+                                                                        'destructive'
+                                                            } className="shrink-0 capitalize">
+                                                                {job.status.toLowerCase().replace('_', ' ')}
+                                                            </Badge>
+                                                        </div>
+
+                                                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                                                            <span className="flex items-center gap-1.5">
+                                                                <Clock className="h-4 w-4" />
+                                                                Posted {safeDate(job.createdAt)}
+                                                            </span>
+                                                            <span className="flex items-center gap-1.5">
+                                                                <DollarSign className="h-4 w-4" />
+                                                                {job.budgetType}
+                                                            </span>
+                                                            {job.hiredFreelancerId && (
+                                                                <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+                                                                    <CheckCircle2 className="h-4 w-4" />
+                                                                    Hired
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="h-4 w-4" /> Posted {safeDate(job.createdAt)}
-                                                        </span>
-                                                        <span className="flex items-center gap-1">
-                                                            <DollarSign className="h-4 w-4" /> {job.budgetType}
-                                                        </span>
+
+                                                    {/* Stats & Actions */}
+                                                    <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-0 border-border/50">
+                                                        <div className="text-right px-4 border-r border-border/50 pr-6 mr-2 hidden md:block">
+                                                            <span className="text-2xl font-bold text-foreground leading-none block">
+                                                                {job._count?.applications || 0}
+                                                            </span>
+                                                            <span className="text-xs text-muted-foreground uppercase font-medium tracking-wide">
+                                                                Applicants
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Mobile Stats */}
+                                                        <div className="flex items-center gap-2 md:hidden">
+                                                            <Users className="h-4 w-4 text-muted-foreground" />
+                                                            <span className="font-medium text-foreground">
+                                                                {job._count?.applications || 0} Applicants
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-3">
+                                                            <Link href={`/dashboard/job/${job.id}/applications`}>
+                                                                <Button variant="outline" size="sm" className="gap-2 h-9">
+                                                                    <Users className="h-4 w-4" />
+                                                                    <span className="hidden sm:inline">View Applicants</span>
+                                                                    <span className="sm:hidden">Applicants</span>
+                                                                </Button>
+                                                            </Link>
+
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                                                                        <MoreHorizontal className="h-4 w-4" />
+                                                                        <span className="sr-only">Open menu</span>
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-48">
+                                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                    <Link href={`/jobs/${job.id}`} className="w-full">
+                                                                        <DropdownMenuItem className="cursor-pointer">
+                                                                            <Eye className="mr-2 h-4 w-4" />
+                                                                            View Public Page
+                                                                        </DropdownMenuItem>
+                                                                    </Link>
+                                                                    <DropdownMenuSeparator />
+                                                                    {job.status === 'OPEN' ? (
+                                                                        <DropdownMenuItem
+                                                                            className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                                                                            onClick={async () => {
+                                                                                if (confirm('Are you sure you want to CLOSE this job? New applicants will be blocked.')) {
+                                                                                    await jobsService.update(job.id, { status: 'CANCELLED' });
+                                                                                    window.location.reload();
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <XCircle className="mr-2 h-4 w-4" />
+                                                                            Close Job
+                                                                        </DropdownMenuItem>
+                                                                    ) : (
+                                                                        job.status === 'CANCELLED' && (
+                                                                            <DropdownMenuItem
+                                                                                className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 cursor-pointer"
+                                                                                onClick={async () => {
+                                                                                    await jobsService.update(job.id, { status: 'OPEN' });
+                                                                                    window.location.reload();
+                                                                                }}
+                                                                            >
+                                                                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                                                Re-open Job
+                                                                            </DropdownMenuItem>
+                                                                        )
+                                                                    )}
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="text-sm text-right mr-4">
-                                                        <span className="font-bold text-foreground block">
-                                                            {job._count?.applications || 0}
-                                                        </span>
-                                                        <span className="text-muted-foreground">Applicants</span>
-                                                    </div>
-                                                    <Link href={`/dashboard/job/${job.id}/applications`}>
-                                                        <Button variant="outline" className="gap-2">
-                                                            <Users className="h-4 w-4" />
-                                                            View Applicants
-                                                        </Button>
-                                                    </Link>
                                                 </div>
                                             </div>
                                         ))

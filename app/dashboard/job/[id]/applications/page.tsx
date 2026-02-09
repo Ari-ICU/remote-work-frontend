@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, MessageSquare, User, Download, ExternalLink, Loader2, Star } from "lucide-react";
+import { ArrowLeft, MessageSquare, User, Download, ExternalLink, Loader2, Star, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +50,28 @@ export default function JobApplicationsPage() {
         router.push(`/messages?userId=${applicantId}`);
     };
 
+    const handleAccept = async (appId: string) => {
+        if (!confirm('Are you sure you want to ACCEPT this application? This will hire the freelancer and close the job to other applicants.')) return;
+        try {
+            await applicationService.accept(appId);
+            window.location.reload();
+        } catch (error) {
+            console.error("Failed to accept application:", error);
+            alert('Failed to accept application. Please try again.');
+        }
+    };
+
+    const handleReject = async (appId: string) => {
+        if (!confirm('Are you sure you want to REJECT this application?')) return;
+        try {
+            await applicationService.reject(appId);
+            window.location.reload();
+        } catch (error) {
+            console.error("Failed to reject application:", error);
+            alert('Failed to reject application. Please try again.');
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -87,13 +109,13 @@ export default function JobApplicationsPage() {
 
                     <div className="grid gap-6">
                         {applications.length === 0 ? (
-                            <div className="bg-card border border-border rounded-2xl p-12 text-center">
-                                <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                                    <User className="h-8 w-8 text-muted-foreground" />
+                            <div className="bg-card border border-border rounded-xl p-16 text-center shadow-sm">
+                                <div className="mx-auto w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mb-6">
+                                    <User className="h-10 w-10 text-muted-foreground/50" />
                                 </div>
                                 <h3 className="text-xl font-semibold">No applications yet</h3>
-                                <p className="text-muted-foreground mt-2">
-                                    Wait for freelancers to discover your job posting.
+                                <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+                                    Applicants will appear here once they start applying to your job.
                                 </p>
                             </div>
                         ) : (
@@ -102,50 +124,48 @@ export default function JobApplicationsPage() {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     key={app.id}
-                                    className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group"
+                                    className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all group"
                                 >
                                     <div className="flex flex-col md:flex-row gap-6">
                                         {/* Applicant Info */}
                                         <div className="flex-1">
                                             <div className="flex items-start justify-between mb-4">
                                                 <div className="flex items-center gap-4">
-                                                    <Avatar className="h-16 w-16 border-2 border-background shadow-md group-hover:scale-105 transition-transform">
+                                                    <Avatar className="h-14 w-14 border border-border shadow-sm">
                                                         <AvatarImage src={app.applicant.avatar} />
-                                                        <AvatarFallback className="text-xl bg-primary/10 text-primary">
+                                                        <AvatarFallback className="text-lg bg-primary/5 text-primary font-medium">
                                                             {app.applicant.firstName[0]}
                                                         </AvatarFallback>
                                                     </Avatar>
                                                     <div>
-                                                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                                                            <h3 className="text-xl font-bold tracking-tight">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <h3 className="text-lg font-bold tracking-tight text-foreground">
                                                                 {app.applicant.firstName} {app.applicant.lastName}
                                                             </h3>
                                                             {app.aiMatchScore && app.aiMatchScore > 80 && (
-                                                                <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20 px-2 py-0.5 whitespace-nowrap">
-                                                                    <Star className="w-3 h-3 mr-1 fill-current" />
+                                                                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1 px-2 py-0.5">
+                                                                    <Star className="w-3 h-3 fill-emerald-700" />
                                                                     {app.aiMatchScore}% Match
                                                                 </Badge>
                                                             )}
                                                         </div>
-                                                        <p className="text-muted-foreground text-sm line-clamp-1 max-w-sm">
-                                                            {app.applicant.bio || "No bio provided"}
+                                                        <p className="text-muted-foreground text-sm mt-0.5 line-clamp-1">
+                                                            {app.applicant.bio || "Freelancer"}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="text-right hidden sm:block bg-muted/20 px-4 py-2 rounded-2xl border border-border/50">
-                                                    <div className="font-bold text-xl text-primary">
-                                                        ${app.proposedRate}/hr
+                                                <div className="text-right hidden sm:block">
+                                                    <div className="font-bold text-xl text-foreground">
+                                                        ${app.proposedRate}<span className="text-sm text-muted-foreground font-normal">/hr</span>
                                                     </div>
-                                                    <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
-                                                        Proposed Rate
-                                                    </div>
+                                                    <div className="text-xs text-muted-foreground mt-1">Proposed Rate</div>
                                                 </div>
                                             </div>
 
                                             {/* Proposed Rate for Mobile */}
-                                            <div className="sm:hidden mb-4 flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/10">
+                                            <div className="sm:hidden mb-4 flex items-center justify-between bg-muted/30 p-3 rounded-lg border border-border/50">
                                                 <span className="text-sm font-medium text-muted-foreground">Proposed Rate</span>
-                                                <span className="text-lg font-bold text-primary">${app.proposedRate}/hr</span>
+                                                <span className="text-lg font-bold text-foreground">${app.proposedRate}/hr</span>
                                             </div>
 
                                             <div className="bg-muted/30 rounded-2xl p-5 mb-4 border border-border/40 relative overflow-hidden">
@@ -174,15 +194,36 @@ export default function JobApplicationsPage() {
                                         {/* Actions */}
                                         <div className="flex flex-col sm:flex-row md:flex-col items-stretch justify-center gap-3 md:border-l md:border-border md:pl-8 md:w-56 mt-4 md:mt-0">
                                             <Button
-                                                className="flex-1 md:w-full h-11 gap-2 shadow-md hover:shadow-lg transition-all font-semibold active:scale-[0.98]"
+                                                className="flex-1 md:w-full h-10 gap-2 shadow-sm hover:shadow-md transition-all font-semibold active:scale-[0.98]"
                                                 onClick={() => handleStartChat(app.applicantId)}
                                             >
                                                 <MessageSquare className="h-4 w-4" />
                                                 Chat
                                             </Button>
+
+                                            {app.status === 'PENDING' && (
+                                                <>
+                                                    <Button
+                                                        className="flex-1 md:w-full h-10 gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all font-semibold"
+                                                        onClick={() => handleAccept(app.id)}
+                                                    >
+                                                        <CheckCircle2 className="h-4 w-4" />
+                                                        Accept
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        className="flex-1 md:w-full h-10 gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all font-semibold"
+                                                        onClick={() => handleReject(app.id)}
+                                                    >
+                                                        <XCircle className="h-4 w-4" />
+                                                        Reject
+                                                    </Button>
+                                                </>
+                                            )}
+
                                             <Button
                                                 variant="outline"
-                                                className="flex-1 md:w-full h-11 gap-2 border-2 hover:bg-muted/50 transition-all font-semibold active:scale-[0.98]"
+                                                className="flex-1 md:w-full h-10 gap-2 border-2 hover:bg-muted/50 transition-all font-semibold active:scale-[0.98]"
                                                 onClick={() => router.push(`/profile/${app.applicantId}`)}
                                             >
                                                 <User className="h-4 w-4" />
