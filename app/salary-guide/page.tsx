@@ -1,84 +1,51 @@
-import { Briefcase, TrendingUp, DollarSign, Users, Award, BarChart3 } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Briefcase, TrendingUp, DollarSign, Users, Award, BarChart3, HelpCircle } from "lucide-react";
+import { salaryGuideService, SalaryGuideData } from "@/lib/services/salary-guide";
+
+const IconMap: { [key: string]: any } = {
+    TrendingUp,
+    DollarSign,
+    Users,
+    Award,
+    Briefcase,
+    BarChart3,
+};
+
+function DynamicIcon({ name, className }: { name: string; className?: string }) {
+    const Icon = IconMap[name] || HelpCircle;
+    return <Icon className={className} />;
+}
 
 export default function SalaryGuidePage() {
-    const salaryData = [
-        {
-            category: "Software Development",
-            roles: [
-                { title: "Junior Developer", range: "$800 - $1,500", experience: "0-2 years" },
-                { title: "Mid-Level Developer", range: "$1,500 - $2,500", experience: "2-5 years" },
-                { title: "Senior Developer", range: "$2,500 - $4,000", experience: "5+ years" },
-                { title: "Tech Lead", range: "$3,500 - $5,500", experience: "7+ years" },
-            ],
-        },
-        {
-            category: "Design & Creative",
-            roles: [
-                { title: "UI/UX Designer", range: "$700 - $1,800", experience: "0-3 years" },
-                { title: "Graphic Designer", range: "$600 - $1,500", experience: "0-3 years" },
-                { title: "Senior Designer", range: "$1,800 - $3,000", experience: "3-6 years" },
-                { title: "Creative Director", range: "$2,500 - $4,500", experience: "6+ years" },
-            ],
-        },
-        {
-            category: "Marketing & Sales",
-            roles: [
-                { title: "Digital Marketer", range: "$600 - $1,400", experience: "0-2 years" },
-                { title: "Content Writer", range: "$500 - $1,200", experience: "0-3 years" },
-                { title: "Marketing Manager", range: "$1,500 - $2,800", experience: "3-6 years" },
-                { title: "Sales Manager", range: "$1,800 - $3,500", experience: "3-7 years" },
-            ],
-        },
-        {
-            category: "Data & Analytics",
-            roles: [
-                { title: "Data Analyst", range: "$900 - $1,800", experience: "0-3 years" },
-                { title: "Data Scientist", range: "$1,800 - $3,500", experience: "2-5 years" },
-                { title: "ML Engineer", range: "$2,200 - $4,200", experience: "3-6 years" },
-                { title: "Analytics Manager", range: "$2,500 - $4,500", experience: "5+ years" },
-            ],
-        },
-        {
-            category: "Project Management",
-            roles: [
-                { title: "Project Coordinator", range: "$700 - $1,400", experience: "0-2 years" },
-                { title: "Project Manager", range: "$1,500 - $2,800", experience: "2-5 years" },
-                { title: "Senior PM", range: "$2,500 - $4,000", experience: "5-8 years" },
-                { title: "Program Manager", range: "$3,000 - $5,000", experience: "7+ years" },
-            ],
-        },
-    ];
+    const [data, setData] = useState<SalaryGuideData | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    const insights = [
-        {
-            icon: TrendingUp,
-            title: "Growing Demand",
-            description: "Remote work opportunities in Cambodia have increased by 45% in the last year.",
-            color: "text-green-500",
-            bg: "bg-green-500/10",
-        },
-        {
-            icon: DollarSign,
-            title: "Competitive Rates",
-            description: "Cambodian freelancers offer competitive rates while maintaining high-quality work.",
-            color: "text-blue-500",
-            bg: "bg-blue-500/10",
-        },
-        {
-            icon: Users,
-            title: "Diverse Talent Pool",
-            description: "Access to skilled professionals across 50+ different specializations.",
-            color: "text-purple-500",
-            bg: "bg-purple-500/10",
-        },
-        {
-            icon: Award,
-            title: "Quality Standards",
-            description: "85% of projects are completed on time with high client satisfaction rates.",
-            color: "text-orange-500",
-            bg: "bg-orange-500/10",
-        },
-    ];
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const result = await salaryGuideService.getSalaryData();
+                setData(result);
+            } catch (error) {
+                console.error("Failed to fetch salary guide data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    const insights = data?.insights || [];
+    const salaryData = data?.categories || [];
 
     return (
         <div className="min-h-screen bg-background">
@@ -107,14 +74,13 @@ export default function SalaryGuidePage() {
                 <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Market Insights</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
                     {insights.map((insight) => {
-                        const Icon = insight.icon;
                         return (
                             <div
-                                key={insight.title}
+                                key={insight.id}
                                 className="p-6 rounded-xl border border-border bg-card hover:shadow-lg transition-all"
                             >
                                 <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${insight.bg} mb-4`}>
-                                    <Icon className={`h-6 w-6 ${insight.color}`} />
+                                    <DynamicIcon name={insight.icon} className={`h-6 w-6 ${insight.color}`} />
                                 </div>
                                 <h3 className="text-lg font-semibold text-foreground mb-2">{insight.title}</h3>
                                 <p className="text-sm text-muted-foreground">{insight.description}</p>
@@ -133,10 +99,10 @@ export default function SalaryGuidePage() {
                     </div>
 
                     {salaryData.map((category) => (
-                        <div key={category.category} className="space-y-4">
+                        <div key={category.id} className="space-y-4">
                             <div className="flex items-center gap-3 mb-6">
                                 <Briefcase className="h-6 w-6 text-primary" />
-                                <h3 className="text-2xl font-bold text-foreground">{category.category}</h3>
+                                <h3 className="text-2xl font-bold text-foreground">{category.name}</h3>
                             </div>
                             <div className="overflow-hidden rounded-xl border border-border bg-card">
                                 <table className="min-w-full divide-y divide-border">
@@ -155,7 +121,7 @@ export default function SalaryGuidePage() {
                                     </thead>
                                     <tbody className="divide-y divide-border">
                                         {category.roles.map((role) => (
-                                            <tr key={role.title} className="hover:bg-muted/50 transition-colors">
+                                            <tr key={role.id} className="hover:bg-muted/50 transition-colors">
                                                 <td className="px-6 py-4 text-sm font-medium text-foreground">
                                                     {role.title}
                                                 </td>

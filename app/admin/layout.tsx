@@ -18,7 +18,8 @@ import {
     Command as CommandIcon,
     FileText,
     DollarSign,
-    Star
+    Star,
+    BarChart3
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -50,6 +51,7 @@ const menuItems = [
     { icon: FileText, label: "Applications", href: "/admin/applications", description: "Review proposals & matches" },
     { icon: DollarSign, label: "Revenue", href: "/admin/payments", description: "Financial audit & reports" },
     { icon: Star, label: "Reviews", href: "/admin/reviews", description: "Moderate feedback & ratings" },
+    { icon: BarChart3, label: "Salary Guide", href: "/admin/salary-guide", description: "Manage salary data" },
     { icon: Settings, label: "Settings", href: "/admin/settings", description: "Global configuration" },
 ];
 
