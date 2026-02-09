@@ -19,7 +19,9 @@ import {
     FileText,
     DollarSign,
     Star,
-    BarChart3
+    BarChart3,
+    Layout,
+    GraduationCap
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -52,6 +54,8 @@ const menuItems = [
     { icon: DollarSign, label: "Revenue", href: "/admin/payments", description: "Financial audit & reports" },
     { icon: Star, label: "Reviews", href: "/admin/reviews", description: "Moderate feedback & ratings" },
     { icon: BarChart3, label: "Salary Guide", href: "/admin/salary-guide", description: "Manage salary data" },
+    { icon: Layout, label: "Hiring Solutions", href: "/admin/hiring-solutions", description: "Manage hiring features" },
+    { icon: GraduationCap, label: "Employer Resources", href: "/admin/employer-resources", description: "Manage help content" },
     { icon: Settings, label: "Settings", href: "/admin/settings", description: "Global configuration" },
 ];
 

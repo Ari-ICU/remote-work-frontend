@@ -331,7 +331,7 @@ export default function MessagesPage() {
     }
 
     return (
-        <div className="flex flex-col h-[100dvh] bg-background overflow-hidden">
+        <div className="flex flex-col h-[100dvh] bg-background overflow-hidden ">
             <div className="h-16 flex-none bg-background relative z-50">
                 <Header />
             </div>
@@ -448,7 +448,7 @@ export default function MessagesPage() {
                             <>
                                 {/* Modern Chat Header - Clean Responsive */}
                                 <div
-                                    className="w-full flex-none h-[64px] md:h-[72px] border-b border-border flex items-center justify-between px-4 md:px-6 bg-card/80 backdrop-blur-md text-card-foreground shadow-sm relative z-20"
+                                    className="w-full flex-none min-h-[64px] mt-22 md:min-h-[72px] border-b border-border flex items-center justify-between px-4 md:px-6 bg-card/95 backdrop-blur-md text-card-foreground shadow-sm relative z-40"
                                 >
                                     <div className="flex items-center gap-3">
                                         <Button
@@ -497,7 +497,11 @@ export default function MessagesPage() {
                                         </Button>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className="h-9 w-9 rounded-xl text-primary border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all active:scale-95"
+                                                >
                                                     <Info className="h-[18px] w-[18px]" />
                                                 </Button>
                                             </DropdownMenuTrigger>

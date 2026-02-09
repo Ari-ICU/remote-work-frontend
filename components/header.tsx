@@ -63,6 +63,9 @@ export function Header() {
       setSavedJobsCount(wishlistService.getSavedJobIds().length);
     };
 
+    // Initial check when user changes
+    updateSavedCount();
+
     // Listen for storage changes (cross-tab sync)
     window.addEventListener("storage", updateSavedCount);
 
@@ -73,7 +76,7 @@ export function Header() {
       window.removeEventListener("storage", updateSavedCount);
       window.removeEventListener("wishlistUpdated", updateSavedCount);
     };
-  }, []);
+  }, [user]);
 
   const handleLogout = () => {
     authService.logout();

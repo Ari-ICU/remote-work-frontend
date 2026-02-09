@@ -57,7 +57,8 @@ export default function SavedJobsPage() {
                     job !== null &&
                     job.id != null &&
                     job.title != null &&
-                    job.category != null
+                    job.category != null &&
+                    job.status === 'OPEN'
                 );
 
                 // Deduplicate by job ID
@@ -72,6 +73,7 @@ export default function SavedJobsPage() {
                     console.log(`Removing ${invalidIds.length} invalid job IDs from wishlist`);
                     // Remove invalid IDs using the wishlist service
                     invalidIds.forEach(id => wishlistService.removeJob(id));
+                    toast.info(`${invalidIds.length} job(s) were removed because they are no longer available.`);
                 }
 
                 setSavedJobs(uniqueJobs);

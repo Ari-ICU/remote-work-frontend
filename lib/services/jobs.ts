@@ -66,6 +66,10 @@ const mapBackendJobToFrontendJob = (backendJob: any): Job => {
         description: backendJob.description,
         requirements: backendJob.requirements || [],
         responsibilities: backendJob.responsibilities || [],
+        companyWebsite: backendJob.poster?.website,
+        companyEmail: backendJob.poster?.email,
+        posterId: backendJob.posterId,
+        status: backendJob.status,
     };
 };
 

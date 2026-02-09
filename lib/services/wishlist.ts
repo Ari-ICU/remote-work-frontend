@@ -1,6 +1,22 @@
 "use client";
 
-const WISHLIST_KEY = "khmerwork_wishlist";
+const WISHLIST_BASE_KEY = "khmerwork_wishlist";
+
+const getWishlistKey = (): string => {
+    if (typeof window === "undefined") return WISHLIST_BASE_KEY;
+    try {
+        const userStr = localStorage.getItem('user');
+        if (userStr && userStr !== 'undefined') {
+            const user = JSON.parse(userStr);
+            if (user && user.id) {
+                return `${WISHLIST_BASE_KEY}_${user.id}`;
+            }
+        }
+    } catch (error) {
+        console.error("Error getting wishlist key:", error);
+    }
+    return WISHLIST_BASE_KEY;
+};
 
 // Helper to notify components about wishlist changes
 const notifyWishlistChange = () => {
@@ -12,7 +28,8 @@ const notifyWishlistChange = () => {
 export const wishlistService = {
     getSavedJobIds: (): string[] => {
         if (typeof window === "undefined") return [];
-        const saved = localStorage.getItem(WISHLIST_KEY);
+        const key = getWishlistKey();
+        const saved = localStorage.getItem(key);
         if (!saved) return [];
 
         try {
@@ -22,7 +39,7 @@ export const wishlistService = {
 
             // Update localStorage if we found duplicates or invalid entries
             if (uniqueIds.length !== ids.length) {
-                localStorage.setItem(WISHLIST_KEY, JSON.stringify(uniqueIds));
+                localStorage.setItem(key, JSON.stringify(uniqueIds));
             }
 
             return uniqueIds as string[];
@@ -36,24 +53,26 @@ export const wishlistService = {
         if (typeof window === "undefined") return;
         if (!jobId || jobId === "") return; // Prevent saving empty IDs
 
+        const key = getWishlistKey();
         const saved = wishlistService.getSavedJobIds();
         const jobIdStr = String(jobId); // Ensure it's a string
 
         if (!saved.includes(jobIdStr)) {
             const updated = [...saved, jobIdStr];
-            localStorage.setItem(WISHLIST_KEY, JSON.stringify(updated));
+            localStorage.setItem(key, JSON.stringify(updated));
             notifyWishlistChange();
         }
     },
 
     removeJob: (jobId: string) => {
         if (typeof window === "undefined") return;
+        const key = getWishlistKey();
         const saved = wishlistService.getSavedJobIds();
         const jobIdStr = String(jobId);
         const updated = saved.filter(id => id !== jobIdStr);
 
         if (updated.length !== saved.length) {
-            localStorage.setItem(WISHLIST_KEY, JSON.stringify(updated));
+            localStorage.setItem(key, JSON.stringify(updated));
             notifyWishlistChange();
         }
     },
@@ -77,7 +96,8 @@ export const wishlistService = {
     // Utility to clean up the wishlist
     clearAll: () => {
         if (typeof window === "undefined") return;
-        localStorage.removeItem(WISHLIST_KEY);
+        const key = getWishlistKey();
+        localStorage.removeItem(key);
         notifyWishlistChange();
     }
 };

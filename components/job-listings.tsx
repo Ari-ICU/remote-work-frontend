@@ -27,7 +27,20 @@ export function JobListings({ jobs, searchQuery, locationQuery, filterCount = 0,
 
   useEffect(() => {
     // Initial load of saved jobs
-    setSavedJobs(wishlistService.getSavedJobIds());
+    const updateSavedJobs = () => {
+      setSavedJobs(wishlistService.getSavedJobIds());
+    };
+
+    updateSavedJobs();
+
+    // Listen for storage and custom events
+    window.addEventListener("storage", updateSavedJobs);
+    window.addEventListener("wishlistUpdated", updateSavedJobs);
+
+    return () => {
+      window.removeEventListener("storage", updateSavedJobs);
+      window.removeEventListener("wishlistUpdated", updateSavedJobs);
+    };
   }, []);
 
   const toggleSaveJob = (jobId: string) => {

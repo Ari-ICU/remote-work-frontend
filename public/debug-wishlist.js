@@ -4,8 +4,21 @@
 console.log("=== Wishlist Debug Utility ===");
 
 // 1. Check current wishlist
-const wishlistKey = "khmerwork_wishlist";
+// Helper to get current key
+const getWishlistKey = () => {
+    try {
+        const userStr = localStorage.getItem('user');
+        if (userStr && userStr !== 'undefined') {
+            const user = JSON.parse(userStr);
+            if (user && user.id) return `khmerwork_wishlist_${user.id}`;
+        }
+    } catch (e) { }
+    return "khmerwork_wishlist";
+};
+
+const wishlistKey = getWishlistKey();
 const rawData = localStorage.getItem(wishlistKey);
+console.log(`Checking wishlist for key: ${wishlistKey}`);
 console.log("Raw localStorage data:", rawData);
 
 if (rawData) {

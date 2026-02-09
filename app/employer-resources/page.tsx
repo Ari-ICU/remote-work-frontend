@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
     BookOpen,
@@ -11,145 +14,74 @@ import {
     CheckCircle2,
     ArrowRight,
     Newspaper,
-    GraduationCap
+    GraduationCap,
+    HelpCircle
 } from "lucide-react";
+import {
+    employerResourcesService,
+    EmployerResourceCategory,
+    EmployerFeaturedGuide,
+    EmployerDownloadableResource,
+    EmployerFAQ
+} from "@/lib/services/employer-resources";
+
+const IconMap: { [key: string]: any } = {
+    BookOpen,
+    Video,
+    FileText,
+    Download,
+    TrendingUp,
+    Users,
+    Target,
+    Lightbulb,
+    CheckCircle2,
+    GraduationCap
+};
+
+function DynamicIcon({ name, className }: { name: string; className?: string }) {
+    const Icon = IconMap[name] || HelpCircle;
+    return <Icon className={className} />;
+}
 
 export default function EmployerResourcesPage() {
-    const resourceCategories = [
-        {
-            icon: BookOpen,
-            title: "Hiring Guides",
-            description: "Comprehensive guides to help you hire the best remote talent",
-            color: "text-blue-500",
-            bg: "bg-blue-500/10",
-            resources: [
-                "Complete Guide to Remote Hiring in Cambodia",
-                "How to Write Effective Job Descriptions",
-                "Best Practices for Interviewing Remote Candidates",
-                "Onboarding Remote Employees Successfully"
-            ]
-        },
-        {
-            icon: Video,
-            title: "Video Tutorials",
-            description: "Step-by-step video guides for using our platform effectively",
-            color: "text-purple-500",
-            bg: "bg-purple-500/10",
-            resources: [
-                "Getting Started with KhmerWork",
-                "How to Post Your First Job",
-                "Managing Applications Efficiently",
-                "Using Our Messaging System"
-            ]
-        },
-        {
-            icon: FileText,
-            title: "Templates & Tools",
-            description: "Ready-to-use templates and tools to streamline your hiring",
-            color: "text-green-500",
-            bg: "bg-green-500/10",
-            resources: [
-                "Job Description Templates",
-                "Interview Question Bank",
-                "Candidate Evaluation Scorecards",
-                "Offer Letter Templates"
-            ]
-        },
-        {
-            icon: TrendingUp,
-            title: "Market Insights",
-            description: "Data-driven insights about the Cambodian job market",
-            color: "text-orange-500",
-            bg: "bg-orange-500/10",
-            resources: [
-                "2026 Salary Benchmarking Report",
-                "Remote Work Trends in Cambodia",
-                "Skills in Demand Analysis",
-                "Hiring Competition Insights"
-            ]
-        }
-    ];
+    const [categories, setCategories] = useState<EmployerResourceCategory[]>([]);
+    const [guides, setGuides] = useState<EmployerFeaturedGuide[]>([]);
+    const [downloads, setDownloads] = useState<EmployerDownloadableResource[]>([]);
+    const [faqs, setFaqs] = useState<EmployerFAQ[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const guides = [
-        {
-            title: "The Ultimate Guide to Remote Hiring",
-            description: "Learn everything you need to know about building and managing a successful remote team in Cambodia.",
-            category: "Hiring Strategy",
-            readTime: "15 min read",
-            icon: Users,
-            color: "bg-blue-500"
-        },
-        {
-            title: "Crafting Job Posts That Attract Top Talent",
-            description: "Discover the secrets to writing compelling job descriptions that stand out and attract qualified candidates.",
-            category: "Job Posting",
-            readTime: "8 min read",
-            icon: Target,
-            color: "bg-green-500"
-        },
-        {
-            title: "Effective Remote Interview Techniques",
-            description: "Master the art of conducting virtual interviews that help you identify the best candidates for your team.",
-            category: "Interviewing",
-            readTime: "12 min read",
-            icon: Video,
-            color: "bg-purple-500"
-        },
-        {
-            title: "Building a Strong Employer Brand",
-            description: "Learn how to position your company as an employer of choice in the competitive Cambodian market.",
-            category: "Branding",
-            readTime: "10 min read",
-            icon: Lightbulb,
-            color: "bg-orange-500"
-        }
-    ];
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [cats, gds, dls, fqs] = await Promise.all([
+                    employerResourcesService.getCategories(),
+                    employerResourcesService.getGuides(),
+                    employerResourcesService.getDownloads(),
+                    employerResourcesService.getFaqs()
+                ]);
+                setCategories(cats);
+                setGuides(gds);
+                setDownloads(dls);
+                setFaqs(fqs);
+            } catch (error) {
+                console.error("Failed to fetch employer resources data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
-    const downloads = [
-        {
-            title: "Hiring Checklist",
-            description: "A comprehensive checklist to ensure you don't miss any crucial steps in your hiring process.",
-            format: "PDF",
-            size: "2.4 MB"
-        },
-        {
-            title: "Interview Question Templates",
-            description: "Pre-written interview questions for various roles and experience levels.",
-            format: "DOCX",
-            size: "1.8 MB"
-        },
-        {
-            title: "Salary Benchmarking Guide",
-            description: "Detailed salary data for remote positions across different industries in Cambodia.",
-            format: "PDF",
-            size: "3.2 MB"
-        },
-        {
-            title: "Remote Work Policy Template",
-            description: "A customizable template for creating your company's remote work policy.",
-            format: "DOCX",
-            size: "1.5 MB"
-        }
-    ];
-
-    const faqs = [
-        {
-            question: "How do I attract quality candidates to my job postings?",
-            answer: "Focus on writing clear, detailed job descriptions that highlight your company culture, benefits, and growth opportunities. Use relevant keywords, be transparent about salary ranges, and respond quickly to applications."
-        },
-        {
-            question: "What's the average time to hire on KhmerWork?",
-            answer: "Most employers find qualified candidates within 7-14 days. The timeline depends on factors like job complexity, salary range, and how quickly you review applications. Premium listings typically see faster results."
-        },
-        {
-            question: "How can I verify candidate skills and experience?",
-            answer: "We recommend a multi-step verification process: review portfolios, conduct technical assessments, check references, and use video interviews. Our platform also provides skill verification badges for candidates."
-        },
-        {
-            question: "What payment methods do you accept?",
-            answer: "We accept major credit cards (Visa, Mastercard), PayPal, and local payment methods including KHQR. All transactions are secure and processed through encrypted payment gateways."
-        }
-    ];
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="animate-pulse flex flex-col items-center">
+                    <div className="h-12 w-12 bg-primary/20 rounded-full mb-4"></div>
+                    <div className="h-4 w-32 bg-muted rounded"></div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background">
@@ -176,15 +108,14 @@ export default function EmployerResourcesPage() {
             {/* Resource Categories */}
             <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {resourceCategories.map((category) => {
-                        const Icon = category.icon;
+                    {categories.map((category) => {
                         return (
                             <div
-                                key={category.title}
+                                key={category.id}
                                 className="p-8 rounded-xl border border-border bg-card hover:shadow-xl transition-all"
                             >
                                 <div className={`flex h-14 w-14 items-center justify-center rounded-xl ${category.bg} mb-6`}>
-                                    <Icon className={`h-7 w-7 ${category.color}`} />
+                                    <DynamicIcon name={category.icon} className={`h-7 w-7 ${category.color}`} />
                                 </div>
                                 <h3 className="text-2xl font-bold text-foreground mb-3">{category.title}</h3>
                                 <p className="text-muted-foreground mb-6">{category.description}</p>
@@ -214,15 +145,14 @@ export default function EmployerResourcesPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {guides.map((guide) => {
-                            const Icon = guide.icon;
                             return (
                                 <div
-                                    key={guide.title}
+                                    key={guide.id}
                                     className="p-6 rounded-xl border border-border bg-card hover:shadow-lg transition-all group cursor-pointer"
                                 >
                                     <div className="flex items-start gap-4">
                                         <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${guide.color} flex-shrink-0`}>
-                                            <Icon className="h-6 w-6 text-white" />
+                                            <DynamicIcon name={guide.icon} className="h-6 w-6 text-white" />
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-2">

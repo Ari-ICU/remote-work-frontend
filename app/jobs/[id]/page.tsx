@@ -227,6 +227,15 @@ export default function JobDetailPage() {
 
             <main className="flex-1 pt-24 pb-24">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    {/* Status Banner */}
+                    {job.status !== 'OPEN' && (
+                        <div className="mb-8 rounded-2xl bg-destructive/10 border border-destructive/20 p-4 flex items-center gap-3 text-destructive">
+                            <Info className="h-5 w-5" />
+                            <p className="font-bold">
+                                This job is currently {job.status?.toLowerCase().replace('_', ' ')}. Applications are no longer being accepted.
+                            </p>
+                        </div>
+                    )}
                     {/* Navigation Bar */}
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
                         <motion.button
@@ -321,9 +330,11 @@ export default function JobDetailPage() {
                                             <Button
                                                 variant="outline"
                                                 size="icon"
+                                                disabled={job.status !== 'OPEN'}
                                                 className={cn(
                                                     "h-14 w-14 rounded-2xl transition-all duration-300",
-                                                    isSaved ? "bg-primary border-primary text-white shadow-xl shadow-primary/25 scale-105" : "hover:bg-primary/5 hover:border-primary/50"
+                                                    isSaved ? "bg-primary border-primary text-white shadow-xl shadow-primary/25 scale-105" : "hover:bg-primary/5 hover:border-primary/50",
+                                                    job.status !== 'OPEN' && "opacity-50 cursor-not-allowed"
                                                 )}
                                                 onClick={handleToggleSave}
                                             >
@@ -516,14 +527,58 @@ export default function JobDetailPage() {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Button variant="outline" className="rounded-2xl h-12 text-[10px] font-black uppercase tracking-widest border-2 border-dashed hover:border-solid transition-all group/link">
-                                        Site
-                                        <ExternalLink className="ml-1.5 h-3.5 w-3.5 text-muted-foreground group-hover/link:text-primary" />
-                                    </Button>
-                                    <Button variant="outline" className="rounded-2xl h-12 text-[10px] font-black uppercase tracking-widest border-2 border-dashed hover:border-solid transition-all">
-                                        Talk
-                                        <Mail className="ml-1.5 h-3.5 w-3.5 text-muted-foreground" />
-                                    </Button>
+                                    {(() => {
+                                        const hasWebsite = !!job.companyWebsite;
+                                        const websiteUrl = hasWebsite
+                                            ? (job.companyWebsite!.startsWith('http') ? job.companyWebsite : `https://${job.companyWebsite}`)
+                                            : undefined;
+
+                                        return (
+                                            <Button
+                                                asChild={hasWebsite}
+                                                disabled={!hasWebsite}
+                                                variant="outline"
+                                                className="rounded-2xl h-12 text-[10px] font-black uppercase tracking-widest border-2 border-dashed hover:border-solid transition-all group/link cursor-pointer"
+                                            >
+                                                {hasWebsite ? (
+                                                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 w-full h-full">
+                                                        Site
+                                                        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover/link:text-primary transition-colors" />
+                                                    </a>
+                                                ) : (
+                                                    <span className="flex items-center justify-center gap-1.5 w-full h-full opacity-50">
+                                                        Site
+                                                        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        );
+                                    })()}
+
+                                    {(() => {
+                                        const hasPoster = !!job.posterId;
+
+                                        return (
+                                            <Button
+                                                asChild={hasPoster}
+                                                disabled={!hasPoster}
+                                                variant="outline"
+                                                className="rounded-2xl h-12 text-[10px] font-black uppercase tracking-widest border-2 border-dashed hover:border-solid transition-all cursor-pointer"
+                                            >
+                                                {hasPoster ? (
+                                                    <Link href={`/messages?userId=${job.posterId}`} className="flex items-center justify-center gap-1.5 w-full h-full">
+                                                        Talk
+                                                        <Mail className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-primary" />
+                                                    </Link>
+                                                ) : (
+                                                    <span className="flex items-center justify-center gap-1.5 w-full h-full opacity-50">
+                                                        Talk
+                                                        <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        );
+                                    })()}
                                 </div>
                             </motion.div>
 

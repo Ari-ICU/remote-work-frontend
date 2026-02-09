@@ -15,6 +15,10 @@ export interface Job {
     description?: string;
     requirements?: string[];
     responsibilities?: string[];
+    companyWebsite?: string;
+    companyEmail?: string;
+    posterId?: string;
+    status?: string;
 }
 
 export interface Category {
