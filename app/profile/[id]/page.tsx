@@ -20,21 +20,28 @@ import {
     Loader2,
     ArrowLeft,
     MessageSquare,
-    DollarSign
+    DollarSign,
+    Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { userService } from "@/lib/services/user";
+import { reviewService } from "@/lib/services/review";
 import { fadeIn } from "@/lib/animations";
-import { User as UserType, Experience, Education } from "@/types/user";
+import { User as UserType, Experience, Education, Review } from "@/types/user";
+import { ReviewsList } from "@/components/reviews-list";
+import { AddReviewDialog } from "@/components/add-review-dialog";
 
 export default function PublicProfilePage() {
     const params = useParams();
     const router = useRouter();
     const [user, setUser] = useState<UserType | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(null);
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -42,6 +49,10 @@ export default function PublicProfilePage() {
             try {
                 const userData = await userService.getProfile(params.id as string);
                 setUser(userData);
+
+                // Load reviews
+                const reviewsData = await reviewService.getUserReviews(params.id as string);
+                setReviews(reviewsData);
             } catch (error) {
                 console.error("Failed to fetch profile", error);
                 // router.push("/404"); // Or handle error gracefully
@@ -49,6 +60,14 @@ export default function PublicProfilePage() {
                 setIsLoading(false);
             }
         };
+
+        // Load current user from localStorage
+        if (typeof window !== 'undefined') {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                setCurrentUser(JSON.parse(storedUser));
+            }
+        }
 
         loadProfile();
     }, [params.id]);
@@ -58,6 +77,18 @@ export default function PublicProfilePage() {
         if (path.startsWith('http')) return path;
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
         return `${baseUrl}${path}`;
+    };
+
+    const handleReviewAdded = async () => {
+        // Reload reviews after a new review is added
+        if (params.id) {
+            try {
+                const reviewsData = await reviewService.getUserReviews(params.id as string);
+                setReviews(reviewsData);
+            } catch (error) {
+                console.error("Failed to reload reviews", error);
+            }
+        }
     };
 
     if (isLoading) {
@@ -146,6 +177,16 @@ export default function PublicProfilePage() {
                                         <MessageSquare className="h-4 w-4 mr-2" />
                                         Message
                                     </Button>
+                                    {currentUser && currentUser.id !== user.id && (
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setIsReviewDialogOpen(true)}
+                                            className="rounded-xl transition-all hover:scale-105"
+                                        >
+                                            <Star className="h-4 w-4 mr-2" />
+                                            Rate User
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -325,11 +366,25 @@ export default function PublicProfilePage() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Reviews Section */}
+                            <ReviewsList reviews={reviews} />
                         </motion.div>
                     </div>
                 </div>
             </main>
             <Footer />
+
+            {/* Add Review Dialog */}
+            {user && (
+                <AddReviewDialog
+                    isOpen={isReviewDialogOpen}
+                    onClose={() => setIsReviewDialogOpen(false)}
+                    revieweeId={user.id}
+                    revieweeName={`${user.firstName} ${user.lastName}`}
+                    onReviewAdded={handleReviewAdded}
+                />
+            )}
         </div>
     );
 }

@@ -43,9 +43,11 @@ export function JobCard({ job, isSaved, onToggleSave }: JobCardProps) {
                         <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                             {job.title}
                         </h3>
-                        <p className="text-sm font-medium text-muted-foreground">
-                            {job.company}
-                        </p>
+                        {job.company && (
+                            <p className="text-sm font-medium text-muted-foreground">
+                                {job.company}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <motion.button
@@ -66,19 +68,23 @@ export function JobCard({ job, isSaved, onToggleSave }: JobCardProps) {
 
             <div className="mt-4 space-y-2">
                 <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        <span>{job.location}</span>
-                    </div>
+                    {job.location && (
+                        <div className="flex items-center gap-1.5">
+                            <MapPin className="h-4 w-4 text-primary" />
+                            <span>{job.location}</span>
+                        </div>
+                    )}
                     <div className="flex items-center gap-1.5">
                         <Clock className="h-4 w-4 text-primary" />
                         <span>{job.type}</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-foreground">
-                    <DollarSign className="h-4 w-4 text-primary" />
-                    <span className="font-bold">{job.salary}</span>
-                </div>
+                {job.salary && (
+                    <div className="flex items-center gap-1.5 text-foreground">
+                        <DollarSign className="h-4 w-4 text-primary" />
+                        <span className="font-bold">{job.salary}</span>
+                    </div>
+                )}
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">

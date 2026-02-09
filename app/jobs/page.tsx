@@ -49,19 +49,19 @@ export default function JobsPage() {
     const filteredJobs = useMemo(() => {
         return jobs.filter((job) => {
             const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                job.salary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                job.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                job.salary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 job.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
                 job.category.toLowerCase().includes(searchQuery.toLowerCase());
 
-            const matchesLocation = job.location.toLowerCase().includes(locationQuery.toLowerCase());
+            const matchesLocation = job.location?.toLowerCase().includes(locationQuery.toLowerCase()) ?? true;
 
             // Job type filtering
             let matchesType = true;
             if (selectedTypes.length > 0) {
                 matchesType = selectedTypes.some(type => {
-                    if (type === "remote") return job.remote || job.location.toLowerCase().includes("remote");
-                    if (type === "hourly") return job.budgetType === "HOURLY" || job.salary.toLowerCase().includes("/hr");
+                    if (type === "remote") return job.remote || job.location?.toLowerCase().includes("remote");
+                    if (type === "hourly") return job.budgetType === "HOURLY" || job.salary?.toLowerCase().includes("/hr");
                     if (type === "freelance") return job.type.toLowerCase().includes("freelance");
                     if (type === "part-time") return job.type.toLowerCase().includes("part-time");
                     if (type === "full-time") return job.type.toLowerCase().includes("full-time");

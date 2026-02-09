@@ -40,11 +40,11 @@ export default function HomePage() {
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
       const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.salary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.salary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         job.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
         job.category.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesLocation = job.location.toLowerCase().includes(locationQuery.toLowerCase());
+      const matchesLocation = job.location?.toLowerCase().includes(locationQuery.toLowerCase()) ?? true;
       return matchesSearch && matchesLocation;
     });
   }, [jobs, searchQuery, locationQuery]);

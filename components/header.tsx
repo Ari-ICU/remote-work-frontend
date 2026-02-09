@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { SettingsControl } from "@/components/settings-control";
 import { messagingService } from "@/lib/services/messaging";
+import { wishlistService } from "@/lib/services/wishlist";
 
 export function Header() {
   const t = useTranslations("common");
@@ -18,6 +19,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [savedJobsCount, setSavedJobsCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -28,6 +30,9 @@ export function Header() {
 
     // Check for user on mount
     setUser(authService.getCurrentUser());
+
+    // Initialize saved jobs count
+    setSavedJobsCount(wishlistService.getSavedJobIds().length);
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -51,6 +56,24 @@ export function Header() {
       setUnreadCount(0);
     }
   }, [user]);
+
+  // Track saved jobs count changes
+  useEffect(() => {
+    const updateSavedCount = () => {
+      setSavedJobsCount(wishlistService.getSavedJobIds().length);
+    };
+
+    // Listen for storage changes (cross-tab sync)
+    window.addEventListener("storage", updateSavedCount);
+
+    // Custom event for same-tab updates
+    window.addEventListener("wishlistUpdated", updateSavedCount);
+
+    return () => {
+      window.removeEventListener("storage", updateSavedCount);
+      window.removeEventListener("wishlistUpdated", updateSavedCount);
+    };
+  }, []);
 
   const handleLogout = () => {
     authService.logout();
@@ -120,6 +143,11 @@ export function Header() {
               <Link href="/jobs/saved">
                 <Button variant="ghost" size="icon" className="group rounded-xl relative" title="Saved Jobs">
                   <Bookmark className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  {savedJobsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground ring-2 ring-background animate-in zoom-in duration-300">
+                      {savedJobsCount > 9 ? "9+" : savedJobsCount}
+                    </span>
+                  )}
                 </Button>
               </Link>
               <Link href="/messages">
@@ -226,9 +254,14 @@ export function Header() {
                       </Button>
                     </Link>
                     <Link href="/jobs/saved" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="justify-start w-full gap-2">
+                      <Button variant="ghost" className="justify-start w-full gap-2 relative">
                         <Bookmark className="h-4 w-4" />
                         Saved Jobs
+                        {savedJobsCount > 0 && (
+                          <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-black px-2 py-0.5 rounded-full">
+                            {savedJobsCount}
+                          </span>
+                        )}
                       </Button>
                     </Link>
                     <Link href="/messages" onClick={() => setMobileMenuOpen(false)}>

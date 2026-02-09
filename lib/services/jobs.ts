@@ -2,16 +2,64 @@ import api from '../api';
 import { Job } from '@/types/job';
 
 const mapBackendJobToFrontendJob = (backendJob: any): Job => {
+    // Helper to format date safely
+    const formatDate = (dateString: string) => {
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                return 'Recently posted';
+            }
+
+            // Calculate relative time
+            const now = new Date();
+            const diffInMs = now.getTime() - date.getTime();
+            const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+            if (diffInDays === 0) return 'Today';
+            if (diffInDays === 1) return 'Yesterday';
+            if (diffInDays < 7) return `${diffInDays} days ago`;
+            if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+            if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
+            return date.toLocaleDateString();
+        } catch (error) {
+            return 'Recently posted';
+        }
+    };
+
+    // Helper to get company name
+    const getCompanyName = () => {
+        if (backendJob.companyName) return backendJob.companyName;
+        if (backendJob.poster?.firstName && backendJob.poster?.lastName) {
+            return `${backendJob.poster.firstName} ${backendJob.poster.lastName}`;
+        }
+        return undefined; // Return undefined instead of 'Unknown'
+    };
+
+    // Helper to get location
+    const getLocation = () => {
+        if (backendJob.location) return backendJob.location;
+        if (backendJob.remote) return 'Remote';
+        return undefined; // Return undefined instead of 'As specified'
+    };
+
+    // Helper to get salary
+    const getSalary = () => {
+        if (backendJob.budget) {
+            return `$${backendJob.budget}${backendJob.budgetType === 'HOURLY' ? '/hr' : ''}`;
+        }
+        return undefined; // Return undefined instead of 'Negotiable'
+    };
+
     return {
         id: backendJob.id,
         title: backendJob.title,
-        company: backendJob.companyName || (backendJob.poster ? `${backendJob.poster.firstName} ${backendJob.poster.lastName}` : 'Unknown'),
-        location: backendJob.location || (backendJob.remote ? 'Remote' : 'As specified'),
+        company: getCompanyName(),
+        location: getLocation(),
         type: backendJob.budgetType === 'HOURLY' ? 'Hourly' : 'Freelance',
         remote: backendJob.remote || false,
         budgetType: backendJob.budgetType,
-        salary: backendJob.budget ? `$${backendJob.budget}${backendJob.budgetType === 'HOURLY' ? '/hr' : ''}` : 'Negotiable',
-        posted: new Date(backendJob.createdAt).toLocaleDateString(),
+        salary: getSalary(),
+        posted: formatDate(backendJob.createdAt),
         tags: backendJob.skills || [],
         featured: false,
         category: backendJob.category,

@@ -1,13 +1,13 @@
 export interface Job {
     id: string | number;
     title: string;
-    company: string;
+    company?: string;
     companyName?: string;
-    location: string;
+    location?: string;
     type: string;
     remote: boolean;
     budgetType: 'HOURLY' | 'FIXED';
-    salary: string;
+    salary?: string;
     posted: string;
     tags: string[];
     featured: boolean;

@@ -45,10 +45,20 @@ export default function SavedJobsPage() {
                     return;
                 }
 
+                // Deduplicate IDs (extra safety)
+                const uniqueIds = Array.from(new Set(savedIds));
+
                 // Fetch all saved jobs (in a real app, there might be a batch endpoint)
-                const jobPromises = savedIds.map(id => jobsService.getById(id).catch(() => null));
+                const jobPromises = uniqueIds.map(id => jobsService.getById(id).catch(() => null));
                 const projects = await Promise.all(jobPromises);
-                setSavedJobs(projects.filter((job): job is Job => job !== null));
+
+                // Filter out null values and deduplicate by job ID
+                const validJobs = projects.filter((job): job is Job => job !== null);
+                const uniqueJobs = validJobs.filter((job, index, self) =>
+                    index === self.findIndex(j => j.id === job.id)
+                );
+
+                setSavedJobs(uniqueJobs);
             } catch (err) {
                 console.error("Failed to fetch saved jobs:", err);
                 toast.error("Failed to load your wishlist");
@@ -65,10 +75,10 @@ export default function SavedJobsPage() {
             if (savedJobs.length > 0) {
                 try {
                     const allJobs = await jobsService.getAll();
-                    const savedIds = savedJobs.map(j => j.id.toString());
+                    const savedIds = savedJobs.map(j => j?.id?.toString()).filter(Boolean);
                     const reco = allJobs.filter((j: Job) =>
-                        !savedIds.includes(j.id.toString()) &&
-                        savedJobs.some(sj => sj.category === j.category)
+                        j?.id && !savedIds.includes(j.id.toString()) &&
+                        savedJobs.some(sj => sj?.category === j?.category)
                     ).slice(0, 3);
                     setRecommendations(reco);
                 } catch (err) {
@@ -81,7 +91,7 @@ export default function SavedJobsPage() {
 
     const removeJob = (id: string) => {
         wishlistService.removeJob(id);
-        setSavedJobs(prev => prev.filter(job => job.id.toString() !== id));
+        setSavedJobs(prev => prev.filter(job => job?.id?.toString() !== id));
         toast.info("Removed from wishlist");
     };
 
@@ -166,7 +176,7 @@ export default function SavedJobsPage() {
                             <AnimatePresence mode="popLayout">
                                 {savedJobs.map((job, index) => (
                                     <motion.div
-                                        key={job.id}
+                                        key={job?.id?.toString() || `job-${index}`}
                                         layout
                                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                                         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -183,33 +193,39 @@ export default function SavedJobsPage() {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => removeJob(job.id.toString())}
+                                                    onClick={() => job?.id && removeJob(job.id.toString())}
                                                     className="h-10 w-10 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
                                                 >
                                                     <Trash2 className="h-5 w-5" />
                                                 </Button>
                                             </div>
 
-                                            <Link href={`/jobs/${job.id}`} className="block flex-1 group/title">
+                                            <Link href={`/jobs/${job?.id || ''}`} className="block flex-1 group/title">
                                                 <h3 className="text-2xl font-black tracking-tight leading-tight mb-4 group-hover/title:text-primary transition-colors">
                                                     {job.title}
                                                 </h3>
-                                                <div className="flex items-center gap-3 text-muted-foreground mb-6">
-                                                    <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
-                                                        <Building2 className="h-4 w-4" />
+                                                {job.company && (
+                                                    <div className="flex items-center gap-3 text-muted-foreground mb-6">
+                                                        <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
+                                                            <Building2 className="h-4 w-4" />
+                                                        </div>
+                                                        <span className="font-bold text-sm tracking-tight">{job.company}</span>
                                                     </div>
-                                                    <span className="font-bold text-sm tracking-tight">{job.company}</span>
-                                                </div>
+                                                )}
 
                                                 <div className="space-y-3 mb-8">
-                                                    <div className="flex items-center gap-3 text-sm text-muted-foreground/80 font-bold">
-                                                        <MapPin className="h-4 w-4 text-primary/60" />
-                                                        {job.location}
-                                                    </div>
-                                                    <div className="flex items-center gap-3 text-sm text-muted-foreground/80 font-bold">
-                                                        <DollarSign className="h-4 w-4 text-primary/60" />
-                                                        {job.salary}
-                                                    </div>
+                                                    {job.location && (
+                                                        <div className="flex items-center gap-3 text-sm text-muted-foreground/80 font-bold">
+                                                            <MapPin className="h-4 w-4 text-primary/60" />
+                                                            {job.location}
+                                                        </div>
+                                                    )}
+                                                    {job.salary && (
+                                                        <div className="flex items-center gap-3 text-sm text-muted-foreground/80 font-bold">
+                                                            <DollarSign className="h-4 w-4 text-primary/60" />
+                                                            {job.salary}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </Link>
 
@@ -219,7 +235,7 @@ export default function SavedJobsPage() {
                                                     {job.posted}
                                                 </div>
                                                 <Button asChild variant="link" className="p-0 h-auto text-primary font-black uppercase tracking-widest text-[10px] group/btn">
-                                                    <Link href={`/jobs/${job.id}`} className="flex items-center gap-1">
+                                                    <Link href={`/jobs/${job?.id || ''}`} className="flex items-center gap-1">
                                                         Details
                                                         <ChevronRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-1" />
                                                     </Link>
@@ -248,7 +264,7 @@ export default function SavedJobsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {recommendations.map((job, index) => (
                                     <motion.div
-                                        key={job.id}
+                                        key={job?.id?.toString() || `recommendation-${index}`}
                                         initial={{ opacity: 0, y: 20 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
@@ -261,20 +277,26 @@ export default function SavedJobsPage() {
                                             </div>
                                             <div className="min-w-0">
                                                 <h4 className="font-bold line-clamp-1 group-hover:text-primary transition-colors">{job.title}</h4>
-                                                <p className="text-xs text-muted-foreground font-medium">{job.company}</p>
+                                                {job.company && (
+                                                    <p className="text-xs text-muted-foreground font-medium">{job.company}</p>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mb-8 font-bold">
-                                            <div className="flex items-center gap-1">
-                                                <MapPin className="h-3.5 w-3.5 text-primary" />
-                                                {job.location}
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <DollarSign className="h-3.5 w-3.5 text-primary" />
-                                                {job.salary}
-                                            </div>
+                                            {job.location && (
+                                                <div className="flex items-center gap-1">
+                                                    <MapPin className="h-3.5 w-3.5 text-primary" />
+                                                    {job.location}
+                                                </div>
+                                            )}
+                                            {job.salary && (
+                                                <div className="flex items-center gap-1">
+                                                    <DollarSign className="h-3.5 w-3.5 text-primary" />
+                                                    {job.salary}
+                                                </div>
+                                            )}
                                         </div>
-                                        <Link href={`/jobs/${job.id}`}>
+                                        <Link href={`/jobs/${job?.id || ''}`}>
                                             <Button className="w-full rounded-2xl h-12 font-black uppercase tracking-widest text-[10px] gap-2 shadow-lg shadow-primary/10">
                                                 View Position
                                                 <ChevronRight className="h-3 w-3" />

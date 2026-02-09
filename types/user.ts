@@ -1,3 +1,18 @@
+export interface Review {
+    id: string;
+    rating: number;
+    comment: string | null;
+    reviewerId: string;
+    revieweeId: string;
+    createdAt: string;
+    reviewer?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        avatar: string | null;
+    };
+}
+
 export interface User {
     id: string;
     email: string;
@@ -21,6 +36,7 @@ export interface User {
     verified: boolean;
     createdAt: string;
     updatedAt: string;
+    reviews?: Review[];
 }
 
 export interface Education {

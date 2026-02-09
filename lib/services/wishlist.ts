@@ -2,32 +2,65 @@
 
 const WISHLIST_KEY = "khmerwork_wishlist";
 
+// Helper to notify components about wishlist changes
+const notifyWishlistChange = () => {
+    if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("wishlistUpdated"));
+    }
+};
+
 export const wishlistService = {
     getSavedJobIds: (): string[] => {
         if (typeof window === "undefined") return [];
         const saved = localStorage.getItem(WISHLIST_KEY);
-        return saved ? JSON.parse(saved) : [];
+        if (!saved) return [];
+
+        try {
+            const ids = JSON.parse(saved);
+            // Deduplicate and filter out invalid entries
+            const uniqueIds = Array.from(new Set(ids.filter((id: any) => id != null && id !== "")));
+
+            // Update localStorage if we found duplicates or invalid entries
+            if (uniqueIds.length !== ids.length) {
+                localStorage.setItem(WISHLIST_KEY, JSON.stringify(uniqueIds));
+            }
+
+            return uniqueIds as string[];
+        } catch (error) {
+            console.error("Failed to parse wishlist:", error);
+            return [];
+        }
     },
 
     saveJob: (jobId: string) => {
         if (typeof window === "undefined") return;
+        if (!jobId || jobId === "") return; // Prevent saving empty IDs
+
         const saved = wishlistService.getSavedJobIds();
-        if (!saved.includes(jobId)) {
-            const updated = [...saved, jobId];
+        const jobIdStr = String(jobId); // Ensure it's a string
+
+        if (!saved.includes(jobIdStr)) {
+            const updated = [...saved, jobIdStr];
             localStorage.setItem(WISHLIST_KEY, JSON.stringify(updated));
+            notifyWishlistChange();
         }
     },
 
     removeJob: (jobId: string) => {
         if (typeof window === "undefined") return;
         const saved = wishlistService.getSavedJobIds();
-        const updated = saved.filter(id => id !== jobId);
-        localStorage.setItem(WISHLIST_KEY, JSON.stringify(updated));
+        const jobIdStr = String(jobId);
+        const updated = saved.filter(id => id !== jobIdStr);
+
+        if (updated.length !== saved.length) {
+            localStorage.setItem(WISHLIST_KEY, JSON.stringify(updated));
+            notifyWishlistChange();
+        }
     },
 
     isJobSaved: (jobId: string): boolean => {
         const saved = wishlistService.getSavedJobIds();
-        return saved.includes(jobId);
+        return saved.includes(String(jobId));
     },
 
     toggleJob: (jobId: string): boolean => {
@@ -39,5 +72,13 @@ export const wishlistService = {
             wishlistService.saveJob(jobId);
             return true;
         }
+    },
+
+    // Utility to clean up the wishlist
+    clearAll: () => {
+        if (typeof window === "undefined") return;
+        localStorage.removeItem(WISHLIST_KEY);
+        notifyWishlistChange();
     }
 };
+
