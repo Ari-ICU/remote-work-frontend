@@ -42,6 +42,7 @@ import { getMessages } from 'next-intl/server';
 import { ThemeProvider } from "@/components/theme-provider"
 import { getUserLocale } from "@/lib/locale"
 import { Toaster } from 'sonner'
+import { LoadingProvider } from "@/components/providers/loading-provider"
 
 export default async function RootLayout({
   children,
@@ -61,7 +62,9 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <LoadingProvider>
+              {children}
+            </LoadingProvider>
             <AiChatBot />
             <Analytics />
             <Toaster position="top-right" richColors closeButton />
