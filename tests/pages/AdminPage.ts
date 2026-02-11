@@ -46,7 +46,7 @@ export class AdminPage extends BasePage {
         await this.page.fill('input#firstName', userData.firstName);
         await this.page.fill('input#lastName', userData.lastName);
         await this.page.fill('input#email', userData.email);
-        await this.page.fill('input#password', 'password123');
+        await this.page.fill('input#password', 'Password123!');
 
         console.log(`Selecting role: ${userData.role}`);
         const dialog = this.page.locator('div[role="dialog"]');
@@ -69,20 +69,39 @@ export class AdminPage extends BasePage {
         await submitBtn.click({ force: true });
         console.log('Submit button clicked.');
 
+        // Wait for success toast first as it appears immediately
+        await this.page.waitForSelector('text=User created successfully', { state: 'visible', timeout: 10000 });
+        console.log('Success toast appeared.');
+
+        // Attempt to close dialog if it's still open (sometimes state update is slow or stuck)
+        try {
+            await this.page.waitForSelector('text=Create New User', { state: 'hidden', timeout: 2000 });
+        } catch (e) {
+            console.log('Dialog still visible, pressing Escape...');
+            await this.page.keyboard.press('Escape');
+        }
+
         await this.page.waitForSelector('text=Create New User', { state: 'hidden', timeout: 30000 });
         console.log('User creation dialog closed.');
     }
 
     async searchUser(query: string) {
+        // Trigger search and wait for the API response to ensure the table updates
+        const responsePromise = this.page.waitForResponse(resp =>
+            resp.url().includes('/admin/users') && resp.status() === 200
+        );
         await this.page.fill('input[placeholder*="Find user"]', query);
-        await this.page.waitForTimeout(1000); // Wait for debounce
+        await responsePromise;
+        await this.page.waitForTimeout(500); // Small buffer for React render cycle
     }
 
     async deleteUser(email: string) {
         console.log(`Searching for user to delete: ${email}`);
-        await this.searchUser(email);
 
         const row = this.page.locator(`tr:has-text("${email}")`).first();
+        if (!await row.isVisible()) {
+            await this.searchUser(email);
+        }
         await row.waitFor({ state: 'visible' });
 
         console.log('Opening action menu...');

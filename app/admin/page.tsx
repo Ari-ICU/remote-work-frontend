@@ -14,7 +14,11 @@ import {
     ShieldCheck,
     UserPlus,
     MoreHorizontal,
-    Trash2
+    Trash2,
+    Activity,
+    Globe,
+    Server,
+    Cpu
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -34,7 +38,9 @@ import {
     Area,
     BarChart,
     Bar,
-    Cell
+    Cell,
+    PieChart,
+    Pie
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +62,13 @@ const categoryData = [
     { name: "Marketing", count: 28, color: "#6366f1" },
     { name: "Writing", count: 18, color: "#f59e0b" },
     { name: "Other", count: 12, color: "#ef4444" },
+];
+
+const trafficData = [
+    { name: "Direct", value: 400, color: "#8b5cf6" },
+    { name: "Social", value: 300, color: "#ec4899" },
+    { name: "Organic", value: 300, color: "#10b981" },
+    { name: "Referral", value: 200, color: "#f59e0b" },
 ];
 
 export default function AdminOverview() {
@@ -116,6 +129,7 @@ export default function AdminOverview() {
             value: stats?.overview?.totalUsers || 0,
             icon: Users,
             color: "text-blue-400",
+            bg: "bg-blue-400/10",
             trend: stats?.overview?.growth?.users > 0 ? `+${stats.overview.growth.users}` : "Stable",
             growth: stats?.overview?.growth?.users >= 0
         },
@@ -124,6 +138,7 @@ export default function AdminOverview() {
             value: stats?.overview?.totalJobs || 0,
             icon: Briefcase,
             color: "text-emerald-400",
+            bg: "bg-emerald-400/10",
             trend: stats?.overview?.growth?.jobs > 0 ? `+${stats.overview.growth.jobs}` : "Stable",
             growth: stats?.overview?.growth?.jobs >= 0
         },
@@ -132,6 +147,7 @@ export default function AdminOverview() {
             value: stats?.overview?.totalApplications || 0,
             icon: FileText,
             color: "text-indigo-400",
+            bg: "bg-indigo-400/10",
             trend: stats?.overview?.growth?.applications > 0 ? `+${stats.overview.growth.applications}` : "Stable",
             growth: stats?.overview?.growth?.applications >= 0
         },
@@ -140,6 +156,7 @@ export default function AdminOverview() {
             value: `$${stats?.overview?.revenue?.toLocaleString() || "0"}`,
             icon: DollarSign,
             color: "text-amber-400",
+            bg: "bg-amber-400/10",
             trend: "verified",
             growth: true
         },
@@ -149,11 +166,14 @@ export default function AdminOverview() {
         <div className="space-y-10 pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-                        System Overview
+                    <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/60">
+                        System Command
                     </h1>
                     <p className="text-gray-400 mt-2 font-medium flex items-center gap-2">
-                        <ShieldCheck size={16} className="text-primary" />
+                        <span className="relative flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                        </span>
                         Security Level 10 Active • Real-time Monitoring Enabled
                     </p>
                 </div>
@@ -165,10 +185,7 @@ export default function AdminOverview() {
                         disabled={isCleaning}
                     >
                         <Trash2 size={18} />
-                        {isCleaning ? "Cleaning..." : "Cleanup Platform"}
-                    </Button>
-                    <Button variant="outline" className="bg-white/5 border-white/10 hover:bg-white/10 h-11 px-6 rounded-xl font-semibold">
-                        Export Report
+                        {isCleaning ? "Purging..." : "Purge Test Data"}
                     </Button>
                     <Button className="bg-primary text-black hover:bg-primary/90 shadow-[0_10px_20px_color-mix(in_srgb,var(--primary),transparent_70%)] h-11 px-6 rounded-xl font-bold flex gap-2">
                         <Zap size={18} fill="currentColor" /> Quick Action
@@ -189,21 +206,21 @@ export default function AdminOverview() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
                     >
-                        <Card className="bg-white/[0.03] border-white/[0.06] backdrop-blur-md overflow-hidden group hover:border-primary/40 transition-all duration-500 rounded-2xl relative">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[40px] rounded-full translate-x-16 -translate-y-16 group-hover:bg-primary/10 transition-colors"></div>
-                            <CardContent className="p-7 relative">
+                        <Card className="bg-white/[0.03] border-white/[0.06] backdrop-blur-md overflow-hidden group hover:border-primary/40 transition-all duration-500 rounded-3xl relative h-full">
+                            <div className={`absolute top-0 right-0 w-32 h-32 blur-[60px] rounded-full translate-x-16 -translate-y-16 transition-colors ${stat.bg}`}></div>
+                            <CardContent className="p-7 relative flex flex-col justify-between h-full">
                                 <div className="flex items-center justify-between mb-6">
-                                    <div className={`p-3 rounded-2xl bg-white/5 group-hover:bg-primary/20 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-6`}>
-                                        <stat.icon className={`w-7 h-7 ${stat.color} group-hover:text-white transition-colors`} />
+                                    <div className={`p-3.5 rounded-2xl bg-white/5 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 border border-white/5`}>
+                                        <stat.icon className={`w-6 h-6 ${stat.color}`} />
                                     </div>
-                                    <Badge variant="secondary" className="bg-white/5 text-[11px] font-bold border-white/5 flex items-center gap-1.5 px-2 py-1">
+                                    <Badge variant="secondary" className="bg-white/5 text-[11px] font-bold border-white/5 flex items-center gap-1.5 px-2.5 py-1 rounded-lg">
                                         <span className={stat.growth ? "text-emerald-400" : "text-rose-400"}>{stat.trend}</span>
                                         <TrendingUp size={12} className={stat.growth ? "text-emerald-400" : "text-rose-400"} />
                                     </Badge>
                                 </div>
                                 <div>
-                                    <h3 className="text-3xl font-black tracking-tight">{stat.value}</h3>
-                                    <p className="text-sm font-semibold text-gray-500 mt-1.5 uppercase tracking-widest">{stat.label}</p>
+                                    <h3 className="text-4xl font-black tracking-tighter text-white">{stat.value}</h3>
+                                    <p className="text-xs font-bold text-gray-500 mt-2 uppercase tracking-widest">{stat.label}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -219,15 +236,16 @@ export default function AdminOverview() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
                 >
-                    <Card className="bg-white/[0.03] border-white/[0.06] backdrop-blur-md h-full rounded-2xl overflow-hidden">
+                    <Card className="bg-white/[0.03] border-white/[0.06] backdrop-blur-md h-full rounded-3xl overflow-hidden relative">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-20"></div>
                         <CardHeader className="flex flex-row items-center justify-between border-b border-white/[0.06] py-6 px-8">
                             <div>
-                                <CardTitle className="text-xl font-bold tracking-tight">Ecosystem Growth</CardTitle>
-                                <CardDescription className="text-gray-500 font-medium mt-1">Activity metrics across the platform ecosystem</CardDescription>
+                                <CardTitle className="text-xl font-bold tracking-tight">Ecosystem Metrics</CardTitle>
+                                <CardDescription className="text-gray-500 font-medium mt-1">Real-time platform activity analysis</CardDescription>
                             </div>
                             <div className="flex gap-2">
-                                <Badge className="bg-primary/20 text-primary hover:bg-primary/30 border-0">Daily</Badge>
-                                <Badge variant="outline" className="border-white/10 text-gray-500">Monthly</Badge>
+                                <Badge className="bg-primary/20 text-primary hover:bg-primary/30 border-0 h-7 px-3">Daily</Badge>
+                                <Badge variant="outline" className="border-white/10 text-gray-500 h-7 px-3 hover:bg-white/5 cursor-pointer">Monthly</Badge>
                             </div>
                         </CardHeader>
                         <CardContent className="p-8">
@@ -264,11 +282,11 @@ export default function AdminOverview() {
                                         />
                                         <Tooltip
                                             contentStyle={{
-                                                backgroundColor: '#111',
+                                                backgroundColor: '#0a0a0a',
                                                 border: '1px solid rgba(255,255,255,0.1)',
                                                 borderRadius: '16px',
-                                                boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                                                backdropFilter: 'blur(10px)'
+                                                boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+                                                backdropFilter: 'blur(20px)'
                                             }}
                                             itemStyle={{ fontSize: '12px', fontWeight: '800' }}
                                         />
@@ -283,27 +301,27 @@ export default function AdminOverview() {
                                     <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">New Registrations</p>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl md:text-2xl font-bold">+1,240</span>
-                                        <Badge className="bg-emerald-500/10 text-emerald-500 text-[10px] border-0 px-1 py-0">+8%</Badge>
+                                        <Badge className="bg-emerald-500/10 text-emerald-500 text-[10px] border-0 px-1.5">+8%</Badge>
                                     </div>
                                 </div>
                                 <div className="space-y-2 md:border-l border-white/5 md:pl-8">
                                     <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Active Jobs</p>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl md:text-2xl font-bold">582</span>
-                                        <Badge className="bg-emerald-500/10 text-emerald-500 text-[10px] border-0 px-1 py-0">+3%</Badge>
+                                        <Badge className="bg-emerald-500/10 text-emerald-500 text-[10px] border-0 px-1.5">+3%</Badge>
                                     </div>
                                 </div>
                                 <div className="space-y-2 lg:border-l border-white/5 lg:pl-8">
                                     <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Success Rate</p>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl md:text-2xl font-bold">94.2%</span>
-                                        <Badge className="bg-primary/10 text-primary text-[10px] border-0 px-1 py-0">Target</Badge>
+                                        <Badge className="bg-primary/10 text-primary text-[10px] border-0 px-1.5">Target</Badge>
                                     </div>
                                 </div>
                                 <div className="space-y-2 md:border-l border-white/5 md:pl-8">
                                     <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Server Health</p>
                                     <div className="flex items-center gap-2 text-primary">
-                                        <Zap size={18} fill="currentColor" />
+                                        <Activity size={18} className="animate-pulse" />
                                         <span className="text-xl md:text-2xl font-bold font-mono">99.9%</span>
                                     </div>
                                 </div>
@@ -319,39 +337,84 @@ export default function AdminOverview() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 }}
                 >
-                    <Card className="bg-white/[0.03] border-white/[0.06] backdrop-blur-md rounded-2xl overflow-hidden h-full">
+                    {/* Traffic Source Pie Chart */}
+                    <Card className="bg-white/[0.03] border-white/[0.06] backdrop-blur-md rounded-3xl overflow-hidden min-h-[300px]">
+                        <CardHeader className="border-b border-white/[0.06] py-5 px-6">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-lg font-bold">Traffic Inflow</CardTitle>
+                                <Globe size={18} className="text-gray-500" />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-0 relative">
+                            <div className="h-[200px] mt-4">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={trafficData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {trafficData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} stroke="rgba(0,0,0,0.5)" strokeWidth={2} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#111', border: '0', borderRadius: '8px', fontSize: '12px' }}
+                                            itemStyle={{ color: '#fff' }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                {/* Center Stats */}
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] text-center">
+                                    <span className="text-2xl font-black">1.2k</span>
+                                    <p className="text-[10px] text-gray-500 font-bold uppercase">Visitors</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 p-4 pt-0">
+                                {trafficData.map((item, i) => (
+                                    <div key={i} className="flex items-center gap-2 text-xs">
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
+                                        <span className="text-gray-400 font-medium">{item.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-white/[0.03] border-white/[0.06] backdrop-blur-md rounded-3xl overflow-hidden h-full">
                         <CardHeader className="border-b border-white/[0.06] py-6 px-7">
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-lg font-bold">New Signups</CardTitle>
+                                <CardTitle className="text-lg font-bold">New Actors</CardTitle>
                                 <UserPlus size={18} className="text-gray-500" />
                             </div>
                         </CardHeader>
-                        <CardContent className="p-7">
-                            <div className="space-y-7">
-                                {stats?.recentUsers?.map((user: any, i: number) => (
+                        <CardContent className="p-0">
+                            <div className="flex flex-col">
+                                {stats?.recentUsers?.slice(0, 4).map((user: any, i: number) => (
                                     <motion.div
                                         key={user.id}
-                                        className="flex items-center gap-4 group"
+                                        className="flex items-center gap-4 px-6 py-4 hover:bg-white/[0.02] border-b border-white/[0.03] last:border-0 transition-colors cursor-pointer group"
                                         initial={{ opacity: 0, x: 10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.6 + (i * 0.1) }}
                                     >
                                         <div className="relative">
-                                            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-primary font-bold shadow-lg border border-white/10 group-hover:border-primary/50 transition-colors">
+                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-primary font-bold shadow-lg border border-white/10 group-hover:border-primary/50 transition-colors text-xs">
                                                 {user.firstName[0]}{user.lastName[0]}
                                             </div>
-                                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#111]"></div>
+                                            <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#111]"></div>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between mb-0.5">
                                                 <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{user.firstName} {user.lastName}</p>
                                                 <p className="text-[10px] font-bold text-gray-500 uppercase">{new Date(user.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                             </div>
-                                            <p className="text-[11px] text-gray-500 truncate font-mono">{user.email}</p>
+                                            <p className="text-[10px] text-gray-500 truncate font-mono">{user.email}</p>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-600 hover:text-white rounded-lg">
-                                            <MoreHorizontal size={16} />
-                                        </Button>
                                     </motion.div>
                                 ))}
 
@@ -365,9 +428,13 @@ export default function AdminOverview() {
                                 )}
                             </div>
 
-                            <Button variant="ghost" className="w-full mt-8 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-primary hover:bg-primary/5 h-11 border border-dashed border-white/10 rounded-xl">
-                                View All Personnel <ArrowUpRight size={14} className="ml-2" />
-                            </Button>
+                            {stats?.recentUsers?.length > 0 && (
+                                <div className="p-4">
+                                    <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-primary hover:bg-primary/5 h-10 border border-dashed border-white/10 rounded-xl">
+                                        View Personnel <ArrowUpRight size={14} className="ml-2" />
+                                    </Button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </motion.div>
@@ -379,13 +446,13 @@ export default function AdminOverview() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
             >
-                <Card className="bg-white/[0.03] border-white/[0.06] backdrop-blur-md rounded-2xl overflow-hidden">
+                <Card className="bg-white/[0.03] border-white/[0.06] backdrop-blur-md rounded-3xl overflow-hidden">
                     <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5">
                         <div className="p-8 border-r border-white/5 space-y-4">
                             <h3 className="text-xl font-bold tracking-tight">Market Segments</h3>
                             <p className="text-sm text-gray-500 font-medium">Distribution of activity across industrial categories</p>
                             <div className="pt-4 space-y-3">
-                                {categoryData.map((cat, i) => (
+                                {categoryData.slice(0, 4).map((cat, i) => (
                                     <div key={i} className="flex items-center justify-between text-xs">
                                         <div className="flex items-center gap-2">
                                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }}></div>
@@ -413,9 +480,9 @@ export default function AdminOverview() {
                             </div>
                             <div className="flex justify-between mt-6 px-10">
                                 {categoryData.map((cat, i) => (
-                                    <div key={i} className="text-center">
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">{cat.name}</p>
-                                        <Zap size={14} className="mx-auto" style={{ color: cat.color }} fill="currentColor" fillOpacity={0.2} />
+                                    <div key={i} className="text-center group cursor-pointer hover:-translate-y-1 transition-transform">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1 group-hover:text-gray-400 transition-colors">{cat.name}</p>
+                                        <Zap size={14} className="mx-auto transition-all" style={{ color: cat.color }} fill="currentColor" fillOpacity={0.2} />
                                     </div>
                                 ))}
                             </div>

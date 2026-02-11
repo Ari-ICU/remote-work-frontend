@@ -53,7 +53,7 @@ test.describe('Admin Dashboard Features', () => {
         const empJob = new JobPage(empPage);
 
         const employerEmail = `emp_admin_test_${timestamp}@test.com`;
-        await empRegister.register('Employer', 'AdminTest', employerEmail, 'password123');
+        await empRegister.register('Employer', 'AdminTest', employerEmail, 'Password123!');
         await empJob.postJob({
             title: testJobTitle,
             category: 'Software Engineering',
@@ -69,7 +69,7 @@ test.describe('Admin Dashboard Features', () => {
         const freePage = await freelancerContext.newPage();
         const freeRegister = new RegisterPage(freePage);
         const freeJob = new JobPage(freePage);
-        await freeRegister.register('Freelancer', 'Freelancer AdminTest', testFreelancerEmail, 'password123');
+        await freeRegister.register('Freelancer', 'Freelancer AdminTest', testFreelancerEmail, 'Password123!');
         await freeJob.searchAndSelectJob(testJobTitle);
         // We'll need a dummy file for application
         const path = require('path');
