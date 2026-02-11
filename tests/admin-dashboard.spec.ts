@@ -61,6 +61,7 @@ test.describe('Admin Dashboard Features', () => {
             location: 'Remote',
             type: 'Full-time',
             salary: '1000',
+            skills: 'React, TypeScript, Next.js',
             description: 'Test job for admin dashboard moderation.'
         });
         console.log('✅ Job created by employer.');

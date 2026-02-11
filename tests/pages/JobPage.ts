@@ -10,6 +10,7 @@ export class JobPage extends BasePage {
         location: string;
         type: string;
         salary: string;
+        skills?: string;
         description: string;
     }) {
         await this.navigateTo('/post-job');
@@ -27,6 +28,7 @@ export class JobPage extends BasePage {
         await this.page.click(`button:has-text("${details.type}")`);
 
         await this.page.fill('input[name="salary"]', details.salary);
+        await this.page.fill('input[name="skills"]', details.skills || 'React, Node.js');
         await this.page.fill('textarea[name="description"]', details.description);
         await this.page.click('button[type="submit"]');
 

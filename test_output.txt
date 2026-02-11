@@ -13,11 +13,11 @@ Running 1 test using 1 worker
 
 [1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {route: /login, path: /login}
 
-[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/login?redirect=/admin color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/login?redirect=/admin, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770814595819}
+[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/login?redirect=/admin color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/login?redirect=/admin, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770814866449}
 
 [1A[2K[BROWSER] warning: WebSocket connection to 'ws://localhost:3001/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
 
-[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/admin color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/admin, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770814596370}
+[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/admin color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/admin, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770814866973}
 
 [1A[2K[BROWSER] log: Connected to notification gateway
 
@@ -28,11 +28,11 @@ Running 1 test using 1 worker
 
 [1A[2KNavigating to Admin Users...
 
-[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/admin/users color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/admin/users, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770814596990}
+[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/admin/users color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/admin/users, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770814868055}
 
 [1A[2KReached User Management.
 
-[1A[2KAdding user: test_admin_user_1770814594648@test.com
+[1A[2KAdding user: test_admin_user_1770814865346@test.com
 
 [1A[2K[BROWSER] warning: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
@@ -54,7 +54,7 @@ Running 1 test using 1 worker
 
 [1A[2K✅ Search functionality verified.
 
-[1A[2KSearching for user to delete: test_admin_user_1770814594648@test.com
+[1A[2KSearching for user to delete: test_admin_user_1770814865346@test.com
 
 [1A[2KOpening action menu...
 
@@ -64,7 +64,7 @@ Running 1 test using 1 worker
 
 [1A[2KAccepted dialog: CRITICAL: Permanent deletion of user identity. Proceed?
 
-[1A[2KWaiting for row with test_admin_user_1770814594648@test.com to disappear...
+[1A[2KWaiting for row with test_admin_user_1770814865346@test.com to disappear...
 
 [1A[2KRow disappeared.
 
@@ -75,38 +75,5 @@ Running 1 test using 1 worker
 [1A[2K
 --- Step 3: Preparing Job & Application data ---
 
-[1A[2K  1) [chromium] › tests/admin-dashboard.spec.ts:15:9 › Admin Dashboard Features › Test all admin dashboard features 
+[1A[2K✅ Job created by employer.
 
-    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
-
-    Locator: locator('h1')
-    Expected substring: [32m"Listing Published!"[39m
-    Received string:    [31m"Find your next expert teammate"[39m
-    Timeout: 15000ms
-
-    Call log:
-    [2m  - Expect "toContainText" with timeout 15000ms[22m
-    [2m  - waiting for locator('h1')[22m
-    [2m    19 × locator resolved to <h1 class="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6">…</h1>[22m
-    [2m       - unexpected value "Find your next expert teammate"[22m
-
-
-       at pages/JobPage.ts:34
-
-      32 |
-      33 |         await this.waitForLoadingFinished();
-    > 34 |         await expect(this.page.locator('h1')).toContainText('Listing Published!', { timeout: 15000 });
-         |                                               ^
-      35 |     }
-      36 |
-      37 |     async searchAndSelectJob(title: string) {
-        at JobPage.postJob (/Users/thoeurnratha/Desktop/freelance-platform-ui/frontend/tests/pages/JobPage.ts:34:47)
-        at /Users/thoeurnratha/Desktop/freelance-platform-ui/frontend/tests/admin-dashboard.spec.ts:57:9
-
-    Error Context: test-results/admin-dashboard-Admin-Dash-e02c3-ll-admin-dashboard-features-chromium/error-context.md
-
-
-[1A[2K  1 failed
-    [chromium] › tests/admin-dashboard.spec.ts:15:9 › Admin Dashboard Features › Test all admin dashboard features 
-
-[36m  Serving HTML report at http://localhost:53146. Press Ctrl+C to quit.[39m
