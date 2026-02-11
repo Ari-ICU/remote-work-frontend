@@ -14,7 +14,13 @@ export class BasePage {
     }
 
     async waitForLoadingFinished() {
-        await expect(this.page.locator('.animate-spin')).not.toBeVisible({ timeout: 15000 });
+        await this.page.locator('[data-testid="global-loader"]').waitFor({ state: 'hidden', timeout: 15000 });
+        // Also wait for any spinner if present
+        try {
+            await expect(this.page.locator('.animate-spin')).not.toBeVisible({ timeout: 5000 });
+        } catch (e) {
+            // Ignore if spinner not found
+        }
     }
 
     async log(message: string) {

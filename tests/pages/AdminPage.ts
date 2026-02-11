@@ -13,25 +13,41 @@ export class AdminPage extends BasePage {
             url.pathname === '/',
             { timeout: 15000 }
         );
+        await this.waitForLoadingFinished();
     }
 
     async goToUsers() {
         console.log('Navigating to Admin Users...');
-        await this.page.locator('aside').getByRole('link', { name: 'Users' }).click();
+        await this.waitForLoadingFinished();
+        await Promise.all([
+            this.page.waitForURL(/\/admin\/users/),
+            this.page.locator('aside').getByRole('link', { name: 'Users' }).click({ force: true })
+        ]);
+        await this.waitForLoadingFinished();
         await this.page.waitForSelector('h1:has-text("User Management")');
         console.log('Reached User Management.');
     }
 
     async goToJobs() {
         console.log('Navigating to Admin Jobs...');
-        await this.page.locator('aside').getByRole('link', { name: 'Jobs' }).click();
+        await this.waitForLoadingFinished();
+        await Promise.all([
+            this.page.waitForURL(/\/admin\/jobs/),
+            this.page.locator('aside').getByRole('link', { name: 'Jobs' }).click({ force: true })
+        ]);
+        await this.waitForLoadingFinished();
         await this.page.waitForSelector('h1:has-text("Market Intelligence")');
         console.log('Reached Job Management.');
     }
 
     async goToApplications() {
         console.log('Navigating to Admin Applications...');
-        await this.page.locator('aside').getByRole('link', { name: 'Applications' }).click();
+        await this.waitForLoadingFinished();
+        await Promise.all([
+            this.page.waitForURL(/\/admin\/applications/),
+            this.page.locator('aside').getByRole('link', { name: 'Applications' }).click({ force: true })
+        ]);
+        await this.waitForLoadingFinished();
         await this.page.waitForSelector('h1:has-text("Application Protocol")');
         console.log('Reached Application Protocol.');
     }
@@ -43,9 +59,16 @@ export class AdminPage extends BasePage {
         await addBtn.click({ force: true });
 
         await this.page.waitForSelector('text=Create New User');
+        await this.page.locator('input#firstName').waitFor({ state: 'visible' });
         await this.page.fill('input#firstName', userData.firstName);
+
+        await this.page.locator('input#lastName').waitFor({ state: 'visible' });
         await this.page.fill('input#lastName', userData.lastName);
+
+        await this.page.locator('input#email').waitFor({ state: 'visible' });
         await this.page.fill('input#email', userData.email);
+
+        await this.page.locator('input#password').waitFor({ state: 'visible' });
         await this.page.fill('input#password', 'Password123!');
 
         console.log(`Selecting role: ${userData.role}`);

@@ -13,11 +13,13 @@ Running 1 test using 1 worker
 
 [1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {route: /login, path: /login}
 
-[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/login?redirect=/admin color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/login?redirect=/admin, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770813260643}
+[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/login?redirect=/admin color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/login?redirect=/admin, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770814595819}
 
 [1A[2K[BROWSER] warning: WebSocket connection to 'ws://localhost:3001/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
 
-[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/admin color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/admin, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770813261137}
+[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/admin color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/admin, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770814596370}
+
+[1A[2K[BROWSER] log: Connected to notification gateway
 
 [1A[2K✅ Logged in and cleaned up test data.
 
@@ -26,48 +28,85 @@ Running 1 test using 1 worker
 
 [1A[2KNavigating to Admin Users...
 
-[1A[2K[BROWSER] log: Connected to notification gateway
-
-[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/admin/users color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/admin/users, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770813261785}
+[1A[2K[BROWSER] log: %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/admin/users color: rgb(120, 120, 120) color: inherit {o: http://localhost:3000/admin/users, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.3.1, ts: 1770814596990}
 
 [1A[2KReached User Management.
 
-[1A[2KAdding user: test_admin_user_1770813259774@test.com
+[1A[2KAdding user: test_admin_user_1770814594648@test.com
 
 [1A[2K[BROWSER] warning: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
 [1A[2K[BROWSER] warning: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+[1A[2KSelecting role: FREELANCER
+
+[1A[2KRole is FREELANCER (default or current), skipping selection.
+
+[1A[2KSubmitting user form...
+
+[1A[2KSubmit button clicked.
+
+[1A[2KSuccess toast appeared.
+
+[1A[2KUser creation dialog closed.
+
+[1A[2K✅ Added new user.
+
+[1A[2K✅ Search functionality verified.
+
+[1A[2KSearching for user to delete: test_admin_user_1770814594648@test.com
+
+[1A[2KOpening action menu...
+
+[1A[2KIntercepting confirm dialog...
+
+[1A[2KClicking Terminate Identity...
+
+[1A[2KAccepted dialog: CRITICAL: Permanent deletion of user identity. Proceed?
+
+[1A[2KWaiting for row with test_admin_user_1770814594648@test.com to disappear...
+
+[1A[2KRow disappeared.
+
+[1A[2KUser deleted successfully.
+
+[1A[2K✅ User deletion verified.
+
+[1A[2K
+--- Step 3: Preparing Job & Application data ---
 
 [1A[2K  1) [chromium] › tests/admin-dashboard.spec.ts:15:9 › Admin Dashboard Features › Test all admin dashboard features 
 
-    Test was interrupted.
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
 
-    Error: page.fill: Test ended.
+    Locator: locator('h1')
+    Expected substring: [32m"Listing Published!"[39m
+    Received string:    [31m"Find your next expert teammate"[39m
+    Timeout: 15000ms
+
     Call log:
-    [2m  - waiting for locator('input#password')[22m
-    [2m    - locator resolved to <input value="" required="" id="password" minlength="8" type="password" data-slot="input" class="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:t…/>[22m
-    [2m    - fill("Password123!")[22m
-    [2m  - attempting fill action[22m
-    [2m    - waiting for element to be visible, enabled and editable[22m
+    [2m  - Expect "toContainText" with timeout 15000ms[22m
+    [2m  - waiting for locator('h1')[22m
+    [2m    19 × locator resolved to <h1 class="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6">…</h1>[22m
+    [2m       - unexpected value "Find your next expert teammate"[22m
 
 
-       at pages/AdminPage.ts:49
+       at pages/JobPage.ts:34
 
-      47 |         await this.page.fill('input#lastName', userData.lastName);
-      48 |         await this.page.fill('input#email', userData.email);
-    > 49 |         await this.page.fill('input#password', 'Password123!');
-         |                         ^
-      50 |
-      51 |         console.log(`Selecting role: ${userData.role}`);
-      52 |         const dialog = this.page.locator('div[role="dialog"]');
-        at AdminPage.addUser (/Users/thoeurnratha/Desktop/freelance-platform-ui/frontend/tests/pages/AdminPage.ts:49:25)
-        at /Users/thoeurnratha/Desktop/freelance-platform-ui/frontend/tests/admin-dashboard.spec.ts:30:9
+      32 |
+      33 |         await this.waitForLoadingFinished();
+    > 34 |         await expect(this.page.locator('h1')).toContainText('Listing Published!', { timeout: 15000 });
+         |                                               ^
+      35 |     }
+      36 |
+      37 |     async searchAndSelectJob(title: string) {
+        at JobPage.postJob (/Users/thoeurnratha/Desktop/freelance-platform-ui/frontend/tests/pages/JobPage.ts:34:47)
+        at /Users/thoeurnratha/Desktop/freelance-platform-ui/frontend/tests/admin-dashboard.spec.ts:57:9
+
+    Error Context: test-results/admin-dashboard-Admin-Dash-e02c3-ll-admin-dashboard-features-chromium/error-context.md
 
 
-[1A[2K  1 interrupted
+[1A[2K  1 failed
     [chromium] › tests/admin-dashboard.spec.ts:15:9 › Admin Dashboard Features › Test all admin dashboard features 
 
-To open last HTML report run:
-[36m[39m
-[36m  npx playwright show-report[39m
-[36m[39m
+[36m  Serving HTML report at http://localhost:53146. Press Ctrl+C to quit.[39m

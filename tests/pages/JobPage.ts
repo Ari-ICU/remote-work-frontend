@@ -13,6 +13,8 @@ export class JobPage extends BasePage {
         description: string;
     }) {
         await this.navigateTo('/post-job');
+        await this.waitForLoadingFinished();
+
         await this.page.fill('input[name="title"]', details.title);
 
         await this.page.click('button[data-slot="select-trigger"]:has-text("Select talent area"), button[role="combobox"]:has-text("Select talent area")');
@@ -21,41 +23,48 @@ export class JobPage extends BasePage {
         await this.page.fill('input[name="company"]', details.company);
         await this.page.fill('input[name="location"]', details.location);
 
-        // Find the second combobox trigger (Type)
-        const typeTrigger = this.page.locator('button[data-slot="select-trigger"], button[role="combobox"]').nth(1);
-        await typeTrigger.click();
-        await this.page.click(`div[role="option"]:has-text("${details.type}")`);
+        // Select Type (Buttons)
+        await this.page.click(`button:has-text("${details.type}")`);
 
         await this.page.fill('input[name="salary"]', details.salary);
         await this.page.fill('textarea[name="description"]', details.description);
         await this.page.click('button[type="submit"]');
 
+        await this.waitForLoadingFinished();
         await expect(this.page.locator('h1')).toContainText('Listing Published!', { timeout: 15000 });
     }
 
     async searchAndSelectJob(title: string) {
         await this.navigateTo('/jobs');
+        await this.waitForLoadingFinished();
 
         for (let i = 0; i < 5; i++) {
-            await this.page.waitForSelector('[data-testid="job-list-grid"]', { timeout: 10000 });
 
-            for (let i = 0; i < 5; i++) {
-                // Get all articles (job cards)
-                const count = await this.page.locator('article').count();
+            try {
+                // Wait for grid or list to appear
+                await this.page.waitForSelector('article', { timeout: 10000 });
+            } catch (e) {
+                console.log('No articles found, reloading...');
+            }
 
-                for (let j = 0; j < count; j++) {
-                    const card = this.page.locator('article').nth(j);
-                    if (await card.innerText().then(t => t.includes(title))) {
-                        const link = card.locator('a[href^="/jobs/"]');
-                        await link.click();
-                        return true;
-                    }
+            // Get all articles (job cards)
+            const count = await this.page.locator('article').count();
+
+            for (let j = 0; j < count; j++) {
+                const card = this.page.locator('article').nth(j);
+                if (await card.innerText().then(t => t.includes(title))) {
+                    const link = card.locator('a[href^="/jobs/"]');
+                    await link.click();
+                    await this.waitForLoadingFinished(); // Wait for job details to load
+                    return true;
                 }
+            }
 
-                if (i < 4) {
-                    await this.page.reload();
-                    await this.page.waitForTimeout(2000);
-                }
+            if (i < 4) {
+                console.log(`Job ${title} not found, reloading... (${i + 1}/5)`);
+                await this.page.reload();
+                await this.waitForLoadingFinished();
+                await this.page.waitForTimeout(2000);
             }
         }
         return false;
@@ -79,6 +88,7 @@ export class JobPage extends BasePage {
         await this.page.setInputFiles('input[type="file"]', applicant.resumePath);
         await this.page.click('button[type="submit"]');
 
+        await this.waitForLoadingFinished();
         await expect(this.page.locator('text=Application Sent!')).toBeVisible({ timeout: 10000 });
     }
 }
