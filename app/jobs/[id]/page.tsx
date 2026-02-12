@@ -20,14 +20,17 @@ import {
     Loader2,
     CheckCircle2,
     Check,
+    XCircle,
+    Info,
     ArrowRight,
     Search,
-    Info,
     Star,
     ExternalLink,
     Mail,
     Copy,
     Eye,
+    Sparkles,
+    BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +82,24 @@ export default function JobDetailPage() {
     const [error, setError] = useState<string | null>(null);
     const [isSaved, setIsSaved] = useState(false);
     const [similarJobs, setSimilarJobs] = useState<Job[]>([]);
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const currentUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null;
+        setUser(currentUser);
+    }, []);
+
+    const matchingSkills = user && job?.tags ? job.tags.filter((tag: string) =>
+        user.skills?.some((s: string) => s.toLowerCase() === tag.toLowerCase())
+    ) : [];
+
+    const missingSkills = user && job?.tags ? job.tags.filter((tag: string) =>
+        !user.skills?.some((s: string) => s.toLowerCase() === tag.toLowerCase())
+    ) : [];
+
+    const matchPercentage = job?.tags && job.tags.length > 0
+        ? Math.round((matchingSkills.length / job.tags.length) * 100)
+        : 0;
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
@@ -436,6 +457,75 @@ export default function JobDetailPage() {
                                                 </Badge>
                                             ))}
                                         </div>
+                                        {/* AI Skill Gap Analysis */}
+                                        {user && job.tags.length > 0 && (
+                                            <div className="pt-12 border-t border-border/50">
+                                                <div className="flex items-center justify-between mb-8">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2">AI Performance Index</p>
+                                                        <h3 className="text-2xl font-black text-foreground">Skill Synthesis</h3>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-3xl font-black text-primary">{matchPercentage}%</div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Profile Match</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid gap-8 md:grid-cols-2">
+                                                    <div className="space-y-4">
+                                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                                            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                                                            Strengths ({matchingSkills.length})
+                                                        </p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {matchingSkills.map((skill: string) => (
+                                                                <div key={skill} className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                                                                    {skill}
+                                                                </div>
+                                                            ))}
+                                                            {matchingSkills.length === 0 && (
+                                                                <p className="text-xs text-muted-foreground italic">Add skills to your profile to see highlights.</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-4">
+                                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                                            <Sparkles className="h-3 w-3 text-amber-500" />
+                                                            Growth Areas ({missingSkills.length})
+                                                        </p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {missingSkills.map((skill: string) => (
+                                                                <div key={skill} className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest border border-amber-100">
+                                                                    {skill}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Visual Progress Bar */}
+                                                <div className="mt-8 h-2 w-full bg-muted/30 rounded-full overflow-hidden border border-border/50 p-0.5">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${matchPercentage}%` }}
+                                                        transition={{ duration: 1, ease: "easeOut" }}
+                                                        className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full shadow-[0_0_10px_rgba(var(--primary),0.3)]"
+                                                    />
+                                                </div>
+
+                                                <p className="mt-6 p-4 rounded-2xl bg-primary/5 border border-primary/20 text-xs text-primary leading-relaxed flex gap-3">
+                                                    <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                                                    <span>
+                                                        {matchPercentage >= 80
+                                                            ? "Your profile is an exceptional match for this role! We highly recommend applying immediately."
+                                                            : matchPercentage >= 50
+                                                                ? "You have a solid foundation. Highlighting your experience in the 'Growth Areas' during the interview could bridge the gap."
+                                                                : "This role requires several new skills. Consider taking a certification or building a project in these areas to improve your eligibility."}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>

@@ -15,7 +15,8 @@ import {
     Info,
     Calendar,
     Briefcase,
-    Wand2
+    Wand2,
+    TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +57,8 @@ export default function PostJobPage() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
+    const [salaryPrediction, setSalaryPrediction] = useState<{ estimated_salary: number, confidence_score: number } | null>(null);
+    const [isPredictingSalary, setIsPredictingSalary] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
     const plan = searchParams.get("plan") || "free";
@@ -158,6 +161,30 @@ export default function PostJobPage() {
             toast.error("AI Generation failed. Please try again.");
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    const handlePredictSalary = async () => {
+        if (!skills || !category) {
+            toast.error("Please provide skills and category for better prediction.");
+            return;
+        }
+
+        setIsPredictingSalary(true);
+        try {
+            const skillList = skills.split(",").map(s => s.trim()).filter(s => s !== "");
+            const response = await aiService.predictSalary({
+                skills: skillList,
+                experience_level: "Intermediate", // Defaulting for prediction
+                location: "Remote",
+                job_type: type === "Hourly" ? "HOURLY" : "FIXED"
+            });
+            setSalaryPrediction(response);
+            toast.success("Market rate analysis complete!");
+        } catch (err) {
+            console.error("Failed to predict salary:", err);
+        } finally {
+            setIsPredictingSalary(false);
         }
     };
 
@@ -477,11 +504,45 @@ export default function PostJobPage() {
                                         </div>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label htmlFor="salary" className="text-sm font-semibold">Salary / Rate Range</Label>
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor="salary" className="text-sm font-semibold">Salary / Rate Range</Label>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 text-[10px] font-black uppercase text-primary hover:bg-primary/5 gap-1.5 rounded-lg"
+                                                onClick={handlePredictSalary}
+                                                disabled={isPredictingSalary}
+                                            >
+                                                {isPredictingSalary ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    <TrendingUp className="h-3 w-3" />
+                                                )}
+                                                Check Market Rate
+                                            </Button>
+                                        </div>
                                         <div className="relative group">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
                                             <Input id="salary" name="salary" placeholder="2,000 - 4,000" required className="pl-8 h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
                                         </div>
+                                        {salaryPrediction && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="p-3 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                                                    <span className="text-xs font-semibold text-primary">
+                                                        AI suggests: ${salaryPrediction.estimated_salary.toLocaleString()} - ${(salaryPrediction.estimated_salary * 1.25).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <div className="text-[10px] font-bold text-primary/60 uppercase">
+                                                    {Math.round(salaryPrediction.confidence_score * 100)}% Confidence
+                                                </div>
+                                            </motion.div>
+                                        )}
                                         <p className="text-xs text-muted-foreground italic">Specify monthly range for full-time or hourly rate for freelance.</p>
                                     </div>
                                 </div>

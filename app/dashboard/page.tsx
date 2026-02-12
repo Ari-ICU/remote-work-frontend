@@ -17,7 +17,9 @@ import {
     Loader2,
     MoreHorizontal,
     Bookmark,
-    ChevronRight
+    ChevronRight,
+    Sparkles,
+    TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +50,7 @@ export default function DashboardPage() {
     const [user, setUser] = useState<any>(null);
     const [jobs, setJobs] = useState<any[]>([]);
     const [applications, setApplications] = useState<any[]>([]);
+    const [recommendations, setRecommendations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -61,12 +64,29 @@ export default function DashboardPage() {
 
             try {
                 // Fetch both - user might be both poster and applicant
-                const [myJobs, myApps] = await Promise.all([
+                const [myJobs, myApps, allJobs] = await Promise.all([
                     jobsService.getMyJobs().catch(() => []),
-                    applicationService.getMyApplications().catch(() => [])
+                    applicationService.getMyApplications().catch(() => []),
+                    jobsService.getAll().catch(() => [])
                 ]);
                 setJobs(myJobs || []);
                 setApplications(myApps || []);
+
+                // Simple recommendation logic for freelancers
+                if (currentUser.role === 'FREELANCER' && currentUser.skills) {
+                    const recommended = allJobs
+                        .filter((j: any) => !myApps.some((app: any) => app.jobId === j.id))
+                        .map((j: any) => {
+                            const score = j.tags?.filter((t: string) =>
+                                currentUser.skills.some((s: string) => s.toLowerCase() === t.toLowerCase())
+                            ).length || 0;
+                            return { ...j, matchScore: score };
+                        })
+                        .filter((j: any) => j.matchScore > 0)
+                        .sort((a: any, b: any) => b.matchScore - a.matchScore)
+                        .slice(0, 3);
+                    setRecommendations(recommended);
+                }
             } catch (error) {
                 console.error("Failed to load dashboard data", error);
             } finally {
@@ -384,6 +404,50 @@ export default function DashboardPage() {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Recommendations Section */}
+                            {recommendations.length > 0 && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                                            <Sparkles className="h-5 w-5 text-primary" />
+                                            Smart Recommended Matches
+                                        </h2>
+                                        <Link href="/jobs" className="text-xs font-bold text-primary hover:underline">
+                                            View Explorer
+                                        </Link>
+                                    </div>
+                                    <div className="grid gap-6 md:grid-cols-3">
+                                        {recommendations.map((job) => (
+                                            <motion.div
+                                                key={job.id}
+                                                whileHover={{ y: -5 }}
+                                                className="bg-card border border-border/50 hover:border-primary/30 rounded-2xl p-6 shadow-sm transition-all group"
+                                            >
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest bg-primary/5 text-primary border-primary/20">
+                                                        {job.category}
+                                                    </Badge>
+                                                    <div className="flex items-center gap-1 text-[10px] font-black text-emerald-600 uppercase">
+                                                        <TrendingUp className="h-3 w-3" />
+                                                        High Match
+                                                    </div>
+                                                </div>
+                                                <h3 className="font-bold mb-2 group-hover:text-primary transition-colors line-clamp-1">{job.title}</h3>
+                                                <p className="text-xs text-muted-foreground mb-6 flex items-center gap-1.5">
+                                                    <Briefcase className="h-3.5 w-3.5" />
+                                                    {job.company}
+                                                </p>
+                                                <Link href={`/jobs/${job.id}`}>
+                                                    <Button variant="outline" size="sm" className="w-full rounded-xl text-xs font-bold group-hover:bg-primary group-hover:text-white transition-all">
+                                                        Check It Out
+                                                    </Button>
+                                                </Link>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
