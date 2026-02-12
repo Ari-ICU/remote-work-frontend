@@ -29,6 +29,7 @@ import { jobsService } from "@/lib/services/jobs";
 import { applicationService } from "@/lib/services/application";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
     DropdownMenu,
@@ -297,11 +298,24 @@ export default function DashboardPage() {
                                                                                 {job.status === 'OPEN' ? (
                                                                                     <DropdownMenuItem
                                                                                         className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
-                                                                                        onClick={async () => {
-                                                                                            if (confirm('Are you sure you want to CLOSE this job? New applicants will be blocked.')) {
-                                                                                                await jobsService.update(job.id, { status: 'CANCELLED' });
-                                                                                                window.location.reload();
-                                                                                            }
+                                                                                        onClick={() => {
+                                                                                            toast("Close this job?", {
+                                                                                                description: "New applicants will be blocked. You can re-open it later.",
+                                                                                                action: {
+                                                                                                    label: "Close Job",
+                                                                                                    onClick: async () => {
+                                                                                                        toast.promise(jobsService.update(job.id, { status: 'CANCELLED' }), {
+                                                                                                            loading: 'Closing job...',
+                                                                                                            success: () => {
+                                                                                                                // Trigger a local refresh
+                                                                                                                jobsService.getMyJobs().then(setJobs);
+                                                                                                                return 'Job closed successfully.';
+                                                                                                            },
+                                                                                                            error: 'Failed to close job.'
+                                                                                                        });
+                                                                                                    }
+                                                                                                },
+                                                                                            });
                                                                                         }}
                                                                                     >
                                                                                         <XCircle className="mr-2 h-4 w-4" />
@@ -312,8 +326,14 @@ export default function DashboardPage() {
                                                                                         <DropdownMenuItem
                                                                                             className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 cursor-pointer"
                                                                                             onClick={async () => {
-                                                                                                await jobsService.update(job.id, { status: 'OPEN' });
-                                                                                                window.location.reload();
+                                                                                                toast.promise(jobsService.update(job.id, { status: 'OPEN' }), {
+                                                                                                    loading: 'Re-opening job...',
+                                                                                                    success: () => {
+                                                                                                        jobsService.getMyJobs().then(setJobs);
+                                                                                                        return 'Job re-opened!';
+                                                                                                    },
+                                                                                                    error: 'Failed to re-open job.'
+                                                                                                });
                                                                                             }}
                                                                                         >
                                                                                             <CheckCircle2 className="mr-2 h-4 w-4" />

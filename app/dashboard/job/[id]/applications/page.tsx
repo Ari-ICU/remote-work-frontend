@@ -4,15 +4,17 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, MessageSquare, User, Download, ExternalLink, Loader2, Star, CheckCircle2, XCircle, Sparkles, Wand2 } from "lucide-react";
+import { ArrowLeft, MessageSquare, User, Download, ExternalLink, Loader2, Star, CheckCircle2, XCircle, Sparkles, Wand2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/header";
 import { applicationService } from "@/lib/services/application";
 import { jobsService } from "@/lib/services/jobs";
+import { aiService } from "@/lib/services/ai";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function JobApplicationsPage() {
     const params = useParams();
@@ -20,28 +22,25 @@ export default function JobApplicationsPage() {
     const [job, setJob] = useState<any>(null);
     const [applications, setApplications] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [interviewQuestions, setInterviewQuestions] = useState<Record<string, string[]>>({});
+    const [isGeneratingQuestions, setIsGeneratingQuestions] = useState<Record<string, boolean>>({});
+
+    const loadData = async () => {
+        if (!params.id) return;
+        try {
+            const jobData = await jobsService.getById(params.id as string);
+            setJob(jobData);
+
+            const appsData = await applicationService.getForJob(params.id as string);
+            setApplications(appsData);
+        } catch (error) {
+            console.error("Failed to fetch applications:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const loadData = async () => {
-            if (!params.id) return;
-            try {
-                // Fetch job details first to ensure it matches
-                // Note: Frontend jobsService.getById returns mapped object, might need raw for some items,
-                // but checking title is enough for context.
-                const jobData = await jobsService.getById(params.id as string);
-                setJob(jobData);
-
-                const appsData = await applicationService.getForJob(params.id as string);
-                setApplications(appsData);
-            } catch (error) {
-                console.error("Failed to fetch applications:", error);
-                // Redirect if access denied or not found
-                // router.push("/dashboard");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         loadData();
     }, [params.id]);
 
@@ -52,24 +51,66 @@ export default function JobApplicationsPage() {
     };
 
     const handleAccept = async (appId: string) => {
-        if (!confirm('Are you sure you want to ACCEPT this application? This will hire the freelancer and close the job to other applicants.')) return;
-        try {
-            await applicationService.accept(appId);
-            window.location.reload();
-        } catch (error) {
-            console.error("Failed to accept application:", error);
-            alert('Failed to accept application. Please try again.');
-        }
+        toast("Accept this application?", {
+            description: "This will hire the freelancer and close the job to other applicants.",
+            action: {
+                label: "Hire Now",
+                onClick: () => {
+                    toast.promise(applicationService.accept(appId), {
+                        loading: 'Hiring freelancer...',
+                        success: () => {
+                            loadData();
+                            return 'Freelancer hired successfully!';
+                        },
+                        error: (err) => {
+                            console.error("Failed to accept application:", err);
+                            return 'Failed to accept application. Please try again.';
+                        }
+                    });
+                }
+            },
+        });
     };
 
     const handleReject = async (appId: string) => {
-        if (!confirm('Are you sure you want to REJECT this application?')) return;
+        toast("Reject this application?", {
+            action: {
+                label: "Reject",
+                onClick: () => {
+                    toast.promise(applicationService.reject(appId), {
+                        loading: 'Rejecting application...',
+                        success: () => {
+                            loadData();
+                            return 'Application rejected.';
+                        },
+                        error: (err) => {
+                            console.error("Failed to reject application:", err);
+                            return 'Failed to reject application.';
+                        }
+                    });
+                }
+            },
+        });
+    };
+
+    const handleGenerateQuestions = async (appId: string, applicant: any) => {
+        if (!job) return;
+
+        setIsGeneratingQuestions(prev => ({ ...prev, [appId]: true }));
         try {
-            await applicationService.reject(appId);
-            window.location.reload();
+            const data = await aiService.generateInterviewQuestions({
+                job_title: job.title,
+                job_description: job.description,
+                candidate_skills: applicant.skills || [],
+                candidate_bio: applicant.bio
+            });
+            setInterviewQuestions(prev => ({ ...prev, [appId]: data.questions }));
+            toast.success("Tailored interview questions generated!");
         } catch (error) {
-            console.error("Failed to reject application:", error);
-            alert('Failed to reject application. Please try again.');
+            console.error("Failed to generate questions:", error);
+            toast.error("Failed to generate questions. Please try again.");
+        } finally {
+            setIsGeneratingQuestions(prev => ({ ...prev, [appId]: false }));
         }
     };
 
@@ -195,7 +236,7 @@ export default function JobApplicationsPage() {
 
                                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                                 <span className="flex items-center gap-1">
-                                                    <Loader2 className="h-3 w-3 animate-none" /> {/* Placeholder for calendar icon if needed */}
+                                                    <Clock className="h-3 w-3" />
                                                     Applied {format(new Date(app.createdAt), "MMM d, yyyy")}
                                                 </span>
                                                 {app.status !== 'PENDING' && (
@@ -204,6 +245,52 @@ export default function JobApplicationsPage() {
                                                     } className="uppercase text-[10px] font-bold px-2 py-0">
                                                         {app.status}
                                                     </Badge>
+                                                )}
+                                            </div>
+                                            {/* AI Interview Questions Section */}
+                                            <div className="mt-6 border-t border-border/50 pt-6">
+                                                {!interviewQuestions[app.id] ? (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleGenerateQuestions(app.id, app.applicant)}
+                                                        disabled={isGeneratingQuestions[app.id]}
+                                                        className="text-xs font-bold text-primary hover:bg-primary/5 gap-2 rounded-xl h-9"
+                                                    >
+                                                        {isGeneratingQuestions[app.id] ? (
+                                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                        ) : (
+                                                            <Wand2 className="h-3.5 w-3.5" />
+                                                        )}
+                                                        Generate Smart Interview Questions
+                                                    </Button>
+                                                ) : (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, height: 0 }}
+                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                        className="space-y-4"
+                                                    >
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                                                <Sparkles className="h-3 w-3 text-primary" />
+                                                            </div>
+                                                            <h4 className="text-sm font-black text-foreground uppercase tracking-wider">AI Tailored Interview Guide</h4>
+                                                        </div>
+                                                        <div className="grid gap-3">
+                                                            {interviewQuestions[app.id].map((q, i) => (
+                                                                <motion.div
+                                                                    initial={{ opacity: 0, x: -10 }}
+                                                                    animate={{ opacity: 1, x: 0 }}
+                                                                    transition={{ delay: i * 0.1 }}
+                                                                    key={i}
+                                                                    className="p-4 rounded-xl bg-primary/5 border border-primary/10 text-sm font-medium text-foreground/80 flex gap-4"
+                                                                >
+                                                                    <span className="text-primary font-black opacity-30">0{i + 1}</span>
+                                                                    {q}
+                                                                </motion.div>
+                                                            ))}
+                                                        </div>
+                                                    </motion.div>
                                                 )}
                                             </div>
                                         </div>
@@ -253,7 +340,7 @@ export default function JobApplicationsPage() {
                         )}
                     </div>
                 </div>
-            </main >
-        </div >
+            </main>
+        </div>
     );
 }

@@ -22,6 +22,7 @@ import { format, isSameDay } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getCookie } from "@/lib/utils/cookies";
+import { toast } from "sonner";
 
 interface User {
     id: string;
@@ -253,7 +254,7 @@ export default function MessagesPage() {
             fetchConversations();
         } catch (error) {
             console.error("Failed to upload file", error);
-            alert("Failed to upload file. Please try again.");
+            toast.error("Failed to upload file. Please try again.");
         } finally {
             setIsSendingFile(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -294,20 +295,29 @@ export default function MessagesPage() {
 
     const handleDeleteMessage = (messageId: string) => {
         if (!socket) return;
-        if (confirm("Are you sure you want to delete this message?")) {
-            socket.emit("deleteMessage", { messageId });
-        }
+        toast("Delete this message?", {
+            action: {
+                label: "Delete",
+                onClick: () => socket.emit("deleteMessage", { messageId })
+            },
+        });
     };
 
     const handleDeleteConversation = (otherUserId: string, otherUserName: string) => {
         if (!socket) return;
-        if (confirm(`Delete conversation with ${otherUserName}? This cannot be undone.`)) {
-            socket.emit("deleteConversation", { otherUserId });
-            if (selectedUser?.id === otherUserId) {
-                setSelectedUser(null);
-                setMessages([]);
-            }
-        }
+        toast(`Delete conversation with ${otherUserName}?`, {
+            description: "This cannot be undone.",
+            action: {
+                label: "Delete All",
+                onClick: () => {
+                    socket.emit("deleteConversation", { otherUserId });
+                    if (selectedUser?.id === otherUserId) {
+                        setSelectedUser(null);
+                        setMessages([]);
+                    }
+                }
+            },
+        });
     };
 
     const formatMessageTime = (date: string) => {
@@ -483,7 +493,7 @@ export default function MessagesPage() {
                                             variant="outline"
                                             size="icon"
                                             className="h-9 w-9 rounded-xl text-primary border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all active:scale-95"
-                                            onClick={() => alert(`Simulating call to ${selectedUser.firstName}... Functionality coming soon.`)}
+                                            onClick={() => toast.info(`Simulating call to ${selectedUser.firstName}...`, { description: "Voice calling functionality coming soon!" })}
                                         >
                                             <Phone className="h-[18px] w-[18px]" />
                                         </Button>
@@ -491,7 +501,7 @@ export default function MessagesPage() {
                                             variant="outline"
                                             size="icon"
                                             className="h-9 w-9 rounded-xl text-primary border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all active:scale-95"
-                                            onClick={() => alert(`Simulating video call to ${selectedUser.firstName}... Functionality coming soon.`)}
+                                            onClick={() => toast.info(`Simulating video call to ${selectedUser.firstName}...`, { description: "Video calling functionality coming soon!" })}
                                         >
                                             <Video className="h-[18px] w-[18px]" />
                                         </Button>

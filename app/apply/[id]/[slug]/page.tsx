@@ -88,7 +88,7 @@ export default function ApplyPage() {
             setIsSuccess(true);
         } catch (err) {
             console.error("Failed to submit application:", err);
-            alert("Something went wrong. Please try again.");
+            toast.error("Something went wrong. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
