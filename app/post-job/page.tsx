@@ -14,7 +14,8 @@ import {
     Sparkles,
     Info,
     Calendar,
-    Briefcase
+    Briefcase,
+    Wand2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,8 @@ import { authService } from "@/lib/services/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import api from "@/lib/api";
+import { aiService } from "@/lib/services/ai";
+import { toast } from "sonner";
 
 interface Plan {
     id: string;
@@ -50,6 +53,9 @@ export default function PostJobPage() {
     const [activeStep, setActiveStep] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const [plans, setPlans] = useState<Plan[]>([]);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
     const router = useRouter();
     const searchParams = useSearchParams();
     const plan = searchParams.get("plan") || "free";
@@ -131,6 +137,29 @@ export default function PostJobPage() {
             observers.forEach(o => o.disconnect());
         };
     }, [plans]); // Re-run when plans load as content height changes
+
+    const handleGenerateAIDescription = async () => {
+        if (!title || !category) {
+            toast.error("Please provide a title and category first!");
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const response = await aiService.generateDescription(title, category);
+            setDescription(response.description);
+            if (response.responsibilities) setResponsibilities(response.responsibilities);
+            if (response.requirements) setRequirements(response.requirements);
+            toast.success("AI Content generated!", {
+                description: "Review and refine the generated details."
+            });
+        } catch (err) {
+            console.error("Failed to generate AI description:", err);
+            toast.error("AI Generation failed. Please try again.");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -354,7 +383,7 @@ export default function PostJobPage() {
                                 <div className="grid gap-8 md:grid-cols-2">
                                     <div className="space-y-3">
                                         <Label htmlFor="title" className="text-sm font-semibold">Listing Title</Label>
-                                        <Input id="title" name="title" placeholder="e.g. Senior Product Designer" required className="h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
+                                        <Input id="title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Senior Product Designer" required className="h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
                                     </div>
                                     <div className="space-y-3">
                                         <Label htmlFor="category" className="text-sm font-semibold">Work Category</Label>
@@ -460,13 +489,32 @@ export default function PostJobPage() {
 
                             {/* Section 3: Detailed Desc */}
                             <div className="space-y-8 scroll-mt-32" ref={sectionRefs[3]}>
-                                <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-                                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                        <Sparkles className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-bold text-foreground">Detailed Description</h2>
-                                        <p className="text-sm text-muted-foreground">Highlight the exciting parts of the role</p>
+                                <div>
+                                    <div className="flex items-center justify-between gap-3 pb-4 border-b border-border/50">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                                <Sparkles className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-foreground">Detailed Description</h2>
+                                                <p className="text-sm text-muted-foreground">Highlight the exciting parts of the role</p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-9 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary hover:bg-primary/5 gap-2 rounded-xl border border-primary/20"
+                                            onClick={handleGenerateAIDescription}
+                                            disabled={isGenerating}
+                                        >
+                                            {isGenerating ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Wand2 className="h-4 w-4" />
+                                            )}
+                                            {isGenerating ? "AI Thinking..." : "Generate with AI"}
+                                        </Button>
                                     </div>
                                 </div>
 
@@ -476,6 +524,8 @@ export default function PostJobPage() {
                                         <Textarea
                                             id="description"
                                             name="description"
+                                            value={description}
+                                            onChange={(e) => setDescription(e.target.value)}
                                             placeholder="Introduce your company and the core mission of this role..."
                                             className="min-h-[150px] rounded-2xl bg-muted/30 border-border/50 focus:bg-background transition-all p-6 resize-none leading-relaxed"
                                             required

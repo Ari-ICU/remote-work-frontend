@@ -18,7 +18,9 @@ import {
     Linkedin,
     Globe,
     Clock,
-    Check
+    Check,
+    Sparkles,
+    Wand2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +34,8 @@ import { authService } from "@/lib/services/auth";
 import { fadeIn, scaleUp } from "@/lib/animations";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { aiService } from "@/lib/services/ai";
+import { toast } from "sonner";
 
 export default function ApplyPage() {
     const params = useParams();
@@ -41,6 +45,8 @@ export default function ApplyPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [coverLetter, setCoverLetter] = useState("");
 
     useEffect(() => {
         const fetchJob = async () => {
@@ -85,6 +91,34 @@ export default function ApplyPage() {
             alert("Something went wrong. Please try again.");
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleGenerateAIProposal = async () => {
+        if (!job) return;
+        const user = authService.getCurrentUser();
+        if (!user) {
+            toast.error("Please login to use AI features");
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const response = await aiService.generateProposal({
+                job_title: job.title,
+                job_description: job.description || "",
+                user_skills: user.skills || [],
+                user_bio: user.bio || ""
+            });
+            setCoverLetter(response.proposal);
+            toast.success("AI Proposal drafted!", {
+                description: "You can now review and edit the generated cover letter."
+            });
+        } catch (err) {
+            console.error("Failed to generate AI proposal:", err);
+            toast.error("AI Generation failed. Please try again later.");
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -266,12 +300,31 @@ export default function ApplyPage() {
                                                     <Input id="phone" name="phone" type="tel" placeholder="+855 12 345 678" required className="rounded-xl" />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="coverLetter">Cover Letter</Label>
+                                                    <div className="flex items-center justify-between">
+                                                        <Label htmlFor="coverLetter">Cover Letter</Label>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary hover:bg-primary/5 gap-1.5 rounded-lg"
+                                                            onClick={handleGenerateAIProposal}
+                                                            disabled={isGenerating}
+                                                        >
+                                                            {isGenerating ? (
+                                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                                            ) : (
+                                                                <Wand2 className="h-3 w-3" />
+                                                            )}
+                                                            {isGenerating ? "Generating..." : "Draft with AI"}
+                                                        </Button>
+                                                    </div>
                                                     <Textarea
                                                         id="coverLetter"
                                                         name="coverLetter"
                                                         placeholder="Tell the employer why you're a good fit..."
-                                                        className="rounded-xl min-h-[120px]"
+                                                        className="rounded-xl min-h-[120px] transition-all focus:ring-2 focus:ring-primary/20"
+                                                        value={coverLetter}
+                                                        onChange={(e) => setCoverLetter(e.target.value)}
                                                         required
                                                     />
                                                 </div>

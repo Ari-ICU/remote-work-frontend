@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, MessageSquare, User, Download, ExternalLink, Loader2, Star, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, MessageSquare, User, Download, ExternalLink, Loader2, Star, CheckCircle2, XCircle, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Header } from "@/components/header";
 import { applicationService } from "@/lib/services/application";
 import { jobsService } from "@/lib/services/jobs";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function JobApplicationsPage() {
     const params = useParams();
@@ -142,10 +143,26 @@ export default function JobApplicationsPage() {
                                                             <h3 className="text-lg font-bold tracking-tight text-foreground">
                                                                 {app.applicant.firstName} {app.applicant.lastName}
                                                             </h3>
-                                                            {app.aiMatchScore && app.aiMatchScore > 80 && (
-                                                                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1 px-2 py-0.5">
-                                                                    <Star className="w-3 h-3 fill-emerald-700" />
-                                                                    {app.aiMatchScore}% Match
+                                                            {app.aiMatchScore ? (
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    className={cn(
+                                                                        "gap-1 px-2 py-0.5 border",
+                                                                        app.aiMatchScore >= 80 ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                                                            app.aiMatchScore >= 50 ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                                                                "bg-muted text-muted-foreground border-border"
+                                                                    )}
+                                                                >
+                                                                    <Sparkles className={cn(
+                                                                        "w-3 h-3",
+                                                                        app.aiMatchScore >= 80 ? "fill-emerald-700" :
+                                                                            app.aiMatchScore >= 50 ? "fill-amber-700" : ""
+                                                                    )} />
+                                                                    {app.aiMatchScore}% AI Match
+                                                                </Badge>
+                                                            ) : (
+                                                                <Badge variant="outline" className="text-[10px] text-muted-foreground border-dashed">
+                                                                    No score yet
                                                                 </Badge>
                                                             )}
                                                         </div>
