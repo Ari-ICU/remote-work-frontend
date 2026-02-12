@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/components/ui/use-mobile";
 import { CommandMenu } from "@/components/admin/command-menu";
+import Image from "next/image";
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/admin", description: "Platform performance & stats" },
@@ -147,9 +148,15 @@ function AdminLayoutContent({
                         <motion.div
                             whileHover={{ rotate: 5, scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-[0_0_20px_color-mix(in_srgb,var(--primary),transparent_60%)]"
+                            className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center overflow-hidden"
                         >
-                            <ShieldCheck className="w-6 h-6 text-black" />
+                            <Image
+                                src="/placeholder-logo.svg"
+                                alt="KhmerWork Logo"
+                                width={32}
+                                height={32}
+                                className="w-8 h-8"
+                            />
                         </motion.div>
                         <AnimatePresence>
                             {isSidebarOpen && (
@@ -267,8 +274,14 @@ function AdminLayoutContent({
                                     <div className="h-full flex flex-col">
                                         <div className="p-8 flex items-center justify-between">
                                             <Link href="/admin" className="flex items-center gap-3" onClick={() => setIsMobileMenuOpen(false)}>
-                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                                                    <ShieldCheck className="w-6 h-6 text-black" />
+                                                <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center overflow-hidden">
+                                                    <Image
+                                                        src="/placeholder-logo.svg"
+                                                        alt="KhmerWork Logo"
+                                                        width={32}
+                                                        height={32}
+                                                        className="w-8 h-8"
+                                                    />
                                                 </div>
                                                 <div>
                                                     <span className="text-xl font-bold tracking-tight text-white">KhmerWork</span>

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Briefcase, Facebook, Twitter, Linkedin, Instagram, Mail, Send } from "lucide-react";
+import { Facebook, Twitter, Linkedin, Instagram, Mail, Send } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
 
 const footerLinks = {
   forJobSeekers: [
@@ -78,8 +79,14 @@ export function Footer() {
           {/* Brand & Description */}
           <div className="col-span-1 lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary transition-transform group-hover:rotate-6 group-hover:scale-110">
-                <Briefcase className="h-5 w-5 text-primary-foreground" />
+              <div className="relative flex items-center justify-center transition-transform group-hover:scale-105">
+                <Image
+                  src="/placeholder-logo.svg"
+                  alt="KhmerWork Logo"
+                  width={36}
+                  height={36}
+                  className="h-9 w-auto"
+                />
               </div>
               <span className="text-xl font-bold text-foreground transition-colors group-hover:text-primary">
                 KhmerWork

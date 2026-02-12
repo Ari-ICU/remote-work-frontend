@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Briefcase, User, LogOut, ShieldCheck, MessageSquare, Bookmark } from "lucide-react";
+import { Menu, X, User, LogOut, ShieldCheck, MessageSquare, Bookmark } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { authService } from "@/lib/services/auth";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 import { useTranslations } from "next-intl";
 import { SettingsControl } from "@/components/settings-control";
@@ -102,13 +103,20 @@ export function Header() {
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2 group">
             <motion.div
-              whileHover={{ rotate: 10, scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative flex items-center justify-center"
             >
-              <Briefcase className="h-5 w-5 text-primary-foreground" />
+              <Image
+                src="/placeholder-logo.svg"
+                alt="KhmerWork Logo"
+                width={36}
+                height={36}
+                className="h-9 w-auto"
+                priority
+              />
             </motion.div>
-            <span className="text-xl font-bold text-foreground">KhmerWork</span>
+            <span className="text-xl font-bold text-foreground tracking-tight">KhmerWork</span>
           </Link>
         </div>
 
