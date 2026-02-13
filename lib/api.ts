@@ -1,12 +1,12 @@
 import axios from 'axios';
 import { loadingStore } from './loading-store';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const api = axios.create({
     baseURL: API_URL,
     withCredentials: true,
-    timeout: 10000, // 10 seconds timeout
+    timeout: 10000,
 });
 
 // Helper to track if we should show loading for this request
@@ -60,14 +60,41 @@ api.interceptors.response.use(
 
             try {
                 // Attempt to refresh token
-                await api.post('/auth/refresh');
+                // Get refresh token from localStorage if available
+                let refreshToken = null;
+                if (typeof window !== 'undefined') {
+                    refreshToken = localStorage.getItem('refreshToken');
+                }
+
+                // If no refresh token is available, redirect to login
+                if (!refreshToken) {
+                    console.warn('No refresh token available in localStorage');
+                    if (typeof window !== 'undefined') {
+                        localStorage.removeItem('user');
+                        localStorage.removeItem('refreshToken');
+                        window.dispatchEvent(new CustomEvent('auth-unauthorized'));
+                    }
+                    return Promise.reject(new Error('No refresh token available'));
+                }
+
+                const response = await api.post('/auth/refresh', { refreshToken });
+
+                // Update localStorage with new tokens
+                if (response.data.refreshToken && typeof window !== 'undefined') {
+                    localStorage.setItem('refreshToken', response.data.refreshToken);
+                }
+                if (response.data.user && typeof window !== 'undefined') {
+                    localStorage.setItem('user', JSON.stringify(response.data.user));
+                }
 
                 // Retry original request (cookies will be attached automatically)
                 return api(originalRequest);
             } catch (refreshError) {
                 // Refresh failed
+                console.error('Token refresh failed:', refreshError);
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('user');
+                    localStorage.removeItem('refreshToken');
                     window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 }
                 return Promise.reject(refreshError);
