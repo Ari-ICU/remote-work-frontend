@@ -50,7 +50,8 @@ api.interceptors.response.use(
                 const isAuthPage = ['/login', '/register'].some(p => window.location.pathname.startsWith(p));
                 const isHome = window.location.pathname === '/';
                 if (!isAuthPage && !isHome) {
-                    window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+                    // Start redirect flow only if we are truly logged out
+                    // window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
                 }
             }
         }
