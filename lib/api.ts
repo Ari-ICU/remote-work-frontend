@@ -6,6 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const api = axios.create({
     baseURL: API_URL,
     withCredentials: true,
+    timeout: 10000, // 10 seconds timeout
 });
 
 // Helper to track if we should show loading for this request

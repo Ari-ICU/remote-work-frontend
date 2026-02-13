@@ -55,33 +55,50 @@ export default function DashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        let isMounted = true;
         const init = async () => {
-            console.log("Dashboard init started");
-            const currentUser = authService.getCurrentUser();
-            if (!currentUser) {
-                console.log("No user found, redirecting to login");
-                router.push("/login?redirect=/dashboard");
-                return;
-            }
-            console.log("Current user:", currentUser.email);
-            setUser(currentUser);
+            console.log("Dashboard: Starting initialization...");
 
             try {
-                console.log("Fetching dashboard data...");
+                const currentUser = authService.getCurrentUser();
+
+                if (!currentUser) {
+                    console.log("Dashboard: No user found, redirecting to login");
+                    if (isMounted) router.push("/login?redirect=/dashboard");
+                    return;
+                }
+
+                console.log("Dashboard: User authenticated:", currentUser.email);
+                if (isMounted) setUser(currentUser);
+
+                console.log("Dashboard: Fetching data from services...");
                 // Fetch both - user might be both poster and applicant
                 const [myJobs, myApps, allJobs] = await Promise.all([
-                    jobsService.getMyJobs().then(res => { console.log("Got my jobs"); return res; }).catch((err) => { console.error("Error fetching my jobs:", err); return []; }),
-                    applicationService.getMyApplications().then(res => { console.log("Got my apps"); return res; }).catch((err) => { console.error("Error fetching my apps:", err); return []; }),
-                    jobsService.getAll().then(res => { console.log("Got all jobs"); return res; }).catch((err) => { console.error("Error fetching all jobs:", err); return []; })
+                    jobsService.getMyJobs()
+                        .then(res => { console.log("Dashboard: My jobs loaded"); return res; })
+                        .catch((err) => { console.error("Dashboard: Error fetching my jobs:", err); return []; }),
+                    applicationService.getMyApplications()
+                        .then(res => { console.log("Dashboard: My apps loaded"); return res; })
+                        .catch((err) => { console.error("Dashboard: Error fetching my apps:", err); return []; }),
+                    jobsService.getAll()
+                        .then(res => { console.log("Dashboard: All jobs loaded"); return res; })
+                        .catch((err) => { console.error("Dashboard: Error fetching all jobs:", err); return []; })
                 ]);
-                console.log("Data fetch complete", { jobsCount: myJobs.length, appsCount: myApps.length });
+
+                if (!isMounted) return;
+
+                console.log("Dashboard: Data fetch complete", {
+                    jobsCount: myJobs?.length || 0,
+                    appsCount: myApps?.length || 0
+                });
+
                 setJobs(myJobs || []);
                 setApplications(myApps || []);
 
                 // Simple recommendation logic for freelancers
                 if (currentUser.role === 'FREELANCER' && currentUser.skills) {
-                    const recommended = allJobs
-                        .filter((j: any) => !myApps.some((app: any) => app.jobId === j.id))
+                    const recommended = (allJobs || [])
+                        .filter((j: any) => !(myApps || []).some((app: any) => app.jobId === j.id))
                         .map((j: any) => {
                             const score = j.tags?.filter((t: string) =>
                                 currentUser.skills.some((s: string) => s.toLowerCase() === t.toLowerCase())
@@ -94,13 +111,30 @@ export default function DashboardPage() {
                     setRecommendations(recommended);
                 }
             } catch (error) {
-                console.error("Failed to load dashboard data", error);
+                console.error("Dashboard: Critical initialization error", error);
+                if (isMounted) toast.error("Failed to load some dashboard data. Please try refreshing.");
             } finally {
-                setIsLoading(false);
+                if (isMounted) {
+                    console.log("Dashboard: Setting isLoading to false");
+                    setIsLoading(false);
+                }
             }
         };
 
+        // Safety timeout to ensure loading spinner doesn't stay forever
+        const safetyTimeout = setTimeout(() => {
+            if (isMounted && isLoading) {
+                console.warn("Dashboard: Safety timeout reached, forcing isLoading to false");
+                setIsLoading(false);
+            }
+        }, 8000); // 8 seconds safety window
+
         init();
+
+        return () => {
+            isMounted = false;
+            clearTimeout(safetyTimeout);
+        };
     }, [router]);
 
     const safeDate = (dateString: string | Date) => {
