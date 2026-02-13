@@ -10,6 +10,7 @@ export const authService = {
 
             if (response.data.accessToken) {
                 localStorage.setItem('accessToken', response.data.accessToken);
+                document.cookie = `token=${response.data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
             }
         }
         return response.data;
@@ -22,6 +23,7 @@ export const authService = {
         }
         if (response.data.accessToken) {
             localStorage.setItem('accessToken', response.data.accessToken);
+            document.cookie = `token=${response.data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
         }
         return response.data;
     },
@@ -34,6 +36,7 @@ export const authService = {
         }
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
+        document.cookie = `token=; path=/; max-age=0`;
     },
 
     getCurrentUser: () => {
