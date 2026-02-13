@@ -75,8 +75,8 @@ export function Header() {
       fetchUnread();
 
       // Poll every 10 seconds for updates when not on messages page
-      const interval = setInterval(fetchUnread, 10000);
-      return () => clearInterval(interval);
+      // const interval = setInterval(fetchUnread, 10000);
+      // return () => clearInterval(interval);
     } else {
       setUnreadCount(0);
     }
