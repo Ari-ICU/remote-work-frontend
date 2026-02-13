@@ -21,6 +21,14 @@ api.interceptors.request.use(
         if (shouldShowLoading(config)) {
             loadingStore.setIsLoading(true);
         }
+
+        // Add authorization header if token exists
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+        }
         return config;
     },
     (error) => {
@@ -46,6 +54,7 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('user');
+                localStorage.removeItem('accessToken');
                 window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 const isAuthPage = ['/login', '/register'].some(p => window.location.pathname.startsWith(p));
                 const isHome = window.location.pathname === '/';

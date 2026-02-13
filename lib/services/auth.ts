@@ -7,6 +7,10 @@ export const authService = {
             // Check if response contains nested user object (common in JWT auth)
             const userToStore = response.data.user || response.data;
             localStorage.setItem('user', JSON.stringify(userToStore));
+
+            if (response.data.accessToken) {
+                localStorage.setItem('accessToken', response.data.accessToken);
+            }
         }
         return response.data;
     },
@@ -15,6 +19,9 @@ export const authService = {
         const response = await api.post('/auth/login', credentials);
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        if (response.data.accessToken) {
+            localStorage.setItem('accessToken', response.data.accessToken);
         }
         return response.data;
     },
@@ -26,6 +33,7 @@ export const authService = {
             console.error("Logout error:", error);
         }
         localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
     },
 
     getCurrentUser: () => {
