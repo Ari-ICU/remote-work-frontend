@@ -94,8 +94,21 @@ export const adminService = {
         return response.data;
     },
 
+
     deletePricingPlan: async (id: string) => {
         const response = await api.delete(`/pricing/admin/plans/${id}`);
         return response.data;
+    },
+
+
+    getPlatformSettings: async () => {
+        const response = await api.get('/admin/settings');
+        return response.data;
+    },
+
+    updatePlatformSettings: async (data: any) => {
+        const response = await api.patch('/admin/settings', data);
+        return response.data;
     }
 };
+

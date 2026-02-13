@@ -45,22 +45,58 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+
 import { motion } from "framer-motion";
 
 export default function AdminSettings() {
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
+    const [settings, setSettings] = useState<any>({
+        stripeKey: '',
+        openaiKey: '',
+        paymentAccount: '',
+        environment: 'development'
+    });
 
-    const handleSave = () => {
+    useEffect(() => {
+        fetchSettings();
+    }, []);
+
+    const fetchSettings = async () => {
+        try {
+            const data = await adminService.getPlatformSettings();
+            setSettings(data);
+        } catch (error) {
+            toast.error("Failed to fetch system protocols");
+        } finally {
+            setFetching(false);
+        }
+    };
+
+    const handleSave = async () => {
         setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            await adminService.updatePlatformSettings(settings);
             toast.success("Platform Protocol Updated", {
                 description: "New configuration settings are now propagate across all nodes.",
                 style: { background: '#111', color: '#fff', border: '1px solid color-mix(in srgb, var(--primary), transparent 80%)' }
             });
-        }, 1500);
+        } catch (error) {
+            toast.error("Failed to update protocols");
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (fetching) return (
+        <div className="p-12 flex flex-col items-center justify-center space-y-4">
+            <RefreshCw className="h-8 w-8 text-primary animate-spin" />
+            <p className="text-sm font-medium text-gray-400 animate-pulse uppercase tracking-widest">Accessing Secure Vault...</p>
+        </div>
+    );
+
 
     return (
         <div className="space-y-10 pb-20 selection:bg-primary/30">
@@ -292,19 +328,65 @@ export default function AdminSettings() {
                             </CardHeader>
                             <CardContent className="p-8 space-y-8">
                                 <div className="space-y-4">
-                                    <Label htmlFor="stripe-key" className="text-xs font-black uppercase tracking-widest text-gray-500">Stripe Secret Matrix</Label>
+                                    <Label htmlFor="stripe-key" className="text-xs font-black uppercase tracking-widest text-gray-500">Stripe Secret Matrix (Production Only)</Label>
                                     <div className="relative group/key">
-                                        <Input id="stripe-key" type="password" value="sk_test_••••••••••••••••••••" readOnly className="h-14 bg-black/40 border-white/10 rounded-xl pr-32 font-mono group-hover/key:border-primary/30 transition-all" />
-                                        <Button variant="ghost" className="absolute right-2 top-2 h-10 text-[10px] font-black uppercase text-gray-500 hover:text-white">Rotate Key</Button>
+                                        <Input
+                                            id="stripe-key"
+                                            type="password"
+                                            value={settings.stripeKey}
+                                            onChange={(e) => setSettings({ ...settings, stripeKey: e.target.value })}
+                                            className="h-14 bg-black/40 border-white/10 rounded-xl pr-32 font-mono group-hover/key:border-primary/30 transition-all font-bold"
+                                        />
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 px-3 py-1 bg-white/5 rounded-lg text-[10px] font-bold text-gray-400 uppercase">Secure</div>
                                     </div>
+                                    <p className="text-[10px] text-gray-500 italic mt-1 uppercase tracking-wider">Used for processing employer subscriptions and freelancer payouts.</p>
+                                </div>
+                                <div className="space-y-4">
+                                    <Label htmlFor="payment-account" className="text-xs font-black uppercase tracking-widest text-gray-500">Primary Payment Account ID</Label>
+                                    <div className="relative group/key">
+                                        <Input
+                                            id="payment-account"
+                                            type="text"
+                                            value={settings.paymentAccount}
+                                            onChange={(e) => setSettings({ ...settings, paymentAccount: e.target.value })}
+                                            placeholder="acct_xxxxxxxxxxxxxx"
+                                            className="h-14 bg-black/40 border-white/10 rounded-xl font-bold group-hover/key:border-primary/30 transition-all"
+                                        />
+                                        <Key className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 italic mt-1 uppercase tracking-wider">The central Stripe account ID where all platform platform commissions are aggregated.</p>
                                 </div>
                                 <div className="space-y-4">
                                     <Label htmlFor="openai-key" className="text-xs font-black uppercase tracking-widest text-gray-500">OpenAI Neural Processor (Match Engine)</Label>
                                     <div className="relative group/key">
-                                        <Input id="openai-key" type="password" value="sk_test_••••••••••••••••••••" readOnly className="h-14 bg-black/40 border-white/10 rounded-xl pr-32 font-mono group-hover/key:border-primary/30 transition-all" />
-                                        <Button variant="ghost" className="absolute right-2 top-2 h-10 text-[10px] font-black uppercase text-gray-500 hover:text-white">Rotate Key</Button>
+                                        <Input
+                                            id="openai-key"
+                                            type="password"
+                                            value={settings.openaiKey}
+                                            onChange={(e) => setSettings({ ...settings, openaiKey: e.target.value })}
+                                            className="h-14 bg-black/40 border-white/10 rounded-xl pr-32 font-mono group-hover/key:border-primary/30 transition-all font-bold"
+                                        />
+                                        <Cpu className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 italic mt-1 uppercase tracking-wider">Powers the AI Job Matching and Resume Parsing sub-systems.</p>
+                                </div>
+                                <div className="pt-6 border-t border-white/5">
+                                    <div className="flex items-center justify-between p-6 bg-primary/5 rounded-2xl border border-primary/20">
+                                        <div className="flex gap-4 items-center">
+                                            <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
+                                                <Zap className="w-6 h-6 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black uppercase tracking-wider">Active Environment</p>
+                                                <p className="text-[10px] text-primary/80 font-bold uppercase">{settings.environment} Mode</p>
+                                            </div>
+                                        </div>
+                                        <Badge className={`bg-black/40 border-primary/30 ${settings.environment === 'production' ? 'text-emerald-400' : 'text-primary'} font-black text-[10px] px-3 py-1.5 rounded-lg`}>
+                                            {settings.environment.toUpperCase()}
+                                        </Badge>
                                     </div>
                                 </div>
+
                             </CardContent>
                         </Card>
                     </TabsContent>
