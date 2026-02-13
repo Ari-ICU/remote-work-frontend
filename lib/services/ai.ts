@@ -2,7 +2,11 @@ import api from '../api';
 
 export const aiService = {
     chat: async (message: string) => {
-        const response = await api.post('/ai/chat', { message });
+        const response = await api.post('/ai/chat', { message }, {
+            headers: {
+                'x-skip-auth': 'true'
+            }
+        });
         return response.data;
     },
 

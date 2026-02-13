@@ -47,10 +47,16 @@ api.interceptors.response.use(
 
         // Handle 401 Unauthorized errors
         if (error.response?.status === 401 && !originalRequest._retry) {
+            // Skip auth refresh for public endpoints (e.g., AI chat without login)
+            if (originalRequest.headers?.['x-skip-auth'] === 'true') {
+                return Promise.reject(error);
+            }
+
             // Prevent infinite loops if refresh endpoint itself fails
             if (originalRequest.url?.includes('/auth/refresh')) {
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('user');
+                    localStorage.removeItem('refreshToken');
                     window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 }
                 return Promise.reject(error);
