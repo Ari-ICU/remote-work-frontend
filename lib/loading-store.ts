@@ -1,16 +1,22 @@
 type Listener = (loading: boolean) => void;
 
 class LoadingStore {
-    private isLoading: boolean = false;
+    private activeRequests: number = 0;
     private listeners: Set<Listener> = new Set();
     private timeoutId: NodeJS.Timeout | null = null;
 
     getState() {
-        return this.isLoading;
+        return this.activeRequests > 0;
     }
 
     setIsLoading(loading: boolean) {
-        this.isLoading = loading;
+        if (loading) {
+            this.activeRequests++;
+        } else {
+            this.activeRequests = Math.max(0, this.activeRequests - 1);
+        }
+
+        const isCurrentlyLoading = this.activeRequests > 0;
 
         // Clear any existing safety timeout
         if (this.timeoutId) {
@@ -18,14 +24,21 @@ class LoadingStore {
             this.timeoutId = null;
         }
 
-        // Set a safety timeout to stop loading after 10 seconds
-        if (loading) {
+        // Set a safety timeout to stop loading if it gets stuck for 15 seconds
+        if (isCurrentlyLoading) {
             this.timeoutId = setTimeout(() => {
-                this.setIsLoading(false);
-            }, 10000);
+                console.warn("Loading state stuck for 15 seconds, forcing stop.");
+                this.activeRequests = 0;
+                this.notify();
+            }, 15000);
         }
 
-        this.listeners.forEach(listener => listener(this.isLoading));
+        this.notify();
+    }
+
+    private notify() {
+        const state = this.getState();
+        this.listeners.forEach(listener => listener(state));
     }
 
     subscribe(listener: Listener) {

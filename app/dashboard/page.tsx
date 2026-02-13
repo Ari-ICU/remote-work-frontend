@@ -56,20 +56,25 @@ export default function DashboardPage() {
 
     useEffect(() => {
         const init = async () => {
+            console.log("Dashboard init started");
             const currentUser = authService.getCurrentUser();
             if (!currentUser) {
+                console.log("No user found, redirecting to login");
                 router.push("/login?redirect=/dashboard");
                 return;
             }
+            console.log("Current user:", currentUser.email);
             setUser(currentUser);
 
             try {
+                console.log("Fetching dashboard data...");
                 // Fetch both - user might be both poster and applicant
                 const [myJobs, myApps, allJobs] = await Promise.all([
-                    jobsService.getMyJobs().catch(() => []),
-                    applicationService.getMyApplications().catch(() => []),
-                    jobsService.getAll().catch(() => [])
+                    jobsService.getMyJobs().then(res => { console.log("Got my jobs"); return res; }).catch((err) => { console.error("Error fetching my jobs:", err); return []; }),
+                    applicationService.getMyApplications().then(res => { console.log("Got my apps"); return res; }).catch((err) => { console.error("Error fetching my apps:", err); return []; }),
+                    jobsService.getAll().then(res => { console.log("Got all jobs"); return res; }).catch((err) => { console.error("Error fetching all jobs:", err); return []; })
                 ]);
+                console.log("Data fetch complete", { jobsCount: myJobs.length, appsCount: myApps.length });
                 setJobs(myJobs || []);
                 setApplications(myApps || []);
 

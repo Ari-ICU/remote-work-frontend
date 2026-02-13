@@ -42,12 +42,16 @@ export function Header() {
     if (user) {
       const fetchUnread = async () => {
         try {
-          const count = await messagingService.getUnreadCount();
+          const count = await messagingService.getUnreadCount({
+            headers: { 'x-skip-loading': 'true' }
+          });
           setUnreadCount(count);
         } catch (err) {
           console.error("Failed to fetch unread count", err);
         }
       };
+
+
       fetchUnread();
 
       // Poll every 10 seconds for updates when not on messages page

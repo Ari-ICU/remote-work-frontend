@@ -1,5 +1,4 @@
 import axios from 'axios';
-
 import { loadingStore } from './loading-store';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -9,18 +8,21 @@ const api = axios.create({
     withCredentials: true,
 });
 
+// Helper to track if we should show loading for this request
+const shouldShowLoading = (config: any) => {
+    if (config.headers?.['x-skip-loading'] === 'true') return false;
+    return true;
+};
+
 // Add request interceptor
 api.interceptors.request.use(
     (config) => {
-        // Only show loader if explicitly requested or for non-GET requests by default
-        // Or just show it for everything for now to demonstrate global loading
-        if (config.headers?.['x-skip-loading'] !== 'true') {
+        if (shouldShowLoading(config)) {
             loadingStore.setIsLoading(true);
         }
         return config;
     },
     (error) => {
-        loadingStore.setIsLoading(false);
         return Promise.reject(error);
     }
 );
@@ -28,18 +30,31 @@ api.interceptors.request.use(
 // Add response interceptor
 api.interceptors.response.use(
     (response) => {
-        loadingStore.setIsLoading(false);
+        if (shouldShowLoading(response.config)) {
+            loadingStore.setIsLoading(false);
+        }
         return response;
     },
     (error) => {
-        loadingStore.setIsLoading(false);
+        if (error.config && shouldShowLoading(error.config)) {
+            loadingStore.setIsLoading(false);
+        } else if (!error.config) {
+            loadingStore.setIsLoading(false);
+        }
+
         if (error.response?.status === 401) {
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('user');
+                const isAuthPage = ['/login', '/register'].some(p => window.location.pathname.startsWith(p));
+                const isHome = window.location.pathname === '/';
+                if (!isAuthPage && !isHome) {
+                    window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+                }
             }
         }
         return Promise.reject(error);
     }
 );
+
 
 export default api;

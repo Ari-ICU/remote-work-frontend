@@ -6,10 +6,11 @@ export const messagingService = {
         return response.data;
     },
 
-    getUnreadCount: async () => {
-        const response = await api.get('/messaging/unread-count');
+    getUnreadCount: async (config?: any) => {
+        const response = await api.get('/messaging/unread-count', config);
         return response.data;
     },
+
 
     getMessages: async (otherUserId: string) => {
         const response = await api.get(`/messaging/${otherUserId}`);
