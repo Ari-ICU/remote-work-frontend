@@ -60,12 +60,19 @@ export default function DashboardPage() {
             console.log("Dashboard: Starting initialization...");
 
             try {
-                const currentUser = authService.getCurrentUser();
+                let currentUser = authService.getCurrentUser();
 
                 if (!currentUser) {
-                    console.log("Dashboard: No user found, redirecting to login");
-                    if (isMounted) router.push("/login?redirect=/dashboard");
-                    return;
+                    console.log("Dashboard: No user in storage, attempting refresh...");
+                    try {
+                        const res = await authService.refresh();
+                        currentUser = res.user;
+                        console.log("Dashboard: Refresh successful, user restored");
+                    } catch (e) {
+                        console.log("Dashboard: Refresh failed, redirecting to login");
+                        if (isMounted) router.push("/login?redirect=/dashboard");
+                        return;
+                    }
                 }
 
                 console.log("Dashboard: User authenticated:", currentUser.email);

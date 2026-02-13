@@ -74,5 +74,27 @@ export const authService = {
             }
         }
         return null;
+    },
+
+    refresh: async () => {
+        const response = await api.post('/auth/refresh');
+        if (response.data.user) {
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+
+            if (response.data.refreshToken) {
+                localStorage.setItem('refreshToken', response.data.refreshToken);
+            }
+
+            // Set cookies for middleware
+            if (response.data.accessToken) {
+                document.cookie = `token=${response.data.accessToken}; path=/; max-age=900; SameSite=Lax`; // 15m
+            }
+            if (response.data.refreshToken) {
+                document.cookie = `refresh_token=${response.data.refreshToken}; path=/; max-age=604800; SameSite=Lax`; // 7d
+            }
+
+            window.dispatchEvent(new CustomEvent("auth-update"));
+        }
+        return response.data;
     }
 };
