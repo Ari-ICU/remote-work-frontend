@@ -33,8 +33,16 @@ export function Header() {
       setUser(null);
     };
 
+    const handleAuthUpdate = () => {
+      console.log("Header: updating auth state");
+      setUser(authService.getCurrentUser());
+      setSavedJobsCount(wishlistService.getSavedJobIds().length);
+    };
+
     window.addEventListener("scroll", handleScroll);
     window.addEventListener("auth-unauthorized", handleAuthError);
+    window.addEventListener("auth-update", handleAuthUpdate);
+    window.addEventListener("storage", handleAuthUpdate);
 
     // Check for user on mount
     setUser(authService.getCurrentUser());
@@ -45,6 +53,8 @@ export function Header() {
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("auth-unauthorized", handleAuthError);
+      window.removeEventListener("auth-update", handleAuthUpdate);
+      window.removeEventListener("storage", handleAuthUpdate);
     };
   }, []);
 

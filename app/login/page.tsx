@@ -30,12 +30,16 @@ function LoginContent() {
 
         try {
             await authService.login({ email, password });
+
+            // Force UI update
+            window.dispatchEvent(new Event("storage"));
+            window.dispatchEvent(new CustomEvent("auth-update"));
+
             router.push(redirect);
             router.refresh();
         } catch (err: any) {
             console.error("Login failed:", err);
             setError(err.response?.data?.message || "Invalid email or password. Please try again.");
-        } finally {
             setIsLoading(false);
         }
     };
