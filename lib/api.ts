@@ -46,6 +46,7 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('user');
+                window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 const isAuthPage = ['/login', '/register'].some(p => window.location.pathname.startsWith(p));
                 const isHome = window.location.pathname === '/';
                 if (!isAuthPage && !isHome) {

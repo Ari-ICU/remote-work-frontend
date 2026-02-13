@@ -27,7 +27,14 @@ export function Header() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
+
+    const handleAuthError = () => {
+      console.log("Header: Auth error detected, clearing user state");
+      setUser(null);
+    };
+
     window.addEventListener("scroll", handleScroll);
+    window.addEventListener("auth-unauthorized", handleAuthError);
 
     // Check for user on mount
     setUser(authService.getCurrentUser());
@@ -35,7 +42,10 @@ export function Header() {
     // Initialize saved jobs count
     setSavedJobsCount(wishlistService.getSavedJobIds().length);
 
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("auth-unauthorized", handleAuthError);
+    };
   }, []);
 
   useEffect(() => {
