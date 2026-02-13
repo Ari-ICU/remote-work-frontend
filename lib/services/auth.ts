@@ -52,6 +52,7 @@ export const authService = {
             console.error("Logout error:", error);
         }
         localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
 
         // Clear middleware cookies
         document.cookie = `token=; path=/; max-age=0`;
