@@ -21,14 +21,6 @@ api.interceptors.request.use(
         if (shouldShowLoading(config)) {
             loadingStore.setIsLoading(true);
         }
-
-        // Add authorization header if token exists
-        if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-        }
         return config;
     },
     (error) => {
@@ -44,24 +36,41 @@ api.interceptors.response.use(
         }
         return response;
     },
-    (error) => {
+    async (error) => {
+        const originalRequest = error.config;
+
         if (error.config && shouldShowLoading(error.config)) {
             loadingStore.setIsLoading(false);
         } else if (!error.config) {
             loadingStore.setIsLoading(false);
         }
 
-        if (error.response?.status === 401) {
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem('user');
-                localStorage.removeItem('accessToken');
-                window.dispatchEvent(new CustomEvent('auth-unauthorized'));
-                const isAuthPage = ['/login', '/register'].some(p => window.location.pathname.startsWith(p));
-                const isHome = window.location.pathname === '/';
-                if (!isAuthPage && !isHome) {
-                    // Start redirect flow only if we are truly logged out
-                    // window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+        // Handle 401 Unauthorized errors
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            // Prevent infinite loops if refresh endpoint itself fails
+            if (originalRequest.url?.includes('/auth/refresh')) {
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('user');
+                    window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 }
+                return Promise.reject(error);
+            }
+
+            originalRequest._retry = true;
+
+            try {
+                // Attempt to refresh token
+                await api.post('/auth/refresh');
+
+                // Retry original request (cookies will be attached automatically)
+                return api(originalRequest);
+            } catch (refreshError) {
+                // Refresh failed
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('user');
+                    window.dispatchEvent(new CustomEvent('auth-unauthorized'));
+                }
+                return Promise.reject(refreshError);
             }
         }
         return Promise.reject(error);

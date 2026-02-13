@@ -3,15 +3,9 @@ import api from '../api';
 export const authService = {
     register: async (userData: any) => {
         const response = await api.post('/auth/register', userData);
-        if (response.data) {
-            // Check if response contains nested user object (common in JWT auth)
-            const userToStore = response.data.user || response.data;
-            localStorage.setItem('user', JSON.stringify(userToStore));
-
-            if (response.data.accessToken) {
-                localStorage.setItem('accessToken', response.data.accessToken);
-                document.cookie = `token=${response.data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
-            }
+        if (response.data.user) {
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            window.dispatchEvent(new CustomEvent("auth-update"));
         }
         return response.data;
     },
@@ -20,10 +14,7 @@ export const authService = {
         const response = await api.post('/auth/login', credentials);
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
-        }
-        if (response.data.accessToken) {
-            localStorage.setItem('accessToken', response.data.accessToken);
-            document.cookie = `token=${response.data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+            window.dispatchEvent(new CustomEvent("auth-update"));
         }
         return response.data;
     },
@@ -35,8 +26,8 @@ export const authService = {
             console.error("Logout error:", error);
         }
         localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
-        document.cookie = `token=; path=/; max-age=0`;
+        window.dispatchEvent(new CustomEvent("auth-update"));
+        window.dispatchEvent(new CustomEvent("auth-unauthorized"));
     },
 
     getCurrentUser: () => {
