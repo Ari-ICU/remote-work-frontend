@@ -10,8 +10,6 @@ export default function AuthCallback() {
 
     useEffect(() => {
         const userStr = searchParams.get("user");
-        const accessToken = searchParams.get("accessToken");
-        const refreshToken = searchParams.get("refreshToken");
 
         if (userStr) {
             try {
@@ -19,15 +17,7 @@ export default function AuthCallback() {
                 const user = decodeURIComponent(userStr);
                 localStorage.setItem("user", user);
 
-                // Store tokens if present
-                if (accessToken) {
-                    localStorage.setItem("accessToken", accessToken);
-                    document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax`;
-                }
-                if (refreshToken) {
-                    localStorage.setItem("refreshToken", refreshToken);
-                    document.cookie = `refresh_token=${refreshToken}; path=/; max-age=604800; SameSite=Lax`;
-                }
+                // Tokens are now stored safely in HttpOnly cookies by the backend
 
                 // Force UI update
                 window.dispatchEvent(new CustomEvent("auth-update"));
