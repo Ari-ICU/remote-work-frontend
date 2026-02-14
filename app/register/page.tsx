@@ -23,17 +23,17 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { API_URL } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
+import { toast } from "sonner";
+
 export default function RegisterPage() {
     const { register } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [role, setRole] = useState<"FREELANCER" | "EMPLOYER">("FREELANCER");
-    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setError(null);
         setIsLoading(true);
 
         const formData = new FormData(e.currentTarget);
@@ -54,10 +54,15 @@ export default function RegisterPage() {
                 lastName,
                 role
             });
+            toast.success("Account created successfully", {
+                description: "Welcome to the platform! Please sign in to continue or you'll be redirected.",
+            });
             setIsSuccess(true);
         } catch (err: any) {
             console.error("Registration failed:", err);
-            setError(err.response?.data?.message || "Registration failed. Please try again.");
+            toast.error("Registration failed", {
+                description: err.response?.data?.message || "Please check your details and try again.",
+            });
         } finally {
             setIsLoading(false);
         }
@@ -154,15 +159,6 @@ export default function RegisterPage() {
                             </p>
                         </div>
 
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                className="mb-6 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium"
-                            >
-                                {error}
-                            </motion.div>
-                        )}
 
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="grid grid-cols-2 gap-3 mb-2">

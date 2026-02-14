@@ -250,6 +250,9 @@ export default function PostJobPage() {
 
             // For free plan, post immediately
             await jobsService.create(jobData);
+            toast.success("Job Published!", {
+                description: "Your listing is now live in the marketplace."
+            });
             setIsSubmitted(true);
         } catch (err: any) {
             const responseData = err.response?.data;

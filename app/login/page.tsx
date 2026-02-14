@@ -12,19 +12,18 @@ import { authService } from "@/lib/services/auth";
 import { useAuth } from "@/components/providers/auth-provider";
 import { API_URL } from "@/lib/api";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 function LoginContent() {
     const { login } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirect = searchParams.get("redirect") || "/";
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setError(null);
         setIsLoading(true);
 
         const formData = new FormData(e.currentTarget);
@@ -33,12 +32,16 @@ function LoginContent() {
 
         try {
             await login({ email, password });
-
+            toast.success("Welcome back!", {
+                description: "You have successfully signed in.",
+            });
             router.push(redirect);
             router.refresh();
         } catch (err: any) {
             console.error("Login failed:", err);
-            setError(err.response?.data?.message || "Invalid email or password. Please try again.");
+            toast.error("Authentication failed", {
+                description: err.response?.data?.message || "Invalid email or password. Please try again.",
+            });
             setIsLoading(false);
         }
     };
@@ -103,15 +106,6 @@ function LoginContent() {
                             </p>
                         </div>
 
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                className="mb-6 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium"
-                            >
-                                {error}
-                            </motion.div>
-                        )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">

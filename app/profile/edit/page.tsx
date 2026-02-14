@@ -767,8 +767,8 @@ export default function EditProfilePage() {
                 </Dialog>
             </main>
 
-            <Toaster position="top-center" />
             <Footer />
         </div>
     );
 }
+

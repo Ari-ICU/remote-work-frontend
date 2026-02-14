@@ -69,7 +69,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { ThemeProvider } from "@/components/theme-provider"
 import { getUserLocale } from "@/lib/locale"
-import { Toaster } from 'sonner'
+import { Toaster } from "@/components/ui/sonner"
 import { LoadingProvider } from "@/components/providers/loading-provider"
 import { AuthProvider } from "@/components/providers/auth-provider"
 
@@ -135,10 +135,11 @@ export default async function RootLayout({
               <AiChatBot />
             </AuthProvider>
             <Analytics />
-            <Toaster position="top-right" richColors closeButton />
+            <Toaster richColors closeButton />
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>
     </html>
   )
 }
+

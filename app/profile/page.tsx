@@ -365,8 +365,8 @@ export default function ProfilePage() {
                 </div>
             </main>
 
-            <Toaster position="top-center" />
             <Footer />
         </div>
     );
 }
+
