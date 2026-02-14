@@ -26,12 +26,12 @@ export const aiService = {
     },
 
     predictSalary: async (data: { skills: string[]; experience_level: string; location?: string; job_type?: string }) => {
-        const response = await api.post('/ai/predict-salary', data);
+        const response = await api.post('/ai/predict-salary', data, { timeout: 30000 });
         return response.data;
     },
 
     generateInterviewQuestions: async (data: { job_title: string; job_description: string; candidate_skills: string[]; candidate_bio?: string }) => {
-        const response = await api.post('/ai/interview-questions', data);
+        const response = await api.post('/ai/interview-questions', data, { timeout: 30000 });
         return response.data;
     }
 };
