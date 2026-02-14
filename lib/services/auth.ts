@@ -2,6 +2,10 @@ import api from '../api';
 
 export const authService = {
     register: async (userData: any) => {
+        // Clear potential stale data
+        localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
+
         const response = await api.post('/auth/register', userData);
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -20,6 +24,10 @@ export const authService = {
     },
 
     login: async (credentials: any) => {
+        // Clear potential stale data
+        localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
+
         const response = await api.post('/auth/login', credentials);
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -39,7 +47,8 @@ export const authService = {
 
     logout: async () => {
         try {
-            await api.post('/auth/logout');
+            // Use x-skip-auth to avoid triggering a refresh loop during logout
+            await api.post('/auth/logout', {}, { headers: { 'x-skip-auth': 'true' } });
         } catch (error) {
             console.error("Logout error:", error);
         }
@@ -47,11 +56,12 @@ export const authService = {
         localStorage.removeItem('refreshToken');
 
         // Clear the auth cookie
-        document.cookie = `is_authenticated=; path=/; max-age=0`;
+        document.cookie = `is_authenticated=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 
         window.dispatchEvent(new CustomEvent("auth-update"));
         window.dispatchEvent(new CustomEvent("auth-unauthorized"));
     },
+
 
     getCurrentUser: () => {
         if (typeof window !== 'undefined') {

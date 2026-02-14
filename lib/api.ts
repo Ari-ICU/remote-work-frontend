@@ -37,6 +37,21 @@ api.interceptors.request.use(
     }
 );
 
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+
+    failedQueue = [];
+};
+
 // Add response interceptor
 api.interceptors.response.use(
     (response) => {
@@ -56,7 +71,7 @@ api.interceptors.response.use(
 
         // Handle 401 Unauthorized errors
         if (error.response?.status === 401 && !originalRequest._retry) {
-            // Skip auth refresh for public endpoints (e.g., AI chat without login)
+            // Skip auth refresh for public endpoints
             if (originalRequest.headers?.['x-skip-auth'] === 'true') {
                 return Promise.reject(error);
             }
@@ -65,12 +80,26 @@ api.interceptors.response.use(
             if (originalRequest.url?.includes('/auth/refresh')) {
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('user');
+                    localStorage.removeItem('refreshToken');
                     window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 }
                 return Promise.reject(error);
             }
 
+            if (isRefreshing) {
+                return new Promise(function (resolve, reject) {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then(() => {
+                        return api(originalRequest);
+                    })
+                    .catch((err) => {
+                        return Promise.reject(err);
+                    });
+            }
+
             originalRequest._retry = true;
+            isRefreshing = true;
 
             try {
                 // Refresh tokens via cookies OR body fallback
@@ -84,30 +113,30 @@ api.interceptors.response.use(
 
                 console.log('✅ [Auth] Token refresh successful');
 
-                // If we got a new refresh token in the body, save it
-                if (refreshResponse.data.refreshToken) {
-                    localStorage.setItem('refreshToken', refreshResponse.data.refreshToken);
-                }
+                const { accessToken, refreshToken, user } = refreshResponse.data;
 
-                // If we got user data, update it
-                if (refreshResponse.data.user) {
-                    localStorage.setItem('user', JSON.stringify(refreshResponse.data.user));
-                }
+                // Update storage
+                if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+                if (user) localStorage.setItem('user', JSON.stringify(user));
 
-                // Retry original request (cookies are now updated)
+                processQueue(null, accessToken);
                 return api(originalRequest);
             } catch (refreshError: any) {
-                // Refresh failed
                 console.error('❌ [Auth Error] Token refresh failed:', {
                     status: refreshError.response?.status,
-                    message: refreshError.response?.data?.message || refreshError.message,
-                    url: refreshError.config?.url
+                    message: refreshError.response?.data?.message || refreshError.message
                 });
+
+                processQueue(refreshError, null);
+
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('user');
+                    localStorage.removeItem('refreshToken');
                     window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 }
                 return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
             }
         }
         return Promise.reject(error);
