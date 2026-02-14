@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl";
 import { SettingsControl } from "@/components/settings-control";
 import { messagingService } from "@/lib/services/messaging";
 import { wishlistService } from "@/lib/services/wishlist";
+import { API_URL } from "@/lib/api";
 
 export function Header() {
   const t = useTranslations("common");
@@ -83,7 +84,7 @@ export function Header() {
   const getAvatarUrl = (path: string) => {
     if (!path) return null;
     if (path.startsWith('http')) return path;
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const baseUrl = API_URL;
     return `${baseUrl}${path}`;
   };
 

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { fadeIn, scaleUp } from "@/lib/animations";
 import { authService } from "@/lib/services/auth";
 import { useAuth } from "@/components/providers/auth-provider";
+import { API_URL } from "@/lib/api";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function LoginContent() {
@@ -184,7 +185,7 @@ function LoginContent() {
                             <Button
                                 variant="outline"
                                 className="h-11 bg-background/50 border-border hover:bg-muted group/social"
-                                onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/google`}
+                                onClick={() => window.location.href = `${API_URL}/auth/google`}
                             >
                                 <Chrome className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
                                 Google
@@ -192,7 +193,7 @@ function LoginContent() {
                             <Button
                                 variant="outline"
                                 className="h-11 bg-background/50 border-border hover:bg-muted group/social"
-                                onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/github`}
+                                onClick={() => window.location.href = `${API_URL}/auth/github`}
                             >
                                 <Github className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
                                 GitHub

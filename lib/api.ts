@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { loadingStore } from './loading-store';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 console.log(`🚀 [API] Using URL: ${API_URL}`);
 
