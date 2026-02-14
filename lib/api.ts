@@ -73,14 +73,36 @@ api.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                // Refresh tokens via cookies
-                await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+                // Refresh tokens via cookies OR body fallback
+                console.log('🔄 [Auth] Attempting token refresh...');
+                const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+
+                const refreshResponse = await axios.post(`${API_URL}/auth/refresh`,
+                    { refreshToken: storedRefreshToken },
+                    { withCredentials: true }
+                );
+
+                console.log('✅ [Auth] Token refresh successful');
+
+                // If we got a new refresh token in the body, save it
+                if (refreshResponse.data.refreshToken) {
+                    localStorage.setItem('refreshToken', refreshResponse.data.refreshToken);
+                }
+
+                // If we got user data, update it
+                if (refreshResponse.data.user) {
+                    localStorage.setItem('user', JSON.stringify(refreshResponse.data.user));
+                }
 
                 // Retry original request (cookies are now updated)
                 return api(originalRequest);
-            } catch (refreshError) {
+            } catch (refreshError: any) {
                 // Refresh failed
-                console.error('Token refresh failed:', refreshError);
+                console.error('❌ [Auth Error] Token refresh failed:', {
+                    status: refreshError.response?.status,
+                    message: refreshError.response?.data?.message || refreshError.message,
+                    url: refreshError.config?.url
+                });
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('user');
                     window.dispatchEvent(new CustomEvent('auth-unauthorized'));

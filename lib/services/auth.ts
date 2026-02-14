@@ -5,6 +5,9 @@ export const authService = {
         const response = await api.post('/auth/register', userData);
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
+            if (response.data.refreshToken) {
+                localStorage.setItem('refreshToken', response.data.refreshToken);
+            }
 
             // Set a non-HttpOnly cookie for the Middleware to see
             const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
@@ -20,6 +23,9 @@ export const authService = {
         const response = await api.post('/auth/login', credentials);
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
+            if (response.data.refreshToken) {
+                localStorage.setItem('refreshToken', response.data.refreshToken);
+            }
 
             // Set a non-HttpOnly cookie for the Middleware to see
             const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
@@ -38,6 +44,7 @@ export const authService = {
             console.error("Logout error:", error);
         }
         localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
 
         // Clear the auth cookie
         document.cookie = `is_authenticated=; path=/; max-age=0`;
@@ -61,10 +68,14 @@ export const authService = {
     },
 
     refresh: async () => {
-        const response = await api.post('/auth/refresh', {});
+        const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+        const response = await api.post('/auth/refresh', { refreshToken: storedRefreshToken });
 
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
+            if (response.data.refreshToken) {
+                localStorage.setItem('refreshToken', response.data.refreshToken);
+            }
 
             // Re-sync cookie
             const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';

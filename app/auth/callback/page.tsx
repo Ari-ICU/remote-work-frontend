@@ -19,6 +19,11 @@ export default function AuthCallback() {
                 const user = decodeURIComponent(userStr);
                 localStorage.setItem("user", user);
 
+                // Store tokens if available
+                if (refreshToken) {
+                    localStorage.setItem("refreshToken", refreshToken);
+                }
+
                 // Force UI update
                 window.dispatchEvent(new CustomEvent("auth-update"));
 
