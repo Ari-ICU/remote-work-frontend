@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut, ShieldCheck, MessageSquare, Bookmark } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { authService } from "@/lib/services/auth";
+import { useAuth } from "@/components/providers/auth-provider";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -16,9 +17,9 @@ import { wishlistService } from "@/lib/services/wishlist";
 
 export function Header() {
   const t = useTranslations("common");
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [savedJobsCount, setSavedJobsCount] = useState(0);
   const router = useRouter();
@@ -28,33 +29,13 @@ export function Header() {
       setScrolled(window.scrollY > 10);
     };
 
-    const handleAuthError = () => {
-      console.log("Header: Auth error detected, clearing user state");
-      setUser(null);
-    };
-
-    const handleAuthUpdate = () => {
-      console.log("Header: updating auth state");
-      setUser(authService.getCurrentUser());
-      setSavedJobsCount(wishlistService.getSavedJobIds().length);
-    };
-
     window.addEventListener("scroll", handleScroll);
-    window.addEventListener("auth-unauthorized", handleAuthError);
-    window.addEventListener("auth-update", handleAuthUpdate);
-    window.addEventListener("storage", handleAuthUpdate);
 
-    // Check for user on mount
-    setUser(authService.getCurrentUser());
-
-    // Initialize saved jobs count
+    // Initial check for wishlist count
     setSavedJobsCount(wishlistService.getSavedJobIds().length);
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("auth-unauthorized", handleAuthError);
-      window.removeEventListener("auth-update", handleAuthUpdate);
-      window.removeEventListener("storage", handleAuthUpdate);
     };
   }, []);
 
@@ -71,12 +52,7 @@ export function Header() {
         }
       };
 
-
       fetchUnread();
-
-      // Poll every 10 seconds for updates when not on messages page
-      // const interval = setInterval(fetchUnread, 10000);
-      // return () => clearInterval(interval);
     } else {
       setUnreadCount(0);
     }
@@ -88,13 +64,9 @@ export function Header() {
       setSavedJobsCount(wishlistService.getSavedJobIds().length);
     };
 
-    // Initial check when user changes
     updateSavedCount();
 
-    // Listen for storage changes (cross-tab sync)
     window.addEventListener("storage", updateSavedCount);
-
-    // Custom event for same-tab updates
     window.addEventListener("wishlistUpdated", updateSavedCount);
 
     return () => {
@@ -103,9 +75,8 @@ export function Header() {
     };
   }, [user]);
 
-  const handleLogout = () => {
-    authService.logout();
-    setUser(null);
+  const handleLogout = async () => {
+    await logout();
     router.push("/");
   };
 

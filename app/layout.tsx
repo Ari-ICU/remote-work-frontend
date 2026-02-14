@@ -71,6 +71,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { getUserLocale } from "@/lib/locale"
 import { Toaster } from 'sonner'
 import { LoadingProvider } from "@/components/providers/loading-provider"
+import { AuthProvider } from "@/components/providers/auth-provider"
 
 export default async function RootLayout({
   children,
@@ -127,10 +128,12 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <LoadingProvider>
-              {children}
-            </LoadingProvider>
-            <AiChatBot />
+            <AuthProvider>
+              <LoadingProvider>
+                {children}
+              </LoadingProvider>
+              <AiChatBot />
+            </AuthProvider>
             <Analytics />
             <Toaster position="top-right" richColors closeButton />
           </ThemeProvider>

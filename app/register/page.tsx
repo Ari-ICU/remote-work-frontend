@@ -19,9 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fadeIn, scaleUp } from "@/lib/animations";
 import { authService } from "@/lib/services/auth";
+import { useAuth } from "@/components/providers/auth-provider";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
+    const { register } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [role, setRole] = useState<"FREELANCER" | "EMPLOYER">("FREELANCER");
@@ -44,7 +46,7 @@ export default function RegisterPage() {
         const lastName = nameParts.slice(1).join(" ") || " ";
 
         try {
-            await authService.register({
+            await register({
                 email,
                 password,
                 firstName,

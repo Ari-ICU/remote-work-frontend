@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/header";
 import { authService } from "@/lib/services/auth";
+import { useAuth } from "@/components/providers/auth-provider";
 import { jobsService } from "@/lib/services/jobs";
 import { applicationService } from "@/lib/services/application";
 import { format } from "date-fns";
@@ -48,27 +49,29 @@ import {
 
 export default function DashboardPage() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
+    const { user, isLoading: authLoading, refresh } = useAuth();
     const [jobs, setJobs] = useState<any[]>([]);
     const [applications, setApplications] = useState<any[]>([]);
     const [recommendations, setRecommendations] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isDataLoading, setIsDataLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         let isMounted = true;
         const init = async () => {
+            if (authLoading) return;
+
             console.log("Dashboard: Starting initialization...");
-            setIsLoading(true);
+            setIsDataLoading(true);
             setError(null);
 
             try {
-                let currentUser = authService.getCurrentUser();
+                let currentUser = user;
 
                 if (!currentUser) {
-                    console.log("Dashboard: No user in storage, attempting refresh...");
+                    console.log("Dashboard: No user in context, attempting refresh...");
                     try {
-                        const res = await authService.refresh();
+                        const res = await refresh();
                         currentUser = res.user;
                         console.log("Dashboard: Refresh successful, user restored");
                     } catch (e) {
@@ -79,7 +82,6 @@ export default function DashboardPage() {
                 }
 
                 if (!isMounted) return;
-                setUser(currentUser);
 
                 console.log("Dashboard: Fetching data from services...");
                 // Fetch both - user might be both poster and applicant
@@ -133,17 +135,19 @@ export default function DashboardPage() {
                 }
             } finally {
                 if (isMounted) {
-                    setIsLoading(false);
+                    setIsDataLoading(false);
                 }
             }
         };
 
-        init();
+        if (!authLoading) {
+            init();
+        }
 
         return () => {
             isMounted = false;
         };
-    }, [router]);
+    }, [router, authLoading, user, refresh]);
 
     const safeDate = (dateString: string | Date) => {
         try {
@@ -155,7 +159,7 @@ export default function DashboardPage() {
         }
     };
 
-    if (isLoading) {
+    if (authLoading || isDataLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen gap-4">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />

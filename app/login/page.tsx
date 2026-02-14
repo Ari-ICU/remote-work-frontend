@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fadeIn, scaleUp } from "@/lib/animations";
 import { authService } from "@/lib/services/auth";
+import { useAuth } from "@/components/providers/auth-provider";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function LoginContent() {
+    const { login } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,11 +31,7 @@ function LoginContent() {
         const password = formData.get("password") as string;
 
         try {
-            await authService.login({ email, password });
-
-            // Force UI update
-            window.dispatchEvent(new Event("storage"));
-            window.dispatchEvent(new CustomEvent("auth-update"));
+            await login({ email, password });
 
             router.push(redirect);
             router.refresh();

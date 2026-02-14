@@ -33,18 +33,21 @@ import { authService } from "@/lib/services/auth";
 import api from "@/lib/api";
 import { fadeIn, staggerContainer } from "@/lib/animations";
 import { Toaster } from "@/components/ui/sonner";
+import { useAuth } from "@/components/providers/auth-provider";
 import { User as UserType, Experience, Education } from "@/types/user";
 
 export default function ProfilePage() {
     const router = useRouter();
+    const { user: authUser, isLoading: authLoading, logout } = useAuth();
     const [user, setUser] = useState<UserType | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isProfileLoading, setIsProfileLoading] = useState(true);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
-            const currentUser = authService.getCurrentUser();
-            if (!currentUser) {
-                setIsLoading(false);
+            if (authLoading) return;
+
+            if (!authUser) {
+                setIsProfileLoading(false);
                 router.push("/login?redirect=/profile");
                 return;
             }
@@ -54,24 +57,26 @@ export default function ProfilePage() {
                 if (response.data) {
                     setUser(response.data);
                 } else {
-                    authService.logout();
+                    await logout();
                     router.push("/login?redirect=/profile");
                 }
             } catch (error: any) {
                 console.error("Failed to fetch user profile:", error);
                 if (error.response?.status === 401 || error.response?.status === 404) {
-                    authService.logout();
+                    await logout();
                     router.push("/login?redirect=/profile");
                 } else {
-                    setUser(currentUser);
+                    setUser(authUser as any);
                 }
             } finally {
-                setIsLoading(false);
+                setIsProfileLoading(false);
             }
         };
 
-        fetchUserProfile();
-    }, [router]);
+        if (!authLoading) {
+            fetchUserProfile();
+        }
+    }, [router, authLoading, authUser, logout]);
 
     const getAvatarUrl = (path: string) => {
         if (!path) return null;
@@ -80,7 +85,7 @@ export default function ProfilePage() {
         return `${baseUrl}${path}`;
     };
 
-    if (isLoading) {
+    if (authLoading || isProfileLoading) {
         return (
             <div className="min-h-screen flex flex-col">
                 <Header />
