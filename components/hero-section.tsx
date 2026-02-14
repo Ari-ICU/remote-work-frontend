@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin, Briefcase, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { authService } from "@/lib/services/auth";
+import { useAuth } from "@/components/providers/auth-provider";
+import Link from "next/link";
 
 interface HeroSectionProps {
   onSearch?: (query: string, location: string) => void;
@@ -14,11 +16,7 @@ interface HeroSectionProps {
 export function HeroSection({ onSearch }: HeroSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    setUser(authService.getCurrentUser());
-  }, []);
+  const { user } = useAuth();
 
   const handleSearch = () => {
     onSearch?.(searchQuery, location);
@@ -110,14 +108,27 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
                 className="border-0 bg-transparent pl-10 shadow-none focus-visible:ring-0 text-base"
               />
             </div>
-            <Button
-              size="lg"
-              className="w-full sm:w-auto px-8 transition-transform hover:scale-105 active:scale-95"
-              onClick={handleSearch}
-            >
-              <Search className="mr-2 h-4 w-4" />
-              Search
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto px-8 transition-transform hover:scale-105 active:scale-95"
+                onClick={handleSearch}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                Search
+              </Button>
+              {user && (
+                <Link href="/dashboard" className="w-full sm:w-auto">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto px-8 transition-transform hover:scale-105 active:scale-95 border-primary text-primary hover:bg-primary/5"
+                  >
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         </motion.div>
 
