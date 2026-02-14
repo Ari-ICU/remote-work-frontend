@@ -28,14 +28,6 @@ api.interceptors.request.use(
             loadingStore.setIsLoading(true);
         }
 
-        // Attach Authorization header if token exists in localStorage
-        if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('accessToken');
-            if (token && token !== 'undefined' && token !== 'null') {
-                config.headers['Authorization'] = `Bearer ${token}`;
-            }
-        }
-
         return config;
     },
     (error) => {
@@ -71,8 +63,6 @@ api.interceptors.response.use(
             if (originalRequest.url?.includes('/auth/refresh')) {
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('user');
-                    localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('accessToken');
                     window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 }
                 return Promise.reject(error);
@@ -81,45 +71,16 @@ api.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                // Attempt to refresh token using localStorage as fallback for cookies
-                let refreshToken = null;
-                if (typeof window !== 'undefined') {
-                    refreshToken = localStorage.getItem('refreshToken');
-                }
+                // Refresh tokens via cookies
+                await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
 
-                const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken }, { withCredentials: true });
-
-                const { accessToken, refreshToken: newRefreshToken, user } = response.data;
-
-                // Update localStorage with new tokens
-                if (typeof window !== 'undefined') {
-                    if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
-                    if (accessToken) localStorage.setItem('accessToken', accessToken);
-                    if (user) localStorage.setItem('user', JSON.stringify(user));
-
-                    // Keep cookies updated for middleware
-                    if (accessToken) {
-                        document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax`;
-                    }
-                    if (newRefreshToken) {
-                        document.cookie = `refresh_token=${newRefreshToken}; path=/; max-age=604800; SameSite=Lax`;
-                    }
-                }
-
-                // Update the Authorization header for the original request
-                if (accessToken) {
-                    originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
-                }
-
-                // Retry original request
+                // Retry original request (cookies are now updated)
                 return api(originalRequest);
             } catch (refreshError) {
                 // Refresh failed
                 console.error('Token refresh failed:', refreshError);
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('user');
-                    localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('accessToken');
                     window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 }
                 return Promise.reject(refreshError);

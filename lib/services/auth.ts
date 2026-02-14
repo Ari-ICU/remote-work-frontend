@@ -5,21 +5,6 @@ export const authService = {
         const response = await api.post('/auth/register', userData);
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            const { accessToken, refreshToken } = response.data;
-
-            const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
-            const secureFlag = isSecure ? '; Secure' : '';
-
-            if (accessToken) {
-                localStorage.setItem('accessToken', accessToken);
-                document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax${secureFlag}`;
-                document.cookie = `is_authenticated=true; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
-            }
-            if (refreshToken) {
-                localStorage.setItem('refreshToken', refreshToken);
-                document.cookie = `refresh_token=${refreshToken}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
-            }
-
             window.dispatchEvent(new CustomEvent("auth-update"));
         }
         return response.data;
@@ -29,21 +14,6 @@ export const authService = {
         const response = await api.post('/auth/login', credentials);
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            const { accessToken, refreshToken } = response.data;
-
-            const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
-            const secureFlag = isSecure ? '; Secure' : '';
-
-            if (accessToken) {
-                localStorage.setItem('accessToken', accessToken);
-                document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax${secureFlag}`;
-                document.cookie = `is_authenticated=true; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
-            }
-            if (refreshToken) {
-                localStorage.setItem('refreshToken', refreshToken);
-                document.cookie = `refresh_token=${refreshToken}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
-            }
-
             window.dispatchEvent(new CustomEvent("auth-update"));
         }
         return response.data;
@@ -56,13 +26,6 @@ export const authService = {
             console.error("Logout error:", error);
         }
         localStorage.removeItem('user');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('accessToken');
-
-        // Clear tokens from cookies too just in case
-        document.cookie = `token=; path=/; max-age=0`;
-        document.cookie = `refresh_token=; path=/; max-age=0`;
-        document.cookie = `is_authenticated=; path=/; max-age=0`;
 
         window.dispatchEvent(new CustomEvent("auth-update"));
         window.dispatchEvent(new CustomEvent("auth-unauthorized"));
@@ -83,26 +46,10 @@ export const authService = {
     },
 
     refresh: async () => {
-        const refreshToken = localStorage.getItem('refreshToken');
-        const response = await api.post('/auth/refresh', { refreshToken });
+        const response = await api.post('/auth/refresh', {});
 
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            const { accessToken, refreshToken: newRefreshToken } = response.data;
-
-            const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
-            const secureFlag = isSecure ? '; Secure' : '';
-
-            if (accessToken) {
-                localStorage.setItem('accessToken', accessToken);
-                document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax${secureFlag}`;
-                document.cookie = `is_authenticated=true; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
-            }
-            if (newRefreshToken) {
-                localStorage.setItem('refreshToken', newRefreshToken);
-                document.cookie = `refresh_token=${newRefreshToken}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
-            }
-
             window.dispatchEvent(new CustomEvent("auth-update"));
         }
         return response.data;
