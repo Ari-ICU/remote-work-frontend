@@ -3,6 +3,12 @@ import { loadingStore } from './loading-store';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+if (typeof window !== 'undefined' &&
+    window.location.hostname !== 'localhost' &&
+    API_URL.includes('localhost')) {
+    console.warn("⚠️ [Auth Warning] Your frontend is on Vercel but API_URL is still localhost. API calls will fail.");
+}
+
 const api = axios.create({
     baseURL: API_URL,
     withCredentials: true,

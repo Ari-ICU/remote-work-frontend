@@ -53,11 +53,14 @@ export default function DashboardPage() {
     const [applications, setApplications] = useState<any[]>([]);
     const [recommendations, setRecommendations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         let isMounted = true;
         const init = async () => {
             console.log("Dashboard: Starting initialization...");
+            setIsLoading(true);
+            setError(null);
 
             try {
                 let currentUser = authService.getCurrentUser();
@@ -75,72 +78,70 @@ export default function DashboardPage() {
                     }
                 }
 
-                console.log("Dashboard: User authenticated:", currentUser.email);
-                if (isMounted) setUser(currentUser);
+                if (!isMounted) return;
+                setUser(currentUser);
 
                 console.log("Dashboard: Fetching data from services...");
                 // Fetch both - user might be both poster and applicant
-                const [myJobs, myApps, allJobs] = await Promise.all([
-                    jobsService.getMyJobs()
-                        .then(res => { console.log("Dashboard: My jobs loaded"); return res; })
-                        .catch((err) => { console.error("Dashboard: Error fetching my jobs:", err); return []; }),
-                    applicationService.getMyApplications()
-                        .then(res => { console.log("Dashboard: My apps loaded"); return res; })
-                        .catch((err) => { console.error("Dashboard: Error fetching my apps:", err); return []; }),
-                    jobsService.getAll()
-                        .then(res => { console.log("Dashboard: All jobs loaded"); return res; })
-                        .catch((err) => { console.error("Dashboard: Error fetching all jobs:", err); return []; })
-                ]);
+                try {
+                    const [myJobs, myApps, allJobs] = await Promise.all([
+                        jobsService.getMyJobs()
+                            .then(res => { console.log("Dashboard: My jobs loaded"); return res; })
+                            .catch((err) => { console.error("Dashboard: Error fetching my jobs:", err); return []; }),
+                        applicationService.getMyApplications()
+                            .then(res => { console.log("Dashboard: My apps loaded"); return res; })
+                            .catch((err) => { console.error("Dashboard: Error fetching my apps:", err); return []; }),
+                        jobsService.getAll()
+                            .then(res => { console.log("Dashboard: All jobs loaded"); return res; })
+                            .catch((err) => { console.error("Dashboard: Error fetching all jobs:", err); return []; })
+                    ]);
 
-                if (!isMounted) return;
+                    if (!isMounted) return;
 
-                console.log("Dashboard: Data fetch complete", {
-                    jobsCount: myJobs?.length || 0,
-                    appsCount: myApps?.length || 0
-                });
+                    console.log("Dashboard: Data fetch complete", {
+                        jobsCount: myJobs?.length || 0,
+                        appsCount: myApps?.length || 0
+                    });
 
-                setJobs(myJobs || []);
-                setApplications(myApps || []);
+                    setJobs(myJobs || []);
+                    setApplications(myApps || []);
 
-                // Simple recommendation logic for freelancers
-                if (currentUser.role === 'FREELANCER' && currentUser.skills) {
-                    const recommended = (allJobs || [])
-                        .filter((j: any) => !(myApps || []).some((app: any) => app.jobId === j.id))
-                        .map((j: any) => {
-                            const score = j.tags?.filter((t: string) =>
-                                currentUser.skills.some((s: string) => s.toLowerCase() === t.toLowerCase())
-                            ).length || 0;
-                            return { ...j, matchScore: score };
-                        })
-                        .filter((j: any) => j.matchScore > 0)
-                        .sort((a: any, b: any) => b.matchScore - a.matchScore)
-                        .slice(0, 3);
-                    setRecommendations(recommended);
+                    // Simple recommendation logic for freelancers
+                    if (currentUser && currentUser.role === 'FREELANCER' && currentUser.skills) {
+                        const recommended = (allJobs || [])
+                            .filter((j: any) => !(myApps || []).some((app: any) => app.jobId === j.id))
+                            .map((j: any) => {
+                                const score = j.tags?.filter((t: string) =>
+                                    currentUser.skills.some((s: string) => s.toLowerCase() === t.toLowerCase())
+                                ).length || 0;
+                                return { ...j, matchScore: score };
+                            })
+                            .filter((j: any) => j.matchScore > 0)
+                            .sort((a: any, b: any) => b.matchScore - a.matchScore)
+                            .slice(0, 3);
+                        setRecommendations(recommended);
+                    }
+                } catch (dataError) {
+                    console.error("Dashboard: Error fetching data", dataError);
+                    // Don't fail the whole page if just one fetch fails
                 }
             } catch (error) {
                 console.error("Dashboard: Critical initialization error", error);
-                if (isMounted) toast.error("Failed to load some dashboard data. Please try refreshing.");
+                if (isMounted) {
+                    setError("Unable to connect to service. Please verify your connection.");
+                    toast.error("Failed to load dashboard data.");
+                }
             } finally {
                 if (isMounted) {
-                    console.log("Dashboard: Setting isLoading to false");
                     setIsLoading(false);
                 }
             }
         };
 
-        // Safety timeout to ensure loading spinner doesn't stay forever
-        const safetyTimeout = setTimeout(() => {
-            if (isMounted && isLoading) {
-                console.warn("Dashboard: Safety timeout reached, forcing isLoading to false");
-                setIsLoading(false);
-            }
-        }, 8000); // 8 seconds safety window
-
         init();
 
         return () => {
             isMounted = false;
-            clearTimeout(safetyTimeout);
         };
     }, [router]);
 
@@ -156,8 +157,29 @@ export default function DashboardPage() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground animate-pulse">Synchronizing your dashboard...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen gap-6 p-4 text-center">
+                <div className="h-20 w-20 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <XCircle className="h-10 w-10 text-destructive" />
+                </div>
+                <div className="space-y-2">
+                    <h2 className="text-2xl font-bold">Initialization Failed</h2>
+                    <p className="text-muted-foreground max-w-md">{error}</p>
+                </div>
+                <div className="flex gap-4">
+                    <Button onClick={() => window.location.reload()}>Retry</Button>
+                    <Link href="/">
+                        <Button variant="outline">Back to Home</Button>
+                    </Link>
+                </div>
             </div>
         );
     }
