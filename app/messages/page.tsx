@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import io from "socket.io-client";
+import { Buffer } from "buffer";
 import { motion, AnimatePresence } from "framer-motion";
+import type SimplePeer from "simple-peer";
 import { Send, Search, MoreVertical, Phone, Video, Info, User as UserIcon, Loader2, ArrowLeft, Sparkles, Bot, Trash2, Edit2, X, MoreHorizontal, Check, CheckCheck, Paperclip, Image as ImageIcon, File as FileIcon, Download, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,10 +79,161 @@ export default function MessagesPage() {
 
     const [isSendingFile, setIsSendingFile] = useState(false);
 
+    // WebRTC State
+    const [activeCall, setActiveCall] = useState<'voice' | 'video' | 'incoming' | null>(null);
+    const [callDuration, setCallDuration] = useState(0);
+    const [callSignal, setCallSignal] = useState<any>(null);
+    const [caller, setCaller] = useState<any>(null); // Who is calling me
+    const [stream, setStream] = useState<MediaStream | null>(null);
+    const [callAccepted, setCallAccepted] = useState(false);
+
+    const myVideo = useRef<HTMLVideoElement>(null);
+    const userVideo = useRef<HTMLVideoElement>(null);
+    const connectionRef = useRef<SimplePeer.Instance | null>(null);
+
+    // Call timer effect
     useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (activeCall) {
+            interval = setInterval(() => {
+                setCallDuration(prev => prev + 1);
+            }, 1000);
+        } else {
+            setCallDuration(0);
+        }
+        return () => clearInterval(interval);
+    }, [activeCall]);
+
+    const formatCallTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const callUser = async (type: 'voice' | 'video') => {
+        if (!selectedUser || !socket || !currentUser) return;
+
+        setActiveCall(type);
+        setCallAccepted(false);
+
+        try {
+            const currentStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
+            setStream(currentStream);
+            if (myVideo.current) {
+                myVideo.current.srcObject = currentStream;
+            }
+
+            const SimplePeer = (await import('simple-peer')).default;
+            const peer = new SimplePeer({
+                initiator: true,
+                trickle: false,
+                stream: currentStream
+            });
+
+            peer.on('signal', (data: any) => {
+                socket.emit("callUser", {
+                    userToCall: selectedUser.id,
+                    signalData: data,
+                    from: currentUser.id,
+                    name: currentUser.firstName
+                });
+            });
+
+            peer.on('stream', (currentStream: MediaStream) => {
+                if (userVideo.current) {
+                    userVideo.current.srcObject = currentStream;
+                }
+            });
+
+            peer.on('close', () => {
+                endCall();
+            });
+
+            connectionRef.current = peer;
+        } catch (err) {
+            console.error("Failed to get media", err);
+            toast.error("Could not access camera/microphone");
+            setActiveCall(null);
+        }
+    };
+
+    const answerCall = async () => {
+        setCallAccepted(true);
+        setActiveCall('video');
+
+        try {
+            const currentStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+            setStream(currentStream);
+            if (myVideo.current) {
+                myVideo.current.srcObject = currentStream;
+            }
+
+            const SimplePeer = (await import('simple-peer')).default;
+            const peer = new SimplePeer({
+                initiator: false,
+                trickle: false,
+                stream: currentStream
+            });
+
+            peer.on('signal', (data: any) => {
+                socket.emit("answerCall", { signal: data, to: caller.id });
+            });
+
+            peer.on('stream', (currentStream: MediaStream) => {
+                if (userVideo.current) {
+                    userVideo.current.srcObject = currentStream;
+                }
+            });
+
+            peer.on('close', () => {
+                endCall();
+            });
+
+            peer.signal(callSignal);
+            connectionRef.current = peer;
+
+        } catch (err) {
+            console.error("Failed to get media", err);
+            endCall();
+        }
+    };
+
+    const endCall = () => {
+        setCallAccepted(false);
+        setActiveCall(null);
+        setCaller(null);
+        setCallSignal(null);
+
+        if (connectionRef.current) {
+            connectionRef.current.destroy();
+        }
+        connectionRef.current = null;
+
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            setStream(null);
+        }
+
+        if (caller?.id) {
+            socket?.emit("hangUp", { to: caller.id });
+        } else if (selectedUser?.id) {
+            socket?.emit("hangUp", { to: selectedUser.id });
+        }
+    };
+
+    // Initialize Socket & Basic Data (Run once)
+    useEffect(() => {
+        // Polyfill for simple-peer in Next.js environment
+        if (typeof window !== 'undefined') {
+            if (!(window as any).global) (window as any).global = window;
+            // @ts-ignore
+            if (!(window as any).Buffer) (window as any).Buffer = Buffer;
+        }
+
         let socketInstance: any;
 
-        const initChat = async () => {
+        const initSocket = async () => {
             const user = authService.getCurrentUser();
             if (!user) {
                 router.push("/login?redirect=/messages");
@@ -93,62 +247,100 @@ export default function MessagesPage() {
             socketInstance = io(apiUrl, {
                 transports: ['websocket', 'polling'],
                 withCredentials: true,
-                auth: {
-                    token: token
-                }
+                auth: { token }
             } as any);
 
-            socketInstance.on("newMessage", (msg: Message) => {
-                handleIncomingMessage(msg);
-            });
-
+            socketInstance.on("newMessage", (msg: Message) => handleIncomingMessage(msg));
             socketInstance.on("messageUpdated", (updatedMsg: Message) => {
                 setMessages(prev => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m));
             });
-
             socketInstance.on("messageDeleted", ({ messageId }: { messageId: string }) => {
                 setMessages(prev => prev.filter(m => m.id !== messageId));
             });
-
             socketInstance.on("conversationDeleted", ({ otherUserId, userId }: any) => {
                 setSelectedUser(prev => (prev?.id === otherUserId || prev?.id === userId) ? null : prev);
                 fetchConversations();
             });
 
+            // WebRTC Listeners
+            socketInstance.on("callMade", (data: any) => {
+                setCallSignal(data.signal);
+                setCaller({ id: data.from, name: data.name });
+                setActiveCall("incoming");
+            });
+
+            socketInstance.on("callAnswered", (data: any) => {
+                setCallAccepted(true);
+                connectionRef.current?.signal(data.signal);
+            });
+
+            socketInstance.on("iceCandidate", (data: any) => {
+                connectionRef.current?.signal(data.candidate);
+            });
+
+            socketInstance.on("callEnded", () => {
+                endCall();
+            });
+
             setSocket(socketInstance);
-
-            let currentConvs: Conversation[] = [];
-            try {
-                currentConvs = await messagingService.getConversations();
-                setConversations(currentConvs);
-            } catch (error) {
-                console.error("Failed to load conversations", error);
-            } finally {
-                setIsLoading(false);
-            }
-
-            const startChatUserId = searchParams.get("userId");
-            if (startChatUserId) {
-                const existingConv = currentConvs.find(c => c.otherUser.id === startChatUserId);
-                if (existingConv) {
-                    setSelectedUser(existingConv.otherUser);
-                } else {
-                    try {
-                        const newUser = await userService.getProfile(startChatUserId);
-                        setSelectedUser(newUser);
-                    } catch (err) {
-                        console.error("Failed to fetch user for chat", err);
-                    }
-                }
-            }
+            fetchConversations();
         };
 
-        initChat();
+        if (typeof window !== 'undefined') {
+            initSocket();
+        }
 
         return () => {
             if (socketInstance) socketInstance.disconnect();
+            if (connectionRef.current) {
+                connectionRef.current.destroy();
+            }
         };
-    }, [searchParams, router]);
+    }, []);
+
+    // Ensure media tracks are stopped on unmount or stream change
+    useEffect(() => {
+        return () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, [stream]);
+
+    // Sync selected user from URL
+    useEffect(() => {
+        const userIdFromUrl = searchParams.get("userId");
+        if (userIdFromUrl) {
+            if (selectedUser?.id === userIdFromUrl) return;
+
+            const updateSelectedUser = async () => {
+                const existingConv = conversations.find(c => c.otherUser.id === userIdFromUrl);
+                if (existingConv) {
+                    setSelectedUser(existingConv.otherUser);
+                } else if (userIdFromUrl) {
+                    try {
+                        const newUser = await userService.getProfile(userIdFromUrl);
+                        setSelectedUser(newUser);
+                    } catch (err) {
+                        console.error("Failed to fetch user from URL", err);
+                    }
+                }
+            };
+            updateSelectedUser();
+        } else {
+            setSelectedUser(null);
+        }
+    }, [searchParams, conversations.length > 0]);
+
+    const handleSelectUser = (user: User) => {
+        setSelectedUser(user);
+        router.push(`/messages?userId=${user.id}`, { scroll: false });
+    };
+
+    const handleBack = () => {
+        setSelectedUser(null);
+        router.push("/messages", { scroll: false });
+    };
 
     const fetchConversations = async () => {
         try {
@@ -156,6 +348,8 @@ export default function MessagesPage() {
             setConversations(data);
         } catch (error) {
             console.error("Failed to load conversations", error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -346,15 +540,15 @@ export default function MessagesPage() {
                 <Header />
             </div>
             <div className="flex-1 overflow-hidden relative">
-                <div className="flex h-full max-w-[1600px] mx-auto w-full border-x border-border/40 bg-background shadow-2xl relative">
-                    {/* Sidebar - Telegram/Messenger Style */}
+                <div className="flex h-full max-w-[1600px] mx-auto w-full md:border-x border-border/40 bg-background md:shadow-2xl relative">
+                    {/* Sidebar */}
                     <div
                         className={cn(
-                            "absolute inset-0 z-20 bg-card md:static md:w-[320px] lg:w-[380px] border-r border-border/50 flex flex-col transition-all duration-300 ease-in-out min-h-0 overflow-hidden",
-                            selectedUser ? "-translate-x-full md:translate-x-0" : "translate-x-0"
+                            "absolute inset-0 z-30 bg-background md:static md:translate-x-0 md:w-[320px] lg:w-[380px] border-r border-border/50 flex flex-col transition-transform duration-300 ease-in-out min-h-0 overflow-hidden",
+                            selectedUser ? "-translate-x-full" : "translate-x-0"
                         )}
                     >
-                        <div className="p-4 space-y-4 shrink-0 bg-card/50 backdrop-blur-md">
+                        <div className="p-4 space-y-4 flex-none bg-background/95 backdrop-blur-md">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-xl font-bold tracking-tight">Messages</h2>
                                 <Button variant="ghost" size="icon" className="rounded-xl hover:bg-primary/5 hover:text-primary transition-colors">
@@ -363,7 +557,7 @@ export default function MessagesPage() {
                             </div>
                             <div className="relative group">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                <Input placeholder="Search messages..." className="pl-9 rounded-2xl bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 h-10 transition-all" />
+                                <Input placeholder="Search messages..." className="pl-9 rounded-2xl bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 h-10 transition-all text-sm" />
                             </div>
                         </div>
 
@@ -388,13 +582,13 @@ export default function MessagesPage() {
                                                         ? "bg-primary/10"
                                                         : "hover:bg-muted/80"
                                                 )}
-                                                onClick={() => setSelectedUser(conv.otherUser)}
+                                                onClick={() => handleSelectUser(conv.otherUser)}
                                             >
                                                 <div className="relative shrink-0">
                                                     <Avatar className="h-12 w-12 border border-border/50">
                                                         <AvatarImage src={conv.otherUser.avatar} />
                                                         <AvatarFallback className="bg-primary/5 text-primary">
-                                                            {conv.otherUser.firstName[0]}{conv.otherUser.lastName[0]}
+                                                            {conv.otherUser.firstName?.[0]}{conv.otherUser.lastName?.[0]}
                                                         </AvatarFallback>
                                                     </Avatar>
                                                     <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-background bg-green-500 rounded-full" />
@@ -452,11 +646,10 @@ export default function MessagesPage() {
                         </div>
                     </div>
 
-                    {/* Main Chat Area - Clean & Premium */}
+                    {/* Main Chat Area */}
                     <div className="flex-1 flex flex-col bg-background relative w-full border-l border-border/50 overflow-hidden">
                         {selectedUser ? (
                             <>
-                                {/* Modern Chat Header - Clean Responsive */}
                                 <div
                                     className="w-full flex-none min-h-[64px] mt-22 md:min-h-[72px] border-b border-border flex items-center justify-between px-4 md:px-6 bg-card/95 backdrop-blur-md text-card-foreground shadow-sm relative z-40"
                                 >
@@ -465,20 +658,24 @@ export default function MessagesPage() {
                                             variant="ghost"
                                             size="icon"
                                             className="md:hidden -ml-2 rounded-full"
-                                            onClick={() => setSelectedUser(null)}
+                                            onClick={handleBack}
                                         >
                                             <ArrowLeft className="h-5 w-5" />
                                         </Button>
-                                        <Avatar className="h-10 w-10 sm:h-11 sm:w-11 ring-2 ring-primary/5">
-                                            <AvatarImage src={selectedUser.avatar} />
-                                            <AvatarFallback className="bg-primary/5 text-primary text-base">
-                                                {selectedUser.firstName?.[0] || '?'}{selectedUser.lastName?.[0] || ''}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <Link href={`/profile/${selectedUser.id}`} className="transition-transform hover:scale-105 active:scale-95">
+                                            <Avatar className="h-10 w-10 sm:h-11 sm:w-11 ring-2 ring-primary/5">
+                                                <AvatarImage src={selectedUser.avatar} />
+                                                <AvatarFallback className="bg-primary/5 text-primary text-base">
+                                                    {selectedUser.firstName?.[0] || '?'}{selectedUser.lastName?.[0] || ''}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        </Link>
                                         <div className="flex flex-col">
-                                            <h3 className="font-bold text-[16px] leading-tight cursor-pointer hover:text-primary transition-colors">
-                                                {selectedUser.firstName} {selectedUser.lastName}
-                                            </h3>
+                                            <Link href={`/profile/${selectedUser.id}`}>
+                                                <h3 className="font-bold text-[16px] leading-tight cursor-pointer hover:text-primary transition-colors">
+                                                    {selectedUser.firstName} {selectedUser.lastName}
+                                                </h3>
+                                            </Link>
                                             <div className="flex items-center gap-1.5 mt-0.5">
                                                 <div className="relative flex h-2 w-2">
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -493,7 +690,7 @@ export default function MessagesPage() {
                                             variant="outline"
                                             size="icon"
                                             className="h-9 w-9 rounded-xl text-primary border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all active:scale-95"
-                                            onClick={() => toast.info(`Simulating call to ${selectedUser.firstName}...`, { description: "Voice calling functionality coming soon!" })}
+                                            onClick={() => callUser('voice')}
                                         >
                                             <Phone className="h-[18px] w-[18px]" />
                                         </Button>
@@ -501,7 +698,7 @@ export default function MessagesPage() {
                                             variant="outline"
                                             size="icon"
                                             className="h-9 w-9 rounded-xl text-primary border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all active:scale-95"
-                                            onClick={() => toast.info(`Simulating video call to ${selectedUser.firstName}...`, { description: "Video calling functionality coming soon!" })}
+                                            onClick={() => callUser('video')}
                                         >
                                             <Video className="h-[18px] w-[18px]" />
                                         </Button>
@@ -515,8 +712,14 @@ export default function MessagesPage() {
                                                     <Info className="h-[18px] w-[18px]" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-border/50">
-                                                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDeleteConversation(selectedUser.id, selectedUser.firstName)}>
+                                            <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-border/50 p-2">
+                                                <Link href={`/profile/${selectedUser.id}`}>
+                                                    <DropdownMenuItem className="rounded-lg cursor-pointer">
+                                                        <UserIcon className="h-4 w-4 mr-2" />
+                                                        View Profile
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <DropdownMenuItem className="rounded-lg text-destructive focus:text-destructive focus:bg-destructive/5 cursor-pointer mt-1" onClick={() => handleDeleteConversation(selectedUser.id, selectedUser.firstName)}>
                                                     <Trash2 className="h-4 w-4 mr-2" />
                                                     Delete Entire Chat
                                                 </DropdownMenuItem>
@@ -525,15 +728,16 @@ export default function MessagesPage() {
                                     </div>
                                 </div>
 
-                                {/* Chat Messages - Telegram Layout */}
+                                {/* Chat Messages */}
                                 <div className="flex-1 relative min-h-0 bg-[#f8f9fa] dark:bg-background/20">
                                     <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/cubes.png")` }}></div>
                                     <ScrollArea className="h-full w-full absolute inset-0">
                                         <div className="p-4 sm:p-6 space-y-4 max-w-4xl mx-auto w-full relative z-10">
-                                            {/* Date Separator Placeholder */}
-                                            <div className="flex justify-center my-6">
-                                                <span className="text-[10px] font-bold text-muted-foreground/60 bg-background/50 backdrop-blur-sm border border-border/50 px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">Today</span>
-                                            </div>
+                                            {messages.length > 0 && (
+                                                <div className="flex justify-center my-6">
+                                                    <span className="text-[10px] font-bold text-muted-foreground/60 bg-background/50 backdrop-blur-sm border border-border/50 px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">Today</span>
+                                                </div>
+                                            )}
 
                                             {messages.map((msg, idx) => {
                                                 const isMe = msg.senderId === currentUser.id;
@@ -705,7 +909,7 @@ export default function MessagesPage() {
                                         )}
                                     </AnimatePresence>
 
-                                    {/* Premium Messenger Style Input */}
+                                    {/* Input */}
                                     <div className="p-3 sm:p-5 border-t border-border/50 bg-background relative shrink-0">
                                         {editingMessageId && (
                                             <div className="absolute bottom-full left-0 right-0 bg-primary/5 border-t border-primary/20 px-6 py-2.5 flex items-center justify-between text-[12px] backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -842,6 +1046,113 @@ export default function MessagesPage() {
                     </div>
                 </div>
             </div>
+
+            {/* WebRTC Video Call Overlay */}
+            <AnimatePresence>
+                {activeCall && (
+                    <motion.div
+                        key="call-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4"
+                    >
+                        {activeCall === 'incoming' ? (
+                            <div className="relative w-full max-w-md bg-card/10 border border-white/10 rounded-3xl p-8 flex flex-col items-center gap-8 shadow-2xl animate-in zoom-in-95">
+                                <div className="flex flex-col items-center gap-4">
+                                    <Avatar className="h-32 w-32 border-4 border-white/10 shadow-xl">
+                                        <AvatarImage src={''} />
+                                        <AvatarFallback className="text-4xl bg-primary/20 text-white">
+                                            {caller?.name?.[0]}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="text-center space-y-1">
+                                        <h3 className="text-2xl font-bold text-white tracking-tight">
+                                            {caller?.name}
+                                        </h3>
+                                        <p className="text-white/60 font-medium">Incoming Call...</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-8">
+                                    <Button
+                                        size="icon"
+                                        className="h-16 w-16 rounded-full bg-red-500 hover:bg-red-600"
+                                        onClick={endCall}
+                                    >
+                                        <Phone className="h-8 w-8 text-white rotate-[135deg]" />
+                                    </Button>
+                                    <Button
+                                        size="icon"
+                                        className="h-16 w-16 rounded-full bg-green-500 hover:bg-green-600 animate-pulse"
+                                        onClick={answerCall}
+                                    >
+                                        <Phone className="h-8 w-8 text-white" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="relative w-full max-w-4xl h-[80vh] bg-black rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+                                {/* Remote Video (Main) */}
+                                {callAccepted && (
+                                    <video
+                                        playsInline
+                                        ref={userVideo}
+                                        autoPlay
+                                        className="absolute inset-0 w-full h-full object-cover z-0"
+                                    />
+                                )}
+
+                                {(!callAccepted && selectedUser) && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black/80">
+                                        <Avatar className="h-32 w-32 border-4 border-white/10 shadow-xl mb-4">
+                                            <AvatarImage src={selectedUser.avatar} />
+                                            <AvatarFallback className="text-4xl bg-primary/20 text-white">
+                                                {selectedUser.firstName?.[0]}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <h3 className="text-2xl font-bold text-white mb-2">Calling {selectedUser.firstName}...</h3>
+                                        <div className="flex gap-1.5 h-3 items-center">
+                                            <span className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                            <span className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                            <span className="w-2 h-2 bg-white rounded-full animate-bounce"></span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Local Video (PiP) */}
+                                <div className="absolute top-4 right-4 w-32 sm:w-48 aspect-video bg-gray-900 rounded-xl overflow-hidden border border-white/20 shadow-lg z-20">
+                                    <video
+                                        playsInline
+                                        muted
+                                        ref={myVideo}
+                                        autoPlay
+                                        className="w-full h-full object-cover transform scale-x-[-1]"
+                                    />
+                                </div>
+
+                                {/* Controls */}
+                                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 z-30">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-14 w-14 rounded-full border-white/10 bg-black/40 hover:bg-white/10 text-white backdrop-blur-sm"
+                                    >
+                                        <MoreVertical className="h-6 w-6" />
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        className="h-16 w-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg"
+                                        onClick={endCall}
+                                    >
+                                        <Phone className="h-8 w-8 rotate-[135deg]" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
