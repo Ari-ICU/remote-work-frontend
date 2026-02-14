@@ -10,6 +10,10 @@ export const authService = {
                 localStorage.setItem('refreshToken', response.data.refreshToken);
             }
 
+            if (response.data.accessToken) {
+                localStorage.setItem('accessToken', response.data.accessToken);
+            }
+
             // Set cookies for middleware
             if (response.data.accessToken) {
                 document.cookie = `token=${response.data.accessToken}; path=/; max-age=900; SameSite=Lax`; // 15m
@@ -30,6 +34,10 @@ export const authService = {
 
             if (response.data.refreshToken) {
                 localStorage.setItem('refreshToken', response.data.refreshToken);
+            }
+
+            if (response.data.accessToken) {
+                localStorage.setItem('accessToken', response.data.accessToken);
             }
 
             // Set cookies for middleware
@@ -53,6 +61,7 @@ export const authService = {
         }
         localStorage.removeItem('user');
         localStorage.removeItem('refreshToken');
+        localStorage.removeItem('accessToken');
 
         // Clear middleware cookies
         document.cookie = `token=; path=/; max-age=0`;
@@ -78,12 +87,19 @@ export const authService = {
     },
 
     refresh: async () => {
-        const response = await api.post('/auth/refresh');
+        // Get refresh token from localStorage
+        const refreshToken = localStorage.getItem('refreshToken');
+        const response = await api.post('/auth/refresh', { refreshToken });
+
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
 
             if (response.data.refreshToken) {
                 localStorage.setItem('refreshToken', response.data.refreshToken);
+            }
+
+            if (response.data.accessToken) {
+                localStorage.setItem('accessToken', response.data.accessToken);
             }
 
             // Set cookies for middleware

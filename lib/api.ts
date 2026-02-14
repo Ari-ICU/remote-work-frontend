@@ -27,6 +27,15 @@ api.interceptors.request.use(
         if (shouldShowLoading(config)) {
             loadingStore.setIsLoading(true);
         }
+
+        // Attach Authorization header if token exists in localStorage
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('accessToken');
+            if (token && token !== 'undefined' && token !== 'null') {
+                config.headers['Authorization'] = `Bearer ${token}`;
+            }
+        }
+
         return config;
     },
     (error) => {
@@ -63,6 +72,7 @@ api.interceptors.response.use(
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('user');
                     localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('accessToken');
                     window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 }
                 return Promise.reject(error);
@@ -72,34 +82,43 @@ api.interceptors.response.use(
 
             try {
                 // Attempt to refresh token
-                // Get refresh token from localStorage if available
                 let refreshToken = null;
                 if (typeof window !== 'undefined') {
                     refreshToken = localStorage.getItem('refreshToken');
                 }
 
-                // If no refresh token is available, redirect to login
-                if (!refreshToken) {
+                if (!refreshToken || refreshToken === 'undefined' || refreshToken === 'null') {
                     console.warn('No refresh token available in localStorage');
                     if (typeof window !== 'undefined') {
                         localStorage.removeItem('user');
                         localStorage.removeItem('refreshToken');
+                        localStorage.removeItem('accessToken');
                         window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                     }
                     return Promise.reject(new Error('No refresh token available'));
                 }
 
-                const response = await api.post('/auth/refresh', { refreshToken });
+                const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken }, { withCredentials: true });
+
+                const { accessToken, refreshToken: newRefreshToken, user } = response.data;
 
                 // Update localStorage with new tokens
-                if (response.data.refreshToken && typeof window !== 'undefined') {
-                    localStorage.setItem('refreshToken', response.data.refreshToken);
-                }
-                if (response.data.user && typeof window !== 'undefined') {
-                    localStorage.setItem('user', JSON.stringify(response.data.user));
+                if (typeof window !== 'undefined') {
+                    if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
+                    if (accessToken) localStorage.setItem('accessToken', accessToken);
+                    if (user) localStorage.setItem('user', JSON.stringify(user));
+
+                    // Also update cookies for middleware
+                    document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax`;
+                    if (newRefreshToken) {
+                        document.cookie = `refresh_token=${newRefreshToken}; path=/; max-age=604800; SameSite=Lax`;
+                    }
                 }
 
-                // Retry original request (cookies will be attached automatically)
+                // Update the Authorization header for the original request
+                originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
+
+                // Retry original request
                 return api(originalRequest);
             } catch (refreshError) {
                 // Refresh failed
@@ -107,6 +126,7 @@ api.interceptors.response.use(
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('user');
                     localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('accessToken');
                     window.dispatchEvent(new CustomEvent('auth-unauthorized'));
                 }
                 return Promise.reject(refreshError);
@@ -115,6 +135,7 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
 
 
 export default api;
