@@ -20,13 +20,17 @@ export default function AuthCallback() {
                 localStorage.setItem("user", user);
 
                 // Store tokens if present
+                const isSecure = window.location.protocol === 'https:';
+                const secureFlag = isSecure ? '; Secure' : '';
+
                 if (accessToken) {
                     localStorage.setItem("accessToken", accessToken);
-                    document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax`;
+                    document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax${secureFlag}`;
+                    document.cookie = `is_authenticated=true; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
                 }
                 if (refreshToken) {
                     localStorage.setItem("refreshToken", refreshToken);
-                    document.cookie = `refresh_token=${refreshToken}; path=/; max-age=604800; SameSite=Lax`;
+                    document.cookie = `refresh_token=${refreshToken}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
                 }
 
                 // Force UI update

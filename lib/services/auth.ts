@@ -5,8 +5,21 @@ export const authService = {
         const response = await api.post('/auth/register', userData);
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            if (response.data.accessToken) localStorage.setItem('accessToken', response.data.accessToken);
-            if (response.data.refreshToken) localStorage.setItem('refreshToken', response.data.refreshToken);
+            const { accessToken, refreshToken } = response.data;
+
+            const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+            const secureFlag = isSecure ? '; Secure' : '';
+
+            if (accessToken) {
+                localStorage.setItem('accessToken', accessToken);
+                document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax${secureFlag}`;
+                document.cookie = `is_authenticated=true; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
+            }
+            if (refreshToken) {
+                localStorage.setItem('refreshToken', refreshToken);
+                document.cookie = `refresh_token=${refreshToken}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
+            }
+
             window.dispatchEvent(new CustomEvent("auth-update"));
         }
         return response.data;
@@ -16,8 +29,21 @@ export const authService = {
         const response = await api.post('/auth/login', credentials);
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            if (response.data.accessToken) localStorage.setItem('accessToken', response.data.accessToken);
-            if (response.data.refreshToken) localStorage.setItem('refreshToken', response.data.refreshToken);
+            const { accessToken, refreshToken } = response.data;
+
+            const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+            const secureFlag = isSecure ? '; Secure' : '';
+
+            if (accessToken) {
+                localStorage.setItem('accessToken', accessToken);
+                document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax${secureFlag}`;
+                document.cookie = `is_authenticated=true; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
+            }
+            if (refreshToken) {
+                localStorage.setItem('refreshToken', refreshToken);
+                document.cookie = `refresh_token=${refreshToken}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
+            }
+
             window.dispatchEvent(new CustomEvent("auth-update"));
         }
         return response.data;
@@ -62,8 +88,21 @@ export const authService = {
 
         if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            if (response.data.accessToken) localStorage.setItem('accessToken', response.data.accessToken);
-            if (response.data.refreshToken) localStorage.setItem('refreshToken', response.data.refreshToken);
+            const { accessToken, refreshToken: newRefreshToken } = response.data;
+
+            const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+            const secureFlag = isSecure ? '; Secure' : '';
+
+            if (accessToken) {
+                localStorage.setItem('accessToken', accessToken);
+                document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax${secureFlag}`;
+                document.cookie = `is_authenticated=true; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
+            }
+            if (newRefreshToken) {
+                localStorage.setItem('refreshToken', newRefreshToken);
+                document.cookie = `refresh_token=${newRefreshToken}; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
+            }
+
             window.dispatchEvent(new CustomEvent("auth-update"));
         }
         return response.data;

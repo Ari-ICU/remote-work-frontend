@@ -18,13 +18,15 @@ const authRoutes = ['/login', '/register']
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
 
-    // Get token from cookies (which we set in the backend)
+    // Get token or authentication flag from cookies
     const token = request.cookies.get('token')?.value
+    const isAuthenticated = request.cookies.get('is_authenticated')?.value
+    const hasAuth = !!(token || isAuthenticated)
 
     // 1. Check if the route is protected
     const isProtected = protectedRoutes.some(route => pathname.startsWith(route))
 
-    if (isProtected && !token) {
+    if (isProtected && !hasAuth) {
         const loginUrl = new URL('/login', request.url)
         loginUrl.searchParams.set('redirect', pathname)
         return NextResponse.redirect(loginUrl)
@@ -33,7 +35,7 @@ export function middleware(request: NextRequest) {
     // 2. Redirect logged-in users away from auth pages
     const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
 
-    if (isAuthRoute && token) {
+    if (isAuthRoute && hasAuth) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
