@@ -27,6 +27,15 @@ api.interceptors.request.use(
         if (shouldShowLoading(config)) {
             loadingStore.setIsLoading(true);
         }
+
+        // Attach Authorization header if token exists in localStorage
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('accessToken');
+            if (token && token !== 'undefined' && token !== 'null') {
+                config.headers['Authorization'] = `Bearer ${token}`;
+            }
+        }
+
         return config;
     },
     (error) => {
@@ -72,17 +81,37 @@ api.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                // Attempt to refresh token (rely on HttpOnly cookies)
-                const response = await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
-
-                const { user } = response.data;
-
-                // Update user info if returned
-                if (typeof window !== 'undefined' && user) {
-                    localStorage.setItem('user', JSON.stringify(user));
+                // Attempt to refresh token using localStorage as fallback for cookies
+                let refreshToken = null;
+                if (typeof window !== 'undefined') {
+                    refreshToken = localStorage.getItem('refreshToken');
                 }
 
-                // Retry original request (cookies will be attached automatically)
+                const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken }, { withCredentials: true });
+
+                const { accessToken, refreshToken: newRefreshToken, user } = response.data;
+
+                // Update localStorage with new tokens
+                if (typeof window !== 'undefined') {
+                    if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
+                    if (accessToken) localStorage.setItem('accessToken', accessToken);
+                    if (user) localStorage.setItem('user', JSON.stringify(user));
+
+                    // Keep cookies updated for middleware
+                    if (accessToken) {
+                        document.cookie = `token=${accessToken}; path=/; max-age=900; SameSite=Lax`;
+                    }
+                    if (newRefreshToken) {
+                        document.cookie = `refresh_token=${newRefreshToken}; path=/; max-age=604800; SameSite=Lax`;
+                    }
+                }
+
+                // Update the Authorization header for the original request
+                if (accessToken) {
+                    originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
+                }
+
+                // Retry original request
                 return api(originalRequest);
             } catch (refreshError) {
                 // Refresh failed
@@ -99,6 +128,7 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
 
 
 
