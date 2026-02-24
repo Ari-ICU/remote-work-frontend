@@ -10,6 +10,12 @@ import {
   Clock,
   Globe,
   Loader2,
+  Database,
+  Briefcase,
+  LineChart,
+  Megaphone,
+  Calculator,
+  Users
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { CategoryCard } from "./categories/category-card";
@@ -24,16 +30,25 @@ const iconMap: Record<string, any> = {
   "Creative & Design": Palette,
   "Design": Palette,
   "UI/UX": Palette,
-  "Marketing": TrendingUp,
+  "Marketing": Megaphone,
   "Sales": TrendingUp,
   "Customer Support": Headphones,
   "Support": Headphones,
   "Writing": PenTool,
   "Content": PenTool,
-  "Finance": DollarSign,
-  "Accounting": DollarSign,
+  "Finance": Calculator,
+  "Accounting": Calculator,
   "Management": Clock,
   "Translation": Globe,
+  "Data Science": Database,
+  "Machine Learning": Database,
+  "Analytics": LineChart,
+  "Human Resources": Users,
+  "HR": Users,
+  "Recruitment": Users,
+  "Project Management": Briefcase,
+  "Business Development": Briefcase,
+  "Admin": Clock,
 };
 
 const colorMap = [

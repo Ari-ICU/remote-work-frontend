@@ -16,20 +16,42 @@ import {
     Calendar,
     Briefcase,
     Wand2,
-    TrendingUp
+    TrendingUp,
+    Check,
+    ChevronsUpDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select";
+    Command,
+    CommandInput,
+    CommandList,
+    CommandEmpty,
+    CommandGroup,
+    CommandItem,
+} from "@/components/ui/command";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import { Header } from "@/components/header";
+import { cn } from "@/lib/utils";
+
+const CATEGORIES = [
+    { value: "dev", label: "Software Engineering" },
+    { value: "design", label: "Creative & Design" },
+    { value: "marketing", label: "Growth & Marketing" },
+    { value: "content", label: "Content & Writing" },
+    { value: "ops", label: "Operations & Support" },
+    { value: "finance", label: "Finance & Accounting" },
+    { value: "sales", label: "Sales & Business Dev" },
+    { value: "data", label: "Data Science & Analytics" },
+    { value: "hr", label: "HR & Recruitment" },
+    { value: "pm", label: "Project Management" }
+];
 import { fadeIn, scaleUp, staggerContainer } from "@/lib/animations";
 
 import { jobsService } from "@/lib/services/jobs";
@@ -83,6 +105,7 @@ export default function PostJobPage() {
 
 
     const [category, setCategory] = useState("");
+    const [categoryOpen, setCategoryOpen] = useState(false);
     const [type, setType] = useState("Full-time");
     const [responsibilities, setResponsibilities] = useState<string[]>([""]);
     const [requirements, setRequirements] = useState<string[]>([""]);
@@ -416,19 +439,52 @@ export default function PostJobPage() {
                                         <Input id="title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Senior Product Designer" required className="h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all" />
                                     </div>
                                     <div className="space-y-3">
-                                        <Label htmlFor="category" className="text-sm font-semibold">Work Category</Label>
-                                        <Select onValueChange={setCategory} required>
-                                            <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-border/50">
-                                                <SelectValue placeholder="Select talent area" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="dev">Software Engineering</SelectItem>
-                                                <SelectItem value="design">Creative & Design</SelectItem>
-                                                <SelectItem value="marketing">Growth & Marketing</SelectItem>
-                                                <SelectItem value="content">Content & Writing</SelectItem>
-                                                <SelectItem value="ops">Operations & Support</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <Label className="text-sm font-semibold">Work Category</Label>
+                                        <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    role="combobox"
+                                                    aria-expanded={categoryOpen}
+                                                    className="w-full h-12 rounded-xl bg-muted/30 border-border/50 justify-between font-normal hover:bg-muted/50 transition-all text-left"
+                                                >
+                                                    <span className={category ? "text-foreground" : "text-muted-foreground"}>
+                                                        {category
+                                                            ? CATEGORIES.find((cat) => cat.value === category)?.label
+                                                            : "Select talent area"}
+                                                    </span>
+                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-full p-0 rounded-xl" align="start">
+                                                <Command>
+                                                    <CommandInput placeholder="Search categories..." className="h-9" />
+                                                    <CommandList>
+                                                        <CommandEmpty>No category found.</CommandEmpty>
+                                                        <CommandGroup>
+                                                            {CATEGORIES.map((cat) => (
+                                                                <CommandItem
+                                                                    key={cat.value}
+                                                                    value={cat.label}
+                                                                    onSelect={() => {
+                                                                        setCategory(cat.value);
+                                                                        setCategoryOpen(false);
+                                                                    }}
+                                                                >
+                                                                    <Check
+                                                                        className={cn(
+                                                                            "mr-2 h-4 w-4",
+                                                                            category === cat.value ? "opacity-100" : "opacity-0"
+                                                                        )}
+                                                                    />
+                                                                    {cat.label}
+                                                                </CommandItem>
+                                                            ))}
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 </div>
 
