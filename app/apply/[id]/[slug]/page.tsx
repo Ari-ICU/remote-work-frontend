@@ -45,6 +45,7 @@ export default function ApplyPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [coverLetter, setCoverLetter] = useState("");
 
@@ -76,6 +77,7 @@ export default function ApplyPage() {
         }
 
         setIsSubmitting(true);
+        setFormError(null);
         try {
             const formData = new FormData(e.currentTarget);
 
@@ -120,8 +122,10 @@ export default function ApplyPage() {
             setIsSuccess(true);
         } catch (err: any) {
             console.error("Failed to submit application:", err.response?.data || err);
-            const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
-            toast.error(Array.isArray(errorMessage) ? errorMessage[0] : errorMessage);
+            const errorMessage = err.response?.data?.message || err.message || "Something went wrong. Please try again.";
+            const finalMessage = Array.isArray(errorMessage) ? errorMessage[0] : errorMessage;
+            toast.error(finalMessage);
+            setFormError(finalMessage);
         } finally {
             setIsSubmitting(false);
         }
@@ -321,6 +325,12 @@ export default function ApplyPage() {
                                         <p className="text-sm text-muted-foreground mt-1">Fill out the form below</p>
                                     </div>
                                     <div className="p-6">
+                                        {formError && (
+                                            <div className="mb-6 rounded-xl border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive font-medium flex items-center gap-3">
+                                                <div className="h-2 w-2 rounded-full bg-destructive shrink-0" />
+                                                {formError}
+                                            </div>
+                                        )}
                                         <form onSubmit={handleSubmit} className="space-y-6">
                                             <div className="space-y-4">
                                                 <div className="space-y-2">
