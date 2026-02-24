@@ -113,7 +113,7 @@ export function Header() {
           {["home", "jobs", "categories", "companies", "about"].map((item) => (
             <Link
               key={item}
-              href={item === "home" ? "/" : `/#${item}`}
+              href={item === "home" ? "/" : (item === "jobs" ? "/jobs" : `/#${item}`)}
               className="relative text-sm font-medium text-muted-foreground transition-colors hover:text-foreground group capitalize"
             >
               {t(item)}
@@ -223,7 +223,7 @@ export function Header() {
               {["home", "jobs", "categories", "companies", "about"].map((item) => (
                 <Link
                   key={item}
-                  href={item === "home" ? "/" : `/#${item}`}
+                  href={item === "home" ? "/" : (item === "jobs" ? "/jobs" : `/#${item}`)}
                   onClick={() => setMobileMenuOpen(false)}
                   className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground capitalize"
                 >

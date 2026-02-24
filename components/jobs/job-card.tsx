@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Building2, MapPin, Clock, DollarSign, Bookmark, ArrowRight } from "lucide-react";
+import { Building2, MapPin, Clock, DollarSign, Bookmark, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Job } from "@/types/job";
@@ -50,20 +50,28 @@ export function JobCard({ job, isSaved, onToggleSave }: JobCardProps) {
                         )}
                     </div>
                 </div>
-                <motion.button
-                    whileTap={{ scale: 0.8 }}
-                    type="button"
-                    onClick={() => onToggleSave(String(job.id))}
-                    className="shrink-0 p-1 text-muted-foreground transition-colors hover:text-primary"
-                    aria-label={isSaved ? "Unsave job" : "Save job"}
-                >
-                    <Bookmark
-                        className={`h-5 w-5 ${isSaved
-                            ? "fill-primary text-primary"
-                            : ""
-                            }`}
-                    />
-                </motion.button>
+                <div className="flex items-center gap-3 shrink-0">
+                    {job.matchScore && job.matchScore > 50 && (
+                        <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 shadow-sm animate-in fade-in zoom-in duration-500">
+                            <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+                            <span className="text-[11px] font-black text-primary leading-none">{job.matchScore}%</span>
+                        </div>
+                    )}
+                    <motion.button
+                        whileTap={{ scale: 0.8 }}
+                        type="button"
+                        onClick={() => onToggleSave(String(job.id))}
+                        className="p-1 text-muted-foreground transition-colors hover:text-primary"
+                        aria-label={isSaved ? "Unsave job" : "Save job"}
+                    >
+                        <Bookmark
+                            className={`h-5 w-5 ${isSaved
+                                ? "fill-primary text-primary"
+                                : ""
+                                }`}
+                        />
+                    </motion.button>
+                </div>
             </div>
 
             <div className="mt-4 space-y-2">

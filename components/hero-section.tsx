@@ -25,10 +25,11 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
   return (
     <section className="relative overflow-hidden bg-background py-16 sm:py-24 lg:py-32">
       <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
         <motion.div
           animate={{
             scale: [1, 1.1, 1],
-            opacity: [0.3, 0.5, 0.3],
+            opacity: [0.3, 0.4, 0.3],
           }}
           transition={{
             duration: 8,
@@ -40,7 +41,7 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
         <motion.div
           animate={{
             scale: [1, 1.2, 1],
-            opacity: [0.2, 0.4, 0.2],
+            opacity: [0.2, 0.3, 0.2],
           }}
           transition={{
             duration: 10,
@@ -62,21 +63,28 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6"
+              className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-4 py-1.5 text-sm font-semibold text-primary mb-8"
             >
-              <Sparkles className="h-4 w-4" />
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
               Welcome back, {user.firstName}!
             </motion.div>
           )}
-          <h1 className="text-pretty text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-7xl">
-            Cambodia&apos;s Exclusive
-            <span className="block text-primary">Remote & Freelance</span>
-            Job Marketplace
+          <h1 className="text-pretty text-4xl font-black tracking-tight text-foreground sm:text-6xl lg:text-8xl">
+            Cambodia&apos;s <br />
+            <span className="relative inline-block mt-2">
+              <span className="relative z-10 text-primary">Remote & Freelance</span>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ delay: 0.5, duration: 0.8 }}
+                className="absolute bottom-2 left-0 h-4 bg-primary/10 -z-5"
+              />
+            </span>
+            <br />Job Marketplace
           </h1>
-          <p className="mt-6 text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            The only platform in Cambodia dedicated 100% to remote roles and
-            freelance opportunities. Connect with top local and international
-            companies from anywhere.
+          <p className="mt-8 text-lg leading-relaxed text-muted-foreground sm:text-xl max-w-2xl mx-auto font-medium">
+            The exclusive platform for high-impact remote roles in the Kingdom.
+            Scale your career from anywhere.
           </p>
         </motion.div>
 
@@ -84,51 +92,54 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mx-auto mt-10 max-w-3xl"
+          className="mx-auto mt-12 max-w-4xl"
         >
-          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card/50 backdrop-blur-sm p-4 shadow-xl sm:flex-row sm:items-center sm:gap-2">
-            <div className="relative flex-1 group">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
-              <Input
-                type="text"
-                placeholder="Job title or keyword"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="border-0 bg-transparent pl-10 shadow-none focus-visible:ring-0 text-base"
-              />
+          <div className="relative p-1.5 bg-gradient-to-r from-primary/20 via-border to-primary/20 rounded-[2.5rem] shadow-2xl">
+            <div className="flex flex-col gap-3 rounded-[2.25rem] bg-card border border-white/10 p-4 shadow-inner sm:flex-row sm:items-center sm:gap-2">
+              <div className="relative flex-1 group">
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                <Input
+                  type="text"
+                  placeholder="UI Designer, React Native, Marketing..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border-0 bg-transparent pl-12 shadow-none focus-visible:ring-0 text-lg h-14 font-medium"
+                />
+              </div>
+              <div className="hidden h-10 w-px bg-border sm:block" />
+              <div className="relative flex-1 group">
+                <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                <Input
+                  type="text"
+                  placeholder="Remote, Phnom Penh..."
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="border-0 bg-transparent pl-12 shadow-none focus-visible:ring-0 text-lg h-14 font-medium"
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto h-14 px-10 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all hover:scale-[1.02] active:scale-95"
+                  onClick={handleSearch}
+                >
+                  Search Jobs
+                </Button>
+              </div>
             </div>
-            <div className="hidden h-8 w-px bg-border sm:block" />
-            <div className="relative flex-1 group">
-              <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
-              <Input
-                type="text"
-                placeholder="Location (e.g., Phnom Penh)"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="border-0 bg-transparent pl-10 shadow-none focus-visible:ring-0 text-base"
-              />
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto px-8 transition-transform hover:scale-105 active:scale-95"
-                onClick={handleSearch}
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 px-4">
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Trending:</span>
+            {["React", "Fullstack", "Design", "Mobile"].map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setSearchQuery(tag)}
+                className="px-3 py-1 rounded-full bg-muted/50 text-[11px] font-bold text-muted-foreground hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20 transition-all"
               >
-                <Search className="mr-2 h-4 w-4" />
-                Search
-              </Button>
-              {user && (
-                <Link href="/dashboard" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full sm:w-auto px-8 transition-transform hover:scale-105 active:scale-95 border-primary text-primary hover:bg-primary/5"
-                  >
-                    Go to Dashboard
-                  </Button>
-                </Link>
-              )}
-            </div>
+                {tag}
+              </button>
+            ))}
           </div>
         </motion.div>
 
@@ -136,21 +147,19 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="mx-auto mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground md:gap-x-12"
+          className="mx-auto mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl"
         >
-          <div className="flex items-center gap-2 transition-colors hover:text-foreground">
-            <div className="rounded-full bg-primary/10 p-1">
-              <Briefcase className="h-4 w-4 text-primary" />
-            </div>
-            <span className="font-medium">2,500+ Active Jobs</span>
+          <div className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-secondary/30 border border-border/50 group hover:border-primary/20 transition-colors">
+            <div className="text-3xl font-black text-foreground group-hover:text-primary transition-colors">2.5k+</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Verified Jobs</div>
           </div>
-          <div className="flex items-center gap-2 transition-colors hover:text-foreground">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <span className="font-medium">500+ Companies Hiring</span>
+          <div className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-secondary/30 border border-border/50 group hover:border-primary/20 transition-colors">
+            <div className="text-3xl font-black text-foreground group-hover:text-primary transition-colors">500+</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Curated Companies</div>
           </div>
-          <div className="flex items-center gap-2 transition-colors hover:text-foreground">
-            <div className="h-2 w-2 rounded-full bg-accent" />
-            <span className="font-medium">100% Free for Job Seekers</span>
+          <div className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-secondary/30 border border-border/50 group hover:border-primary/20 transition-colors">
+            <div className="text-3xl font-black text-foreground group-hover:text-primary transition-colors">100%</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Free for Seekers</div>
           </div>
         </motion.div>
       </div>

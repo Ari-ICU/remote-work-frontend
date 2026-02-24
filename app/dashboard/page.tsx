@@ -122,12 +122,16 @@ export default function DashboardPage() {
                         const recommended = (allJobs || [])
                             .filter((j: any) => !(myApps || []).some((app: any) => app.jobId === j.id))
                             .map((j: any) => {
-                                const score = j.tags?.filter((t: string) =>
+                                const matchingSkills = j.tags?.filter((t: string) =>
                                     currentUser.skills.some((s: string) => s.toLowerCase() === t.toLowerCase())
-                                ).length || 0;
-                                return { ...j, matchScore: score };
+                                ) || [];
+                                const totalRequired = j.tags?.length || 1;
+                                // Calculate match percentage (Skills + category match)
+                                let matchPercentage = Math.round((matchingSkills.length / totalRequired) * 100);
+                                if (j.category.toLowerCase() === currentUser.headline?.toLowerCase()) matchPercentage += 10;
+                                return { ...j, matchScore: Math.min(matchPercentage, 100) };
                             })
-                            .filter((j: any) => j.matchScore > 0)
+                            .filter((j: any) => j.matchScore > 20)
                             .sort((a: any, b: any) => b.matchScore - a.matchScore)
                             .slice(0, 3);
                         setRecommendations(recommended);
@@ -157,6 +161,26 @@ export default function DashboardPage() {
             isMounted = false;
         };
     }, [router, authLoading, user, refresh]);
+
+    // Calculate profile completion percentage
+    const profileCompletion = (() => {
+        if (!user || user.role !== 'FREELANCER') return null;
+        let score = 0;
+        if (user.avatar) score += 10;
+        if (user.bio && user.bio.length > 20) score += 20;
+        if (user.headline) score += 10;
+        if (user.skills && user.skills.length > 0) score += 20;
+        if (user.hourlyRate) score += 10;
+        if (user.location) score += 10;
+        if (user.resumeUrl) score += 20;
+        return score;
+    })();
+
+    const getCompletionColor = (score: number) => {
+        if (score < 40) return "bg-rose-500";
+        if (score < 80) return "bg-amber-500";
+        return "bg-emerald-500";
+    };
 
     const safeDate = (dateString: string | Date) => {
         try {
@@ -219,6 +243,67 @@ export default function DashboardPage() {
                             </Link>
                         )}
                     </div>
+
+                    {user.role === "FREELANCER" && profileCompletion !== null && profileCompletion < 100 && (
+                        <Card className="border-primary/20 bg-primary/[0.02] overflow-hidden relative group">
+                            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                                <TrendingUp className="h-32 w-32 text-primary" />
+                            </div>
+                            <CardContent className="p-6">
+                                <div className="flex flex-col md:flex-row items-center gap-6">
+                                    <div className="relative h-20 w-20 flex-shrink-0">
+                                        <svg className="h-20 w-20 -rotate-90">
+                                            <circle
+                                                cx="40"
+                                                cy="40"
+                                                r="36"
+                                                stroke="currentColor"
+                                                strokeWidth="8"
+                                                fill="transparent"
+                                                className="text-muted"
+                                            />
+                                            <motion.circle
+                                                initial={{ strokeDashoffset: 226 }}
+                                                animate={{ strokeDashoffset: 226 - (226 * (profileCompletion || 0)) / 100 }}
+                                                transition={{ duration: 1.5, ease: "easeOut" }}
+                                                cx="40"
+                                                cy="40"
+                                                r="36"
+                                                stroke="currentColor"
+                                                strokeWidth="8"
+                                                fill="transparent"
+                                                strokeDasharray="226"
+                                                strokeLinecap="round"
+                                                className="text-primary"
+                                            />
+                                        </svg>
+                                        <div className="absolute inset-0 flex items-center justify-center font-bold text-lg">
+                                            {profileCompletion}%
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 space-y-2 text-center md:text-left">
+                                        <h3 className="text-xl font-bold flex items-center gap-2 justify-center md:justify-start">
+                                            Complete your profile to stand out
+                                            <Sparkles className="h-5 w-5 text-amber-500" />
+                                        </h3>
+                                        <p className="text-muted-foreground text-sm max-w-xl">
+                                            Profiles with 100% completion get up to <span className="text-foreground font-bold italic">3x more invitations</span> from top employers. Add your portfolio and skills today!
+                                        </p>
+                                        <div className="flex flex-wrap gap-2 pt-2 justify-center md:justify-start">
+                                            {!user.skills?.length && <Badge variant="outline" className="bg-background">Missing Skills</Badge>}
+                                            {!user.resumeUrl && <Badge variant="outline" className="bg-background">Missing Resume</Badge>}
+                                            {(profileCompletion || 0) >= 80 && <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Almost there!</Badge>}
+                                        </div>
+                                    </div>
+                                    <Link href="/profile">
+                                        <Button className="rounded-xl px-8 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
+                                            Update Profile
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {user.role === "EMPLOYER" ? (
                         /* EMPLOYER VIEW */
@@ -523,36 +608,58 @@ export default function DashboardPage() {
                                             <motion.div
                                                 key={job.id}
                                                 whileHover={{ y: -5 }}
-                                                className="bg-card border border-border/50 hover:border-primary/30 rounded-2xl p-6 shadow-sm transition-all group"
+                                                className="bg-card border border-border/50 hover:border-primary/30 rounded-2xl p-6 shadow-sm transition-all group overflow-hidden relative"
                                             >
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest bg-primary/5 text-primary border-primary/20">
-                                                        {job.category}
-                                                    </Badge>
-                                                    <div className="flex items-center gap-1 text-[10px] font-black text-emerald-600 uppercase">
-                                                        <TrendingUp className="h-3 w-3" />
-                                                        High Match
+                                                {/* Background Accent */}
+                                                <div className="absolute -top-10 -right-10 h-32 w-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors" />
+
+                                                <div className="flex items-start justify-between mb-4 relative z-10">
+                                                    <div className="flex flex-col gap-1">
+                                                        <Badge variant="outline" className="w-fit text-[9px] font-black underline decoration-primary/50 underline-offset-2 uppercase tracking-widest bg-primary/5 text-primary border-transparent p-0">
+                                                            {job.category}
+                                                        </Badge>
+                                                        <h3 className="font-bold text-base group-hover:text-primary transition-colors line-clamp-1">{job.title}</h3>
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <div className="px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-1.5 shadow-sm">
+                                                            <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+                                                            <span className="text-[10px] font-black text-primary">{job.matchScore}%</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <h3 className="font-bold mb-2 group-hover:text-primary transition-colors line-clamp-1">{job.title}</h3>
-                                                <p className="text-xs text-muted-foreground mb-6 flex items-center gap-1.5">
-                                                    <Briefcase className="h-3.5 w-3.5" />
-                                                    {job.company}
-                                                </p>
-                                                <Link href={`/jobs/${job.id}`}>
-                                                    <Button variant="outline" size="sm" className="w-full rounded-xl text-xs font-bold group-hover:bg-primary group-hover:text-white transition-all">
-                                                        Check It Out
-                                                    </Button>
-                                                </Link>
+
+                                                <div className="flex flex-wrap gap-1.5 mb-6 relative z-10">
+                                                    {job.tags?.slice(0, 3).map((tag: string) => (
+                                                        <Badge key={tag} variant="secondary" className="text-[10px] px-2 py-0 bg-muted/40 font-medium border-none lowercase">
+                                                            #{tag}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-4 border-t border-border/40 relative z-10">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] uppercase tracking-tighter text-muted-foreground font-bold">Estimated</span>
+                                                        <span className="text-sm font-black text-emerald-500 flex items-center gap-0.5">
+                                                            <DollarSign className="h-4 w-4" />
+                                                            {job.budget}
+                                                        </span>
+                                                    </div>
+                                                    <Link href={`/jobs/${job.id}`}>
+                                                        <Button size="sm" className="rounded-xl h-8 px-4 text-[11px] font-bold shadow-md shadow-primary/10 group-hover:shadow-primary/30 transition-all">
+                                                            Details <ChevronRight className="h-3 w-3 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                                                        </Button>
+                                                    </Link>
+                                                </div>
                                             </motion.div>
                                         ))}
                                     </div>
                                 </div>
                             )}
                         </div>
-                    )}
-                </div>
-            </main>
-        </div>
+                    )
+                    }
+                </div >
+            </main >
+        </div >
     );
 }

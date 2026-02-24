@@ -19,6 +19,7 @@ export interface Job {
     companyEmail?: string;
     posterId?: string;
     status?: string;
+    matchScore?: number;
 }
 
 export interface Category {

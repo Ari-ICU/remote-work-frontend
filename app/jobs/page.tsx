@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Search, MapPin, Filter, X, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/components/providers/auth-provider";
 
 const JOB_TYPE_FILTERS = [
     { label: "Remote", value: "remote" },
@@ -21,6 +22,7 @@ const JOB_TYPE_FILTERS = [
 ];
 
 export default function JobsPage() {
+    const { user } = useAuth();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,25 @@ export default function JobsPage() {
     }, []);
 
     const filteredJobs = useMemo(() => {
-        return jobs.filter((job) => {
+        return jobs.map(job => {
+            if (!user || user.role !== 'FREELANCER') return job;
+
+            // Client-side AI Match Score calculation
+            const matchingSkills = job.tags?.filter(t =>
+                user.skills?.some((s: string) => s.toLowerCase() === t.toLowerCase())
+            ) || [];
+
+            const totalRequired = job.tags?.length || 1;
+            let matchPercentage = Math.round((matchingSkills.length / totalRequired) * 100);
+
+            // Boost if category matches headline
+            if (job.category.toLowerCase() === user.headline?.toLowerCase()) matchPercentage += 10;
+
+            return {
+                ...job,
+                matchScore: Math.min(matchPercentage, 100)
+            };
+        }).filter((job) => {
             const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 job.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 job.salary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -71,7 +91,7 @@ export default function JobsPage() {
 
             return matchesSearch && matchesLocation && matchesType;
         });
-    }, [jobs, searchQuery, locationQuery, selectedTypes]);
+    }, [jobs, searchQuery, locationQuery, selectedTypes, user]);
 
     const handleReset = () => {
         setSearchQuery("");

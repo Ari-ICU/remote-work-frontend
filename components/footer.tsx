@@ -9,7 +9,7 @@ import { Logo } from "@/components/logo";
 
 const footerLinks = {
   forJobSeekers: [
-    { label: "Browse Jobs", href: "/#find-jobs" },
+    { label: "Browse Jobs", href: "/jobs" },
     { label: "Categories", href: "/#categories" },
     { label: "Companies", href: "/#companies" },
     { label: "Salary Guide", href: "/salary-guide" },
