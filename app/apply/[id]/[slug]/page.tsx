@@ -106,9 +106,6 @@ export default function ApplyPage() {
                 ${applicationData.coverLetter}
             `.trim());
 
-            // Open user's email client directly
-            window.location.href = `mailto:${clientEmail}?subject=${subject}&body=${body}`;
-
             const backendData = {
                 coverLetter: `Applicant: ${applicationData.fullname} | Email: ${applicationData.email} | Phone: ${applicationData.phone}\n\n${applicationData.coverLetter}`,
                 proposedRate: parseFloat(applicationData.proposedRate) || 0,
@@ -116,6 +113,10 @@ export default function ApplyPage() {
             };
 
             await applicationService.apply(params.id as string, backendData);
+
+            // Open user's email client directly only after successful backend save
+            window.location.href = `mailto:${clientEmail}?subject=${subject}&body=${body}`;
+
             setIsSuccess(true);
         } catch (err: any) {
             console.error("Failed to submit application:", err.response?.data || err);
