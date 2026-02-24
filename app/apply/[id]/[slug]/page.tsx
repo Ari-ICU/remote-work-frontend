@@ -36,8 +36,10 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { aiService } from "@/lib/services/ai";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 export default function ApplyPage() {
+    const t = useTranslations("apply");
     const params = useParams();
     const router = useRouter();
     const [job, setJob] = useState<Job | undefined>(undefined);
@@ -148,12 +150,12 @@ export default function ApplyPage() {
                 user_bio: user.bio || ""
             });
             setCoverLetter(response.proposal);
-            toast.success("AI Proposal drafted!", {
-                description: "You can now review and edit the generated cover letter."
+            toast.success(t("aiSuccess"), {
+                description: t("aiSuccessDesc")
             });
         } catch (err) {
             console.error("Failed to generate AI proposal:", err);
-            toast.error("AI Generation failed. Please try again later.");
+            toast.error(t("aiFailed"));
         } finally {
             setIsGenerating(false);
         }
@@ -165,7 +167,7 @@ export default function ApplyPage() {
                 <Header />
                 <div className="flex-1 flex flex-col items-center justify-center gap-4">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                    <p className="text-muted-foreground">Loading job details...</p>
+                    <p className="text-muted-foreground">{t("loading")}</p>
                 </div>
             </div>
         );
@@ -176,9 +178,9 @@ export default function ApplyPage() {
             <div className="min-h-screen flex flex-col bg-background">
                 <Header />
                 <div className="flex-1 flex flex-col items-center justify-center gap-4">
-                    <p className="text-destructive font-bold text-xl">{error || "Job not found"}</p>
+                    <p className="text-destructive font-bold text-xl">{error || t("jobNotFound")}</p>
                     <Button asChild variant="outline">
-                        <Link href="/jobs">Back to Jobs</Link>
+                        <Link href="/jobs">{t("browseMoreJobs")}</Link>
                     </Button>
                 </div>
             </div>
@@ -200,16 +202,16 @@ export default function ApplyPage() {
                         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 mb-2">
                             <CheckCircle2 className="h-10 w-10 text-primary" />
                         </div>
-                        <h1 className="text-3xl font-bold text-foreground">Application Sent!</h1>
+                        <h1 className="text-3xl font-bold text-foreground">{t("applicationSent")}</h1>
                         <p className="text-muted-foreground leading-relaxed">
-                            Your application for <span className="text-foreground font-semibold">{job?.title}</span> at <span className="text-foreground font-semibold">{job?.company}</span> has been submitted successfully. Good luck!
+                            {t("applicationSentDesc")}
                         </p>
                         <div className="flex flex-col gap-3 pt-4">
                             <Button size="lg" className="w-full shadow-lg shadow-primary/20" asChild>
-                                <Link href={`/jobs/${job?.id}`}>Return to Job Post</Link>
+                                <Link href={`/jobs/${job?.id}`} replace>{t("returnToJob")}</Link>
                             </Button>
                             <Button variant="outline" size="lg" className="w-full" asChild>
-                                <Link href="/jobs">Browse More Jobs</Link>
+                                <Link href="/jobs" replace>{t("browseMoreJobs")}</Link>
                             </Button>
                         </div>
                     </motion.div>
@@ -229,13 +231,13 @@ export default function ApplyPage() {
                         animate={{ opacity: 1, x: 0 }}
                         className="mb-8"
                     >
-                        <Link
-                            href={job ? `/jobs/${job.id}` : "/jobs"}
+                        <button
+                            onClick={() => router.back()}
                             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
                         >
                             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                            Back to Job Post
-                        </Link>
+                            {t("backToJob")}
+                        </button>
                     </motion.div>
 
                     {job && (
@@ -276,15 +278,15 @@ export default function ApplyPage() {
 
                                     <div className="space-y-8">
                                         <div className="space-y-4">
-                                            <h2 className="text-xl font-semibold">Job Description</h2>
+                                            <h2 className="text-xl font-semibold">{t("jobDescription")}</h2>
                                             <p className="text-muted-foreground leading-relaxed">
-                                                {job.description || "No description provided."}
+                                                {job.description || t("noDescription")}
                                             </p>
                                         </div>
 
                                         {job.responsibilities && (
                                             <div className="space-y-4">
-                                                <h2 className="text-xl font-semibold">Key Responsibilities</h2>
+                                                <h2 className="text-xl font-semibold">{t("keyResponsibilities")}</h2>
                                                 <ul className="space-y-3">
                                                     {job.responsibilities.map((item: string, i: number) => (
                                                         <li key={i} className="flex gap-3 text-muted-foreground">
@@ -298,7 +300,7 @@ export default function ApplyPage() {
 
                                         {job.requirements && (
                                             <div className="space-y-4">
-                                                <h2 className="text-xl font-semibold">Requirements</h2>
+                                                <h2 className="text-xl font-semibold">{t("requirements")}</h2>
                                                 <ul className="space-y-3">
                                                     {job.requirements.map((item: string, i: number) => (
                                                         <li key={i} className="flex gap-3 text-muted-foreground">
@@ -321,8 +323,8 @@ export default function ApplyPage() {
                             >
                                 <div className="bg-card border border-border rounded-3xl shadow-xl overflow-hidden sticky top-24">
                                     <div className="bg-muted/30 p-6 border-b border-border">
-                                        <h3 className="font-semibold text-lg">Apply for this position</h3>
-                                        <p className="text-sm text-muted-foreground mt-1">Fill out the form below</p>
+                                        <h3 className="font-semibold text-lg">{t("applyForPosition")}</h3>
+                                        <p className="text-sm text-muted-foreground mt-1">{t("fillOutForm")}</p>
                                     </div>
                                     <div className="p-6">
                                         {formError && (
@@ -334,20 +336,20 @@ export default function ApplyPage() {
                                         <form onSubmit={handleSubmit} className="space-y-6">
                                             <div className="space-y-4">
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="fullname">Full Name</Label>
-                                                    <Input id="fullname" name="fullname" placeholder="John Doe" required className="rounded-xl" />
+                                                    <Label htmlFor="fullname">{t("fullName")}</Label>
+                                                    <Input id="fullname" name="fullname" placeholder={t("placeholderName")} required className="rounded-xl" />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="email">Email Address</Label>
-                                                    <Input id="email" name="email" type="email" placeholder="john@example.com" required className="rounded-xl" />
+                                                    <Label htmlFor="email">{t("emailAddress")}</Label>
+                                                    <Input id="email" name="email" type="email" placeholder={t("placeholderEmail")} required className="rounded-xl" />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="phone">Phone Number</Label>
+                                                    <Label htmlFor="phone">{t("phoneNumber")}</Label>
                                                     <Input id="phone" name="phone" type="tel" placeholder="+855 12 345 678" required className="rounded-xl" />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <div className="flex items-center justify-between">
-                                                        <Label htmlFor="coverLetter">Cover Letter</Label>
+                                                        <Label htmlFor="coverLetter">{t("coverLetter")}</Label>
                                                         <Button
                                                             type="button"
                                                             variant="ghost"
@@ -361,13 +363,13 @@ export default function ApplyPage() {
                                                             ) : (
                                                                 <Wand2 className="h-3 w-3" />
                                                             )}
-                                                            {isGenerating ? "Generating..." : "Draft with AI"}
+                                                            {isGenerating ? t("generating") : t("draftWithAI")}
                                                         </Button>
                                                     </div>
                                                     <Textarea
                                                         id="coverLetter"
                                                         name="coverLetter"
-                                                        placeholder="Tell the employer why you're a good fit..."
+                                                        placeholder={t("placeholderCoverLetter")}
                                                         className="rounded-xl min-h-[120px] transition-all focus:ring-2 focus:ring-primary/20"
                                                         value={coverLetter}
                                                         onChange={(e) => setCoverLetter(e.target.value)}
@@ -375,17 +377,17 @@ export default function ApplyPage() {
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="resume">Resume/CV</Label>
+                                                    <Label htmlFor="resume">{t("resume")}</Label>
                                                     <Input id="resume" name="resume" type="file" required className="rounded-xl cursor-pointer" />
                                                 </div>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="proposedRate">Proposed Rate ($)</Label>
+                                                        <Label htmlFor="proposedRate">{t("proposedRate")}</Label>
                                                         <Input id="proposedRate" name="proposedRate" type="number" min="0" step="0.01" placeholder="50.00" required className="rounded-xl" />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="estimatedTime">Estimated Time</Label>
-                                                        <Input id="estimatedTime" name="estimatedTime" placeholder="e.g. 2 weeks" className="rounded-xl" />
+                                                        <Label htmlFor="estimatedTime">{t("estimatedTime")}</Label>
+                                                        <Input id="estimatedTime" name="estimatedTime" placeholder={t("placeholderTime")} className="rounded-xl" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -399,15 +401,15 @@ export default function ApplyPage() {
                                                 {isSubmitting ? (
                                                     <div className="flex items-center gap-2">
                                                         <Loader2 className="h-5 w-5 animate-spin" />
-                                                        Sending...
+                                                        {t("sending")}
                                                     </div>
                                                 ) : (
-                                                    "Submit Application"
+                                                    t("submitApplication")
                                                 )}
                                             </Button>
 
                                             <p className="text-xs text-center text-muted-foreground">
-                                                By submitting, you agree to our Terms of Service and Privacy Policy.
+                                                {t("terms")}
                                             </p>
                                         </form>
                                     </div>

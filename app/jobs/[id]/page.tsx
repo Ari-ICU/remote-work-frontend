@@ -43,6 +43,7 @@ import { wishlistService } from "@/lib/services/wishlist";
 import { fadeIn, scaleUp, staggerContainer } from "@/lib/animations";
 import { slugify, cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 // --- Sub-components ---
 
@@ -83,6 +84,7 @@ export default function JobDetailPage() {
     const [isSaved, setIsSaved] = useState(false);
     const [similarJobs, setSimilarJobs] = useState<Job[]>([]);
     const [user, setUser] = useState<any>(null);
+    const t = useTranslations("jobDetail");
 
     useEffect(() => {
         const currentUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null;
@@ -202,13 +204,13 @@ export default function JobDetailPage() {
                         <Search className="h-10 w-10 text-destructive/50" />
                     </motion.div>
                     <div className="text-center space-y-2 max-w-sm">
-                        <h1 className="text-3xl font-bold tracking-tight">{error || "Job not found"}</h1>
-                        <p className="text-muted-foreground">This opportunity may have been filled or the link has expired.</p>
+                        <h1 className="text-3xl font-bold tracking-tight">{error || t("jobNotFound")}</h1>
+                        <p className="text-muted-foreground">{t("jobNotFoundDesc")}</p>
                     </div>
                     <Button asChild size="lg" variant="outline" className="rounded-2xl px-8 h-12">
                         <Link href="/jobs" className="flex items-center gap-2">
                             <ArrowLeft className="h-4 w-4" />
-                            Return to Explore
+                            {t("returnToExplore")}
                         </Link>
                     </Button>
                 </main>
@@ -239,7 +241,7 @@ export default function JobDetailPage() {
                                 </p>
                             </div>
                             <Button size="sm" onClick={handleApply} className="rounded-xl px-6 h-11 font-black shadow-lg shadow-primary/25 text-xs uppercase tracking-wider">
-                                Apply
+                                {t("apply")}
                             </Button>
                         </div>
                     </motion.div>
@@ -253,7 +255,7 @@ export default function JobDetailPage() {
                         <div className="mb-8 rounded-2xl bg-destructive/10 border border-destructive/20 p-4 flex items-center gap-3 text-destructive">
                             <Info className="h-5 w-5" />
                             <p className="font-bold">
-                                This job is currently {job.status?.toLowerCase().replace('_', ' ')}. Applications are no longer being accepted.
+                                {t("thisJobIs")} {job.status?.toLowerCase().replace('_', ' ')}. {t("notAccepting")}
                             </p>
                         </div>
                     )}
@@ -265,13 +267,13 @@ export default function JobDetailPage() {
                             className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors py-2 px-1"
                         >
                             <ArrowLeft className="h-4 w-4" />
-                            Back to results
+                            {t("backToResults")}
                         </motion.button>
 
                         <nav className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+                            <Link href="/" className="hover:text-primary transition-colors">{t("home")}</Link>
                             <ChevronRight className="h-3 w-3" />
-                            <Link href="/jobs" className="hover:text-primary transition-colors">Explorer</Link>
+                            <Link href="/jobs" className="hover:text-primary transition-colors">{t("explorer")}</Link>
                             <ChevronRight className="h-3 w-3" />
                             <span className="text-primary truncate max-w-[200px]">{job.title}</span>
                         </nav>
@@ -301,7 +303,7 @@ export default function JobDetailPage() {
                                         {job.featured && (
                                             <Badge className="px-4 py-2 rounded-full bg-amber-500/10 text-amber-600 border-amber-500/20 font-black text-[10px] uppercase tracking-widest hover:bg-amber-500/20">
                                                 <Star className="h-3 w-3 mr-1.5 fill-current" />
-                                                Priority
+                                                {t("priority")}
                                             </Badge>
                                         )}
                                     </div>
@@ -316,7 +318,7 @@ export default function JobDetailPage() {
                                                 <Building2 className="h-7 w-7" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">Company</p>
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">{t("company")}</p>
                                                 <p className="font-black text-foreground text-lg truncate">{job.company}</p>
                                             </div>
                                         </div>
@@ -325,7 +327,7 @@ export default function JobDetailPage() {
                                                 <MapPin className="h-7 w-7" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">Location</p>
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">{t("location")}</p>
                                                 <p className="font-black text-foreground text-lg truncate">{job.location}</p>
                                             </div>
                                         </div>
@@ -335,7 +337,7 @@ export default function JobDetailPage() {
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">
-                                                    {job.budgetType === 'HOURLY' ? 'Hourly Rate' : 'Fixed Budget'}
+                                                    {job.budgetType === 'HOURLY' ? t("hourlyRate") : t("fixedBudget")}
                                                 </p>
                                                 <p className="font-black text-foreground text-lg truncate">{job.salary}</p>
                                             </div>
@@ -345,7 +347,7 @@ export default function JobDetailPage() {
                                     <div className="flex flex-wrap items-center justify-between gap-6">
                                         <div className="flex items-center gap-3 text-xs text-muted-foreground font-bold bg-muted/40 px-5 py-2.5 rounded-full border border-border/50">
                                             <Calendar className="h-4 w-4 text-primary" />
-                                            Posted {job.posted}
+                                            {t("posted")} {job.posted}
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <Button
@@ -384,12 +386,12 @@ export default function JobDetailPage() {
                                 <div className="space-y-16">
                                     {/* Description Section */}
                                     <section>
-                                        <SectionHeader icon={Info} title="Project Overview" />
+                                        <SectionHeader icon={Info} title={t("projectOverview")} />
                                         <div className="text-muted-foreground leading-relaxed text-xl prose dark:prose-invert max-w-none">
                                             <div className="relative">
                                                 <span className="absolute -left-4 top-0 h-full w-1 bg-primary/20 rounded-full" />
                                                 <p className="pl-6 font-medium">
-                                                    {job.description || "Detailed information for this position is currently being updated. Please check back shortly for more specifics about the role and project scope."}
+                                                    {job.description || t("noJobDescription")}
                                                 </p>
                                             </div>
                                         </div>
@@ -398,7 +400,7 @@ export default function JobDetailPage() {
                                     {/* Responsibilities */}
                                     {job.responsibilities && job.responsibilities.length > 0 && (
                                         <section>
-                                            <SectionHeader icon={Briefcase} title="Core Responsibilities" />
+                                            <SectionHeader icon={Briefcase} title={t("coreResponsibilities")} />
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                                 {job.responsibilities.map((item, i) => (
                                                     <motion.div
@@ -423,7 +425,7 @@ export default function JobDetailPage() {
                                     {/* Requirements */}
                                     {job.requirements && job.requirements.length > 0 && (
                                         <section>
-                                            <SectionHeader icon={ShieldCheck} title="Ideal Candidate" />
+                                            <SectionHeader icon={ShieldCheck} title={t("idealCandidate")} />
                                             <div className="space-y-4">
                                                 {job.requirements.map((item, i) => (
                                                     <motion.div
@@ -445,7 +447,7 @@ export default function JobDetailPage() {
 
                                     {/* Skills Tags */}
                                     <div className="pt-12 border-t border-border/50">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 mb-8">Ecosystem & Expertise</p>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 mb-8">{t("ecosystemExpertise")}</p>
                                         <div className="flex flex-wrap gap-3">
                                             {job.tags.map((tag) => (
                                                 <Badge
@@ -462,12 +464,12 @@ export default function JobDetailPage() {
                                             <div className="pt-12 border-t border-border/50">
                                                 <div className="flex items-center justify-between mb-8">
                                                     <div>
-                                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2">AI Performance Index</p>
-                                                        <h3 className="text-2xl font-black text-foreground">Skill Synthesis</h3>
+                                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2">{t("aiPerformanceIndex")}</p>
+                                                        <h3 className="text-2xl font-black text-foreground">{t("skillSynthesis")}</h3>
                                                     </div>
                                                     <div className="text-right">
                                                         <div className="text-3xl font-black text-primary">{matchPercentage}%</div>
-                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Profile Match</p>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{t("profileMatch")}</p>
                                                     </div>
                                                 </div>
 
@@ -475,7 +477,7 @@ export default function JobDetailPage() {
                                                     <div className="space-y-4">
                                                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                                                             <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                                                            Strengths ({matchingSkills.length})
+                                                            {t("strengths")} ({matchingSkills.length})
                                                         </p>
                                                         <div className="flex flex-wrap gap-2">
                                                             {matchingSkills.map((skill: string) => (
@@ -484,7 +486,7 @@ export default function JobDetailPage() {
                                                                 </div>
                                                             ))}
                                                             {matchingSkills.length === 0 && (
-                                                                <p className="text-xs text-muted-foreground italic">Add skills to your profile to see highlights.</p>
+                                                                <p className="text-xs text-muted-foreground italic">{t("addSkillsHighlight")}</p>
                                                             )}
                                                         </div>
                                                     </div>
@@ -492,7 +494,7 @@ export default function JobDetailPage() {
                                                     <div className="space-y-4">
                                                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                                                             <Sparkles className="h-3 w-3 text-amber-500" />
-                                                            Growth Areas ({missingSkills.length})
+                                                            {t("growthAreas")} ({missingSkills.length})
                                                         </p>
                                                         <div className="flex flex-wrap gap-2">
                                                             {missingSkills.map((skill: string) => (
@@ -518,10 +520,10 @@ export default function JobDetailPage() {
                                                     <Info className="h-4 w-4 shrink-0 mt-0.5" />
                                                     <span>
                                                         {matchPercentage >= 80
-                                                            ? "Your profile is an exceptional match for this role! We highly recommend applying immediately."
+                                                            ? t("matchExceptional")
                                                             : matchPercentage >= 50
-                                                                ? "You have a solid foundation. Highlighting your experience in the 'Growth Areas' during the interview could bridge the gap."
-                                                                : "This role requires several new skills. Consider taking a certification or building a project in these areas to improve your eligibility."}
+                                                                ? t("matchSolid")
+                                                                : t("matchLow")}
                                                     </span>
                                                 </p>
                                             </div>
@@ -545,9 +547,9 @@ export default function JobDetailPage() {
                                 <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:bg-white/15 transition-colors" />
 
                                 <div className="relative z-10">
-                                    <h3 className="text-3xl font-black text-white mb-4 tracking-tight">Apply Today</h3>
+                                    <h3 className="text-3xl font-black text-white mb-4 tracking-tight">{t("applyToday")}</h3>
                                     <p className="text-white/80 font-bold mb-10 leading-relaxed text-lg">
-                                        Ready to contribute to <span className="text-white underline decoration-white/30">{job.company}'s</span> next success story?
+                                        {t("readyToContribute")} <span className="text-white underline decoration-white/30">{job.company}{t("nextSuccessStory")}</span>
                                     </p>
 
                                     <div className="space-y-5">
@@ -556,21 +558,21 @@ export default function JobDetailPage() {
                                             className="w-full h-16 bg-white text-primary hover:bg-white/95 font-black text-xl rounded-2xl shadow-xl transition-all active:scale-[0.98] group/btn"
                                             onClick={handleApply}
                                         >
-                                            Apply Now
+                                            {t("applyNow")}
                                             <ArrowRight className="ml-2 h-6 w-6 transition-transform group-hover/btn:translate-x-1.5" />
                                         </Button>
 
                                         <div className="flex items-center justify-center gap-6 pt-4">
                                             <div className="text-center">
-                                                <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-1.5">Avg Response</p>
-                                                <p className="text-xs text-white font-black tracking-wide">48 Hours</p>
+                                                <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-1.5">{t("avgResponse")}</p>
+                                                <p className="text-xs text-white font-black tracking-wide">48 {t("hours")}</p>
                                             </div>
                                             <div className="w-px h-10 bg-white/20" />
                                             <div className="text-center">
-                                                <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-1.5">Social Proof</p>
+                                                <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-1.5">{t("socialProof")}</p>
                                                 <div className="flex items-center gap-1.5 justify-center">
                                                     <Eye className="h-3.5 w-3.5 text-white" />
-                                                    <p className="text-xs text-white font-black tracking-wide">12 others looking</p>
+                                                    <p className="text-xs text-white font-black tracking-wide">12 {t("othersLooking")}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -593,25 +595,25 @@ export default function JobDetailPage() {
                                         <h4 className="font-black text-xl leading-tight group-hover:text-primary transition-colors duration-300">{job.company}</h4>
                                         <div className="flex items-center gap-1.5 text-primary mt-1">
                                             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Verified Hub</span>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t("verifiedHub")}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="space-y-3 mb-8">
                                     <div className="flex items-center justify-between py-4 border-b border-border/10 group/item">
-                                        <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest group-hover/item:text-primary/60 transition-colors">Industry</span>
+                                        <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest group-hover/item:text-primary/60 transition-colors">{t("industry")}</span>
                                         <span className="text-xs font-black tracking-tight">{job.category}</span>
                                     </div>
                                     <div className="flex items-center justify-between py-4 border-b border-border/10 group/item">
-                                        <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest group-hover/item:text-primary/60 transition-colors">Environment</span>
-                                        <span className="text-xs font-black tracking-tight">{job.remote ? "Remote First" : "Hybrid/Office"}</span>
+                                        <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest group-hover/item:text-primary/60 transition-colors">{t("environment")}</span>
+                                        <span className="text-xs font-black tracking-tight">{job.remote ? t("remoteFirst") : t("hybridOffice")}</span>
                                     </div>
                                     <div className="flex items-center justify-between py-4 group/item">
-                                        <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest group-hover/item:text-primary/60 transition-colors">Recruitment</span>
+                                        <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest group-hover/item:text-primary/60 transition-colors">{t("recruitment")}</span>
                                         <span className="text-xs font-black flex items-center gap-1.5">
                                             <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                                            Active Now
+                                            {t("activeNow")}
                                         </span>
                                     </div>
                                 </div>
@@ -632,12 +634,12 @@ export default function JobDetailPage() {
                                             >
                                                 {hasWebsite ? (
                                                     <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 w-full h-full">
-                                                        Site
+                                                        {t("site")}
                                                         <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover/link:text-primary transition-colors" />
                                                     </a>
                                                 ) : (
                                                     <span className="flex items-center justify-center gap-1.5 w-full h-full opacity-50">
-                                                        Site
+                                                        {t("site")}
                                                         <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                                                     </span>
                                                 )}
@@ -657,12 +659,12 @@ export default function JobDetailPage() {
                                             >
                                                 {hasPoster ? (
                                                     <Link href={`/messages?userId=${job.posterId}`} className="flex items-center justify-center gap-1.5 w-full h-full">
-                                                        Talk
+                                                        {t("talk")}
                                                         <Mail className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-primary" />
                                                     </Link>
                                                 ) : (
                                                     <span className="flex items-center justify-center gap-1.5 w-full h-full opacity-50">
-                                                        Talk
+                                                        {t("talk")}
                                                         <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                                                     </span>
                                                 )}
@@ -683,9 +685,9 @@ export default function JobDetailPage() {
                                 <div className="h-12 w-12 rounded-2xl bg-foreground text-background flex items-center justify-center mb-8 shadow-sm">
                                     <Info className="h-6 w-6" />
                                 </div>
-                                <h4 className="font-black text-lg mb-3 tracking-tight">Pro Submission Tip</h4>
+                                <h4 className="font-black text-lg mb-3 tracking-tight">{t("proSubmissionTip")}</h4>
                                 <p className="text-sm text-muted-foreground font-bold leading-relaxed">
-                                    Highlight your experience with <span className="text-foreground">{job.tags[0] || "core technologies"}</span>. Companies in the <span className="text-foreground">{job.category}</span> sector prioritize candidates with specific project results over generic skills.
+                                    {t("proSubmissionTipText1")}<span className="text-foreground">{job.tags[0] || "core technologies"}</span>{t("proSubmissionTipText2")}<span className="text-foreground">{job.category}</span>{t("proSubmissionTipText3")}
                                 </p>
                             </motion.div>
                         </aside>
@@ -701,12 +703,12 @@ export default function JobDetailPage() {
                         >
                             <div className="flex items-end justify-between mb-12">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mb-4">Curated Selections</p>
-                                    <h2 className="text-4xl font-black tracking-tight">Similar <span className="text-primary italic">Positions</span></h2>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mb-4">{t("curatedSelections")}</p>
+                                    <h2 className="text-4xl font-black tracking-tight">{t("similar")} <span className="text-primary italic">{t("positions")}</span></h2>
                                 </div>
                                 <Link href="/jobs">
                                     <Button variant="ghost" className="font-bold gap-2 group">
-                                        View All
+                                        {t("viewAll")}
                                         <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                                     </Button>
                                 </Link>
@@ -743,7 +745,7 @@ export default function JobDetailPage() {
                                         </div>
                                         <Link href={`/jobs/${similarJob.id}`}>
                                             <Button className="w-full rounded-xl font-bold gap-2">
-                                                View Details
+                                                {t("viewDetails")}
                                                 <ArrowRight className="h-4 w-4" />
                                             </Button>
                                         </Link>

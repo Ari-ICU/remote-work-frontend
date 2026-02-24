@@ -80,9 +80,10 @@ export function SettingsControl() {
                     <DropdownMenuItem onClick={() => handleLanguageChange("en")}>
                         English {locale === "en" && <Check className="ml-auto h-4 w-4" />}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleLanguageChange("fr")}>
-                        Français {locale === "fr" && <Check className="ml-auto h-4 w-4" />}
+                    <DropdownMenuItem onClick={() => handleLanguageChange("km")}>
+                        Khmer (ខ្មែរ) {locale === "km" && <Check className="ml-auto h-4 w-4" />}
                     </DropdownMenuItem>
+        
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>

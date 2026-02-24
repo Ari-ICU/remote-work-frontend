@@ -6,8 +6,8 @@ export default getRequestConfig(async () => {
 
     let messages;
     switch (locale) {
-        case 'fr':
-            messages = (await import('../messages/fr.json')).default;
+        case 'km':
+            messages = (await import('../messages/km.json')).default;
             break;
         case 'en':
         default:
