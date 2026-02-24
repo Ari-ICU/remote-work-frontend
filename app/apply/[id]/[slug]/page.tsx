@@ -117,9 +117,10 @@ export default function ApplyPage() {
 
             await applicationService.apply(params.id as string, backendData);
             setIsSuccess(true);
-        } catch (err) {
-            console.error("Failed to submit application:", err);
-            toast.error("Something went wrong. Please try again.");
+        } catch (err: any) {
+            console.error("Failed to submit application:", err.response?.data || err);
+            const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
+            toast.error(Array.isArray(errorMessage) ? errorMessage[0] : errorMessage);
         } finally {
             setIsSubmitting(false);
         }
