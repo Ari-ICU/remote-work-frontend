@@ -78,13 +78,44 @@ export default function ApplyPage() {
         setIsSubmitting(true);
         try {
             const formData = new FormData(e.currentTarget);
+
             const applicationData = {
+                fullname: formData.get("fullname") as string,
+                email: formData.get("email") as string,
+                phone: formData.get("phone") as string,
                 coverLetter: formData.get("coverLetter") as string,
-                proposedRate: parseFloat(formData.get("proposedRate") as string),
+                proposedRate: formData.get("proposedRate") as string,
                 estimatedTime: formData.get("estimatedTime") as string
             };
 
-            await applicationService.apply(params.id as string, applicationData);
+            const clientEmail = job?.companyEmail || "employer@khmerwork.com";
+            const subject = encodeURIComponent(`Application for ${job?.title} - ${applicationData.fullname}`);
+            const body = encodeURIComponent(`
+                Hello,
+
+                I am applying for the position of ${job?.title}.
+
+                Applicant Details:
+                - Name: ${applicationData.fullname}
+                - Email: ${applicationData.email}
+                - Phone: ${applicationData.phone}
+                - Proposed Rate: $${applicationData.proposedRate}
+                - Estimated Time: ${applicationData.estimatedTime}
+
+                Cover Letter:
+                ${applicationData.coverLetter}
+            `.trim());
+
+            // Open user's email client directly
+            window.location.href = `mailto:${clientEmail}?subject=${subject}&body=${body}`;
+
+            const backendData = {
+                coverLetter: `Applicant: ${applicationData.fullname} | Email: ${applicationData.email} | Phone: ${applicationData.phone}\n\n${applicationData.coverLetter}`,
+                proposedRate: parseFloat(applicationData.proposedRate) || 0,
+                estimatedTime: applicationData.estimatedTime || "Not specified"
+            };
+
+            await applicationService.apply(params.id as string, backendData);
             setIsSuccess(true);
         } catch (err) {
             console.error("Failed to submit application:", err);
@@ -141,7 +172,7 @@ export default function ApplyPage() {
                 <div className="flex-1 flex flex-col items-center justify-center gap-4">
                     <p className="text-destructive font-bold text-xl">{error || "Job not found"}</p>
                     <Button asChild variant="outline">
-                        <Link href="/">Back to Jobs</Link>
+                        <Link href="/jobs">Back to Jobs</Link>
                     </Button>
                 </div>
             </div>
@@ -169,7 +200,10 @@ export default function ApplyPage() {
                         </p>
                         <div className="flex flex-col gap-3 pt-4">
                             <Button size="lg" className="w-full shadow-lg shadow-primary/20" asChild>
-                                <Link href="/">Return to Jobs</Link>
+                                <Link href={`/jobs/${job?.id}`}>Return to Job Post</Link>
+                            </Button>
+                            <Button variant="outline" size="lg" className="w-full" asChild>
+                                <Link href="/jobs">Browse More Jobs</Link>
                             </Button>
                         </div>
                     </motion.div>
@@ -190,11 +224,11 @@ export default function ApplyPage() {
                         className="mb-8"
                     >
                         <Link
-                            href="/"
+                            href={job ? `/jobs/${job.id}` : "/jobs"}
                             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
                         >
                             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                            Back to Job Listing
+                            Back to Job Post
                         </Link>
                     </motion.div>
 
