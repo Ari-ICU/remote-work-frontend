@@ -85,6 +85,7 @@ export default function JobDetailPage() {
     const [similarJobs, setSimilarJobs] = useState<Job[]>([]);
     const [user, setUser] = useState<any>(null);
     const t = useTranslations("jobDetail");
+    const tJobTypes = useTranslations("jobTypes");
 
     useEffect(() => {
         const currentUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null;
@@ -298,7 +299,7 @@ export default function JobDetailPage() {
                                             {job.category}
                                         </Badge>
                                         <Badge variant="outline" className="px-4 py-2 rounded-full border-border text-muted-foreground font-black text-[10px] uppercase tracking-widest bg-muted/20">
-                                            {job.type}
+                                            {tJobTypes.has(job.type.toLowerCase().replace(/\s+/g, '-')) ? tJobTypes(job.type.toLowerCase().replace(/\s+/g, '-')) : job.type}
                                         </Badge>
                                         {job.featured && (
                                             <Badge className="px-4 py-2 rounded-full bg-amber-500/10 text-amber-600 border-amber-500/20 font-black text-[10px] uppercase tracking-widest hover:bg-amber-500/20">

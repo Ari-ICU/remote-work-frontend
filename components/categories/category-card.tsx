@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Category } from "@/types/job";
 import { fadeIn } from "@/lib/animations";
+import { useTranslations } from "next-intl";
 
 interface CategoryCardProps {
     category: Category;
@@ -10,7 +11,11 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, onClick }: CategoryCardProps) {
+    const t = useTranslations("categories");
     const Icon = category.icon;
+
+    // Normalize category name for translation key
+    const categoryKey = category.name.toLowerCase().replace(/\s+/g, '');
 
     return (
         <motion.button
@@ -31,10 +36,10 @@ export function CategoryCard({ category, onClick }: CategoryCardProps) {
                 <Icon className="h-7 w-7" />
             </div>
             <h3 className="mt-4 font-bold text-foreground group-hover:text-primary transition-colors text-center">
-                {category.name}
+                {t.has(categoryKey) ? t(categoryKey) : category.name}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground font-medium">
-                {category.count} jobs
+                {t("jobsCount", { count: category.count })}
             </p>
         </motion.button>
     );

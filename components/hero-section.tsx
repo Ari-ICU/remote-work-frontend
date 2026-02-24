@@ -138,7 +138,7 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
                 onClick={() => setSearchQuery(tag)}
                 className="px-3 py-1 rounded-full bg-muted/50 text-[11px] font-bold text-muted-foreground hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20 transition-all"
               >
-                {tag}
+                {t(tag.toLowerCase())}
               </button>
             ))}
           </div>

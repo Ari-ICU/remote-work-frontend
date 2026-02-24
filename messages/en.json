@@ -150,7 +150,11 @@
         "trending": "Trending:",
         "verifiedJobs": "Verified Jobs",
         "curatedCompanies": "Curated Companies",
-        "freeForSeekers": "Free for Seekers"
+        "freeForSeekers": "Free for Seekers",
+        "react": "React",
+        "fullstack": "Fullstack",
+        "design": "Design",
+        "mobile": "Mobile"
     },
     "categories": {
         "title": "Browse by Category",
@@ -178,19 +182,19 @@
         "forEmployers": "For Employers",
         "company": "Company",
         "legal": "Legal",
-        "browseJobs": "Browse Jobs",
+        "browsejobs": "Browse Jobs",
         "categories": "Categories",
         "companies": "Companies",
-        "salaryGuide": "Salary Guide",
-        "postJob": "Post a Job",
+        "salaryguide": "Salary Guide",
+        "postajob": "Post a Job",
         "pricing": "Pricing",
-        "hiringSolutions": "Hiring Solutions",
-        "employerResources": "Employer Resources",
-        "aboutUs": "About Us",
+        "hiringsolutions": "Hiring Solutions",
+        "employerresources": "Employer Resources",
+        "aboutus": "About Us",
         "contact": "Contact",
-        "privacyPolicy": "Privacy Policy",
-        "termsOfService": "Terms of Service",
-        "cookiePolicy": "Cookie Policy",
+        "privacypolicy": "Privacy Policy",
+        "termsofservice": "Terms of Service",
+        "cookiepolicy": "Cookie Policy",
         "subscribeTitle": "Subscribe to Our Newsletter",
         "subscribeSubtitle": "Get the latest job opportunities and career tips delivered to your inbox.",
         "emailPlaceholder": "Enter your email",
@@ -219,5 +223,12 @@
         "companiesHiring": "Companies Hiring",
         "registeredFreelancers": "Registered Freelancers",
         "successfulPlacements": "Successful Placements"
+    },
+    "jobTypes": {
+        "remote": "Remote",
+        "freelance": "Freelance",
+        "full-time": "Full-time",
+        "part-time": "Part-time",
+        "contract": "Contract"
     }
 }

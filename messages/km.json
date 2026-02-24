@@ -135,7 +135,7 @@
         "viewAllJobs": "មើលការងារទាំងអស់",
         "discoverNewest": "ស្វែងយុទ្ធសាស្ត្រថ្មីៗនៃការងារពីចម្ងាយ និងឯករាជ្យ",
         "savedToWishlist": "បានរក្សាទុកក្នុងបញ្ជីប្រាថ្នារបស់អ្នក!",
-        "removedFromWishlist": "បានលុបចេញពីបញ្ជីប្រាថ្នា",
+        "removedFromWishlist": "បានលុបចេញពីបញ្ជីប្រា្នា",
         "unableToLoad": "មិនអាចផ្ទុកការងារចុងក្រោយបានទេ។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។"
     },
     "hero": {
@@ -150,13 +150,30 @@
         "trending": "កំពុងពេញនិយម៖",
         "verifiedJobs": "ការងារដែលបានបញ្ជាក់",
         "curatedCompanies": "ក្រុមហ៊ុនដែលបានសម្រិតសម្រាំង",
-        "freeForSeekers": "ឥតគិតថ្លៃសម្រាប់អ្នកស្វែងរកការងារ"
+        "freeForSeekers": "ឥតគិតថ្លៃសម្រាប់អ្នកស្វែងរកការងារ",
+        "react": "React",
+        "fullstack": "Fullstack",
+        "design": "រចនា",
+        "mobile": "ទូរស័ព្ទដៃ"
     },
     "categories": {
         "title": "ស្វែងរកតាមប្រភេទ",
         "subtitle": "ស្វែងរកឱកាសការងារក្នុងវិស័យផ្សេងៗ និងស្វែងរកការងារដែលស័ក្តិសមបំផុតសម្រាប់ជំនាញរបស់អ្នក",
         "noCategories": "រកមិនឃើញប្រភេទការងារទេ",
-        "noCategoriesDesc": "យើងមិនអាចរកឃើញប្រភេទការងារណាមួយនៅពេលនេះទេ។"
+        "noCategoriesDesc": "យើងមិនអាចរកឃើញប្រភេទការងារណាមួយនៅពេលនេះទេ។",
+        "jobsCount": "ការងារចំនួន {count}",
+        "softwareengineering": "វិស្វកម្មកម្មវិធី",
+        "creative&design": "ការរចនា និងភាពច្នៃប្រឌិត",
+        "marketing": "ទីផ្សារ",
+        "sales": "ការលក់",
+        "customersupport": "សេវាកម្មអតិថិជន",
+        "writing": "ការសរសេរ",
+        "finance": "ហិរញ្ញវត្ថុ",
+        "management": "ការគ្រប់គ្រង",
+        "translation": "ការបកប្រែ",
+        "datascience": "វិទ្យាសាស្ត្រទិន្នន័យ",
+        "humanresources": "ធនធានមនុស្ស",
+        "projectmanagement": "ការគ្រប់គ្រងគម្រោង"
     },
     "footer": {
         "description": "ផ្សារភ្ជាប់ការងារពីចម្ងាយ និងឯករាជ្យដែលផ្តាច់មុខនៅកម្ពុជា។ កសាងអនាគតនៃការធ្វើការងារដែលបត់បែន។",
@@ -165,22 +182,22 @@
         "forEmployers": "សម្រាប់និយោជក",
         "company": "ក្រុមហ៊ុន",
         "legal": "ផ្នែកច្បាប់",
-        "browseJobs": "ស្វែងរកការងារ",
+        "browsejobs": "ស្វែងរកការងារ",
         "categories": "ប្រភេទការងារ",
         "companies": "ក្រុមហ៊ុន",
-        "salaryGuide": "មគ្គុទ្ទេសក៍ប្រាក់ខែ",
-        "postJob": "ប្រកាសការងារ",
+        "salaryguide": "មគ្គុទ្ទេសក៍ប្រាក់ខែ",
+        "postajob": "ប្រកាសការងារ",
         "pricing": "តម្លៃសេវាកម្ម",
-        "hiringSolutions": "ដំណោះស្រាយជ្រើសរើសបុគ្គលិក",
-        "employerResources": "ធនធាននិយោជក",
-        "aboutUs": "អំពីយើង",
+        "hiringsolutions": "ដំណោះស្រាយជ្រើសរើសបុគ្គលិក",
+        "employerresources": "ធនធាននិយោជក",
+        "aboutus": "អំពីយើង",
         "contact": "ទំនាក់ទំនង",
-        "privacyPolicy": "គោលការណ៍ឯកជនភាព",
-        "termsOfService": "លក្ខខណ្ឌសេវាកម្ម",
-        "cookiePolicy": "គោលការណ៍ឃុកឃី",
+        "privacypolicy": "គោលការណ៍ឯកជនភាព",
+        "termsofservice": "លក្ខខណ្ឌសេវាកម្ម",
+        "cookiepolicy": "គោលការណ៍ឃុកឃី",
         "subscribeTitle": "ចុះឈ្មោះដើម្បីទទួលបានព័ត៌មាន",
         "subscribeSubtitle": "ទទួលបានឱកាសការងារថ្មីៗ និងគន្លឹះអាជីពផ្ញើត្រង់ទៅកាន់ប្រអប់សំបុត្ររបស់អ្នក។",
-        "emailPlaceholder": "បញ្ចូលអ៊ីមែលរបស់អ្នក",
+        "emailPlaceholder": "Enter your email",
         "subscribeButton": "ចុះឈ្មោះ",
         "subscribed": "បានចុះឈ្មោះជោគជ័យ!",
         "allRightsReserved": "រក្សាសិទ្ធិគ្រប់យ៉ាង។"
@@ -206,5 +223,12 @@
         "companiesHiring": "ក្រុមហ៊ុនកំពុងជ្រើសរើស",
         "registeredFreelancers": "អ្នកជំនាញឯករាជ្យចុះឈ្មោះ",
         "successfulPlacements": "ការដាក់ការងារជោគជ័យ"
+    },
+    "jobTypes": {
+        "remote": "ពីចម្ងាយ",
+        "freelance": "ឯករាជ្យ",
+        "full-time": "ពេញម៉ោង",
+        "part-time": "ក្រៅម៉ោង",
+        "contract": "កិច្ចសន្យា"
     }
 }

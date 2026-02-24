@@ -8,6 +8,7 @@ import { Job } from "@/types/job";
 import { scaleUp } from "@/lib/animations";
 import Link from "next/link";
 import { slugify } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 interface JobCardProps {
     job: Job;
@@ -16,6 +17,12 @@ interface JobCardProps {
 }
 
 export function JobCard({ job, isSaved, onToggleSave }: JobCardProps) {
+    const t = useTranslations("jobsList");
+    const tCommon = useTranslations("common");
+    const tJobTypes = useTranslations("jobTypes");
+
+    // Normalize job type for translation key
+    const jobTypeKey = job.type.toLowerCase().replace(/\s+/g, '-');
     return (
         <motion.article
             variants={scaleUp}
@@ -30,7 +37,7 @@ export function JobCard({ job, isSaved, onToggleSave }: JobCardProps) {
         >
             {job.featured && (
                 <Badge className="absolute -top-2.5 left-4 bg-primary text-primary-foreground shadow-sm">
-                    Featured
+                    {t("featured")}
                 </Badge>
             )}
 
@@ -86,7 +93,7 @@ export function JobCard({ job, isSaved, onToggleSave }: JobCardProps) {
                     )}
                     <div className="flex items-center gap-1.5">
                         <Clock className="h-4 w-4 text-primary" />
-                        <span>{job.type}</span>
+                        <span>{tJobTypes.has(jobTypeKey) ? tJobTypes(jobTypeKey) : job.type}</span>
                     </div>
                 </div>
                 {job.salary && (
@@ -110,10 +117,10 @@ export function JobCard({ job, isSaved, onToggleSave }: JobCardProps) {
 
             <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
                 <span className="text-xs text-muted-foreground">
-                    Posted {job.posted}
+                    {t("recentOpportunities") === "Recent Opportunities" ? `Posted ${job.posted}` : `បានប្រកាស ${job.posted}`}
                 </span>
                 <Link href={`/apply/${job.id}/${slugify(job.title)}`} className="group/apply flex items-center gap-1 text-sm font-bold text-primary hover:text-primary/80 transition-colors">
-                    Apply Now
+                    {t("viewDetails") === "View Details" ? "Apply Now" : "ដាក់ពាក្យឥឡូវនេះ"}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover/apply:translate-x-1" />
                 </Link>
             </div>
