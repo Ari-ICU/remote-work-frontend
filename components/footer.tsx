@@ -5,6 +5,7 @@ import { Facebook, Twitter, Linkedin, Instagram, Mail, Send } from "lucide-react
 import { useState } from "react";
 import Image from "next/image";
 import { Logo } from "@/components/logo";
+import { useTranslations } from "next-intl";
 
 
 const footerLinks = {
@@ -59,6 +60,7 @@ const socialLinks = [
 ];
 
 export function Footer() {
+  const t = useTranslations("footer");
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -84,13 +86,12 @@ export function Footer() {
               <Logo />
             </Link>
             <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
-              Cambodia&apos;s exclusive marketplace for 100% remote and
-              freelance job opportunities. Building the future of flexible work.
+              {t("description")}
             </p>
 
             {/* Social Media Links */}
             <div className="mt-6">
-              <h4 className="text-sm font-semibold text-foreground mb-3">Follow Us</h4>
+              <h4 className="text-sm font-semibold text-foreground mb-3">{t("followUs")}</h4>
               <div className="flex gap-3">
                 {socialLinks.map((social) => {
                   const Icon = social.icon;
@@ -114,7 +115,7 @@ export function Footer() {
           {/* For Job Seekers */}
           <div>
             <h3 className="text-sm font-semibold text-foreground">
-              For Job Seekers
+              {t("forJobSeekers")}
             </h3>
             <ul className="mt-4 space-y-3">
               {footerLinks.forJobSeekers.map((link) => (
@@ -123,7 +124,7 @@ export function Footer() {
                     href={link.href}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:translate-x-1 inline-block"
                   >
-                    {link.label}
+                    {t(link.label.toLowerCase().replace(/\s+/g, ''))}
                   </Link>
                 </li>
               ))}
@@ -133,7 +134,7 @@ export function Footer() {
           {/* For Employers */}
           <div>
             <h3 className="text-sm font-semibold text-foreground">
-              For Employers
+              {t("forEmployers")}
             </h3>
             <ul className="mt-4 space-y-3">
               {footerLinks.forEmployers.map((link) => (
@@ -142,7 +143,7 @@ export function Footer() {
                     href={link.href}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:translate-x-1 inline-block"
                   >
-                    {link.label}
+                    {t(link.label.toLowerCase().replace(/\s+/g, ''))}
                   </Link>
                 </li>
               ))}
@@ -151,7 +152,7 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Company</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("company")}</h3>
             <ul className="mt-4 space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
@@ -159,7 +160,7 @@ export function Footer() {
                     href={link.href}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:translate-x-1 inline-block"
                   >
-                    {link.label}
+                    {t(link.label.toLowerCase().replace(/\s+/g, ''))}
                   </Link>
                 </li>
               ))}
@@ -168,7 +169,7 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Legal</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("legal")}</h3>
             <ul className="mt-4 space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
@@ -176,7 +177,7 @@ export function Footer() {
                     href={link.href}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:translate-x-1 inline-block"
                   >
-                    {link.label}
+                    {t(link.label.toLowerCase().replace(/\s+/g, ''))}
                   </Link>
                 </li>
               ))}
@@ -190,18 +191,18 @@ export function Footer() {
             <div className="flex items-center justify-center gap-2 mb-3">
               <Mail className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold text-foreground">
-                Subscribe to Our Newsletter
+                {t("subscribeTitle")}
               </h3>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              Get the latest job opportunities and career tips delivered to your inbox.
+              {t("subscribeSubtitle")}
             </p>
             <form onSubmit={handleSubscribe} className="flex gap-2">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder={t("emailPlaceholder")}
                 className="flex-1 px-4 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 required
               />
@@ -212,12 +213,12 @@ export function Footer() {
               >
                 {subscribed ? (
                   <>
-                    <span className="text-sm">✓ Subscribed!</span>
+                    <span className="text-sm">✓ {t("subscribed")}</span>
                   </>
                 ) : (
                   <>
                     <Send className="h-4 w-4" />
-                    <span className="hidden sm:inline">Subscribe</span>
+                    <span className="hidden sm:inline">{t("subscribeButton")}</span>
                   </>
                 )}
               </button>
@@ -228,7 +229,7 @@ export function Footer() {
         {/* Copyright */}
         <div className="mt-8 border-t border-border pt-8">
           <p className="text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} KhmerWork. All rights reserved.
+            &copy; {new Date().getFullYear()} KhmerWork. {t("allRightsReserved")}
           </p>
         </div>
       </div>

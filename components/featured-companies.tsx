@@ -4,6 +4,7 @@ import { Building2, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { jobsService } from "@/lib/services/jobs";
+import { useTranslations } from "next-intl";
 
 interface Company {
   id?: string;
@@ -29,6 +30,7 @@ const item = {
 };
 
 export function FeaturedCompanies() {
+  const t = useTranslations("companies");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -66,14 +68,14 @@ export function FeaturedCompanies() {
       <section id="companies" className="bg-muted/30 py-16 sm:py-24 scroll-mt-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Featured Companies</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{t("title")}</h2>
             <div className="mt-12 flex flex-col items-center justify-center py-12 text-center border border-dashed border-border rounded-3xl bg-card/50">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted transition-colors">
                 <Building2 className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="mt-4 text-lg font-semibold text-foreground">No featured companies</h3>
+              <h3 className="mt-4 text-lg font-semibold text-foreground">{t("noCompanies")}</h3>
               <p className="mt-2 text-muted-foreground">
-                We're currently updating our list of top employers. Check back soon!
+                {t("noCompaniesDesc")}
               </p>
             </div>
           </div>
@@ -92,7 +94,7 @@ export function FeaturedCompanies() {
             viewport={{ once: true }}
             className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
           >
-            Featured Companies
+            {t("title")}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -101,7 +103,7 @@ export function FeaturedCompanies() {
             transition={{ delay: 0.1 }}
             className="mx-auto mt-4 max-w-2xl text-muted-foreground"
           >
-            Top employers in Cambodia actively looking for talented professionals
+            {t("subtitle")}
           </motion.p>
         </div>
 
@@ -134,7 +136,7 @@ export function FeaturedCompanies() {
                 {company.name}
               </h3>
               <p className="mt-1 text-xs font-medium text-muted-foreground">
-                {company.jobsCount} open positions
+                {t("openPositions", { count: company.jobsCount })}
               </p>
             </motion.button>
           ))}

@@ -8,12 +8,14 @@ import { motion } from "framer-motion";
 import { authService } from "@/lib/services/auth";
 import { useAuth } from "@/components/providers/auth-provider";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 interface HeroSectionProps {
   onSearch?: (query: string, location: string) => void;
 }
 
 export function HeroSection({ onSearch }: HeroSectionProps) {
+  const t = useTranslations("hero");
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const { user } = useAuth();
@@ -66,13 +68,13 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
               className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-4 py-1.5 text-sm font-semibold text-primary mb-8"
             >
               <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              Welcome back, {user.firstName}!
+              {t("welcomeBack", { name: user.firstName })}
             </motion.div>
           )}
           <h1 className="text-pretty text-4xl font-black tracking-tight text-foreground sm:text-6xl lg:text-8xl">
-            Cambodia&apos;s <br />
+            {t("title1")} <br />
             <span className="relative inline-block mt-2">
-              <span className="relative z-10 text-primary">Remote & Freelance</span>
+              <span className="relative z-10 text-primary">{t("title2")}</span>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: "100%" }}
@@ -80,11 +82,10 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
                 className="absolute bottom-2 left-0 h-4 bg-primary/10 -z-5"
               />
             </span>
-            <br />Job Marketplace
+            <br />{t("title3")}
           </h1>
           <p className="mt-8 text-lg leading-relaxed text-muted-foreground sm:text-xl max-w-2xl mx-auto font-medium">
-            The exclusive platform for high-impact remote roles in the Kingdom.
-            Scale your career from anywhere.
+            {t("subtitle")}
           </p>
         </motion.div>
 
@@ -100,7 +101,7 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
                 <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input
                   type="text"
-                  placeholder="UI Designer, React Native, Marketing..."
+                  placeholder={t("searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="border-0 bg-transparent pl-12 shadow-none focus-visible:ring-0 text-lg h-14 font-medium"
@@ -111,7 +112,7 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
                 <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input
                   type="text"
-                  placeholder="Remote, Phnom Penh..."
+                  placeholder={t("locationPlaceholder")}
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className="border-0 bg-transparent pl-12 shadow-none focus-visible:ring-0 text-lg h-14 font-medium"
@@ -123,14 +124,14 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
                   className="w-full sm:w-auto h-14 px-10 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all hover:scale-[1.02] active:scale-95"
                   onClick={handleSearch}
                 >
-                  Search Jobs
+                  {t("searchButton")}
                 </Button>
               </div>
             </div>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 px-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Trending:</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("trending")}</span>
             {["React", "Fullstack", "Design", "Mobile"].map((tag) => (
               <button
                 key={tag}
@@ -151,15 +152,15 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
         >
           <div className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-secondary/30 border border-border/50 group hover:border-primary/20 transition-colors">
             <div className="text-3xl font-black text-foreground group-hover:text-primary transition-colors">2.5k+</div>
-            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Verified Jobs</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("verifiedJobs")}</div>
           </div>
           <div className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-secondary/30 border border-border/50 group hover:border-primary/20 transition-colors">
             <div className="text-3xl font-black text-foreground group-hover:text-primary transition-colors">500+</div>
-            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Curated Companies</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("curatedCompanies")}</div>
           </div>
           <div className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-secondary/30 border border-border/50 group hover:border-primary/20 transition-colors">
             <div className="text-3xl font-black text-foreground group-hover:text-primary transition-colors">100%</div>
-            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Free for Seekers</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("freeForSeekers")}</div>
           </div>
         </motion.div>
       </div>

@@ -3,15 +3,17 @@
 import { motion } from "framer-motion";
 import { Stat } from "@/types/job";
 import { fadeIn } from "@/lib/animations";
-
-const stats: Stat[] = [
-  { label: "Active Job Listings", value: "2,500+" },
-  { label: "Companies Hiring", value: "500+" },
-  { label: "Registered Freelancers", value: "15,000+" },
-  { label: "Successful Placements", value: "8,200+" },
-];
+import { useTranslations } from "next-intl";
 
 export function StatsSection() {
+  const t = useTranslations("stats");
+
+  const stats: Stat[] = [
+    { label: t("activeJobListings"), value: "2,500+" },
+    { label: t("companiesHiring"), value: "500+" },
+    { label: t("registeredFreelancers"), value: "15,000+" },
+    { label: t("successfulPlacements"), value: "8,200+" },
+  ];
   return (
     <section className="relative overflow-hidden border-y border-border bg-primary py-12 sm:py-20">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1),transparent)]" />

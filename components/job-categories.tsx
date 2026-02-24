@@ -22,6 +22,7 @@ import { CategoryCard } from "./categories/category-card";
 import { staggerContainer, fadeIn } from "@/lib/animations";
 import { useState, useEffect } from "react";
 import { jobsService } from "@/lib/services/jobs";
+import { useTranslations } from "next-intl";
 
 const iconMap: Record<string, any> = {
   "Software Engineering": Code,
@@ -65,6 +66,7 @@ interface JobCategoriesProps {
 }
 
 export function JobCategories({ onSelectCategory }: JobCategoriesProps) {
+  const t = useTranslations("categories");
   const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -104,7 +106,7 @@ export function JobCategories({ onSelectCategory }: JobCategoriesProps) {
             variants={fadeIn}
             className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
           >
-            Browse by Category
+            {t("title")}
           </motion.h2>
           <motion.p
             initial="hidden"
@@ -114,8 +116,7 @@ export function JobCategories({ onSelectCategory }: JobCategoriesProps) {
             transition={{ delay: 0.1 }}
             className="mx-auto mt-4 max-w-2xl text-muted-foreground"
           >
-            Explore job opportunities across various industries and find the
-            perfect match for your skills
+            {t("subtitle")}
           </motion.p>
         </div>
 
@@ -150,9 +151,9 @@ export function JobCategories({ onSelectCategory }: JobCategoriesProps) {
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted transition-colors">
               <Globe className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="mt-4 text-lg font-semibold text-foreground">No categories found</h3>
+            <h3 className="mt-4 text-lg font-semibold text-foreground">{t("noCategories")}</h3>
             <p className="mt-2 text-muted-foreground">
-              We couldn't find any job categories at this time.
+              {t("noCategoriesDesc")}
             </p>
           </motion.div>
         )}

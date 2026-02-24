@@ -6,8 +6,10 @@ import { ArrowRight, Users, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { authService } from "@/lib/services/auth";
+import { useTranslations } from "next-intl";
 
 export function CTASection() {
+  const t = useTranslations("cta");
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -31,16 +33,14 @@ export function CTASection() {
                 <Users className="h-7 w-7" />
               </div>
               <h3 className="mt-8 text-3xl font-bold text-foreground">
-                For Job Seekers
+                {t("forJobSeekers")}
               </h3>
               <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-                Create your profile, showcase your skills, and get discovered by
-                top companies. We exclusively offer remote and freelance
-                opportunities that allow you to work from anywhere.
+                {t("forJobSeekersDesc")}
               </p>
               <Link href={user ? "/#find-jobs" : "/register"}>
                 <Button size="lg" className="mt-8 group/btn w-full sm:w-auto">
-                  {user ? "Browse Opportunities" : "Create Free Profile"}
+                  {user ? t("browseOpportunities") : t("createFreeProfile")}
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
                 </Button>
               </Link>
@@ -60,16 +60,14 @@ export function CTASection() {
                 <Briefcase className="h-7 w-7" />
               </div>
               <h3 className="mt-8 text-3xl font-bold text-white">
-                For Employers
+                {t("forEmployers")}
               </h3>
               <p className="mt-4 text-lg text-white/90 leading-relaxed">
-                Post job listings and connect with Cambodia&apos;s top remote talent
-                and freelance experts. Find the perfect flexible partner for your
-                projects or long-term remote roles.
+                {t("forEmployersDesc")}
               </p>
               <Link href="/post-job">
                 <Button variant="secondary" size="lg" className="mt-8 group/btn bg-white text-primary hover:bg-white/90 w-full sm:w-auto">
-                  Post a Job
+                  {t("postJob")}
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
                 </Button>
               </Link>
