@@ -40,9 +40,11 @@ export function JobCard({ job, isSaved, onToggleSave }: JobCardProps) {
                         <Building2 className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary" />
                     </div>
                     <div className="min-w-0">
-                        <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                            {job.title}
-                        </h3>
+                        <Link href={`/jobs/${job.id}`}>
+                            <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors hover:underline">
+                                {job.title}
+                            </h3>
+                        </Link>
                         {job.company && (
                             <p className="text-sm font-medium text-muted-foreground">
                                 {job.company}
