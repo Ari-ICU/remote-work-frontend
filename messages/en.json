@@ -230,5 +230,12 @@
         "full-time": "Full-time",
         "part-time": "Part-time",
         "contract": "Contract"
+    },
+    "chatBot": {
+        "title": "AI Assistant",
+        "subtitle": "Always here to help",
+        "welcome": "Hi! I'm your AI assistant. How can I help you find work or hire talent today?",
+        "placeholder": "Type your message...",
+        "error": "Sorry, I'm having trouble connecting to the server. Please try again later."
     }
 }

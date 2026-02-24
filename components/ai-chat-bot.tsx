@@ -10,6 +10,7 @@ import { MessageCircle, X, Send, Bot, User } from "lucide-react"
 import { aiService } from "@/lib/services/ai"
 import { cn } from "@/lib/utils"
 import { usePathname } from "next/navigation"
+import { useTranslations, useLocale } from "next-intl"
 
 interface Message {
     id: string
@@ -18,17 +19,24 @@ interface Message {
 }
 
 export function AiChatBot() {
+    const t = useTranslations("chatBot")
     const pathname = usePathname()
+    const locale = useLocale()
     const isMessagesPage = pathname === "/messages"
     const [isOpen, setIsOpen] = useState(false)
 
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: "1",
-            role: "bot",
-            content: "Hi! I'm your AI assistant. How can I help you find work or hire talent today?"
-        }
-    ])
+    const [messages, setMessages] = useState<Message[]>([])
+
+    // Initialize welcome message with translation
+    useEffect(() => {
+        setMessages([
+            {
+                id: "1",
+                role: "bot",
+                content: t("welcome")
+            }
+        ])
+    }, [t])
     const [inputValue, setInputValue] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -54,7 +62,7 @@ export function AiChatBot() {
         setIsLoading(true)
 
         try {
-            const data = await aiService.chat(userMessage.content)
+            const data = await aiService.chat(userMessage.content, locale)
             const botMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "bot",
@@ -66,7 +74,7 @@ export function AiChatBot() {
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "bot",
-                content: "Sorry, I'm having trouble connecting to the server. Please try again later."
+                content: t("error")
             }
             setMessages(prev => [...prev, errorMessage])
         } finally {
@@ -99,8 +107,8 @@ export function AiChatBot() {
                                 <Bot className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                                <CardTitle className="text-base font-semibold">AI Assistant</CardTitle>
-                                <p className="text-xs text-muted-foreground">Always here to help</p>
+                                <CardTitle className="text-base font-semibold">{t("title")}</CardTitle>
+                                <p className="text-xs text-muted-foreground">{t("subtitle")}</p>
                             </div>
                         </div>
                         <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8 rounded-full hover:bg-muted">
@@ -166,7 +174,7 @@ export function AiChatBot() {
                     <CardFooter className="p-4 border-t bg-muted/30">
                         <div className="flex w-full items-center space-x-2">
                             <Input
-                                placeholder="Type your message..."
+                                placeholder={t("placeholder")}
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 onKeyDown={(e) => {
