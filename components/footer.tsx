@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Facebook, Twitter, Linkedin, Instagram, Mail, Send } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
+import { Logo } from "@/components/logo";
+
 
 const footerLinks = {
   forJobSeekers: [
@@ -78,19 +80,8 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-6">
           {/* Brand & Description */}
           <div className="col-span-1 lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="relative flex items-center justify-center transition-transform group-hover:scale-105">
-                <Image
-                  src="/placeholder-logo.svg"
-                  alt="KhmerWork Logo"
-                  width={36}
-                  height={36}
-                  className="h-9 w-auto"
-                />
-              </div>
-              <span className="text-xl font-bold text-foreground transition-colors group-hover:text-primary">
-                KhmerWork
-              </span>
+            <Link href="/" className="group">
+              <Logo />
             </Link>
             <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
               Cambodia&apos;s exclusive marketplace for 100% remote and

@@ -46,6 +46,8 @@ import {
 import { useIsMobile } from "@/components/ui/use-mobile";
 import { CommandMenu } from "@/components/admin/command-menu";
 import Image from "next/image";
+import { Logo } from "@/components/logo";
+
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/admin", description: "Platform performance & stats" },
@@ -144,31 +146,16 @@ function AdminLayoutContent({
                     } transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] border-r border-white/5 bg-black/40 backdrop-blur-2xl h-screen sticky top-0 flex flex-col z-50`}
             >
                 <div className="p-8 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3 group">
-                        <motion.div
-                            whileHover={{ rotate: 5, scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center overflow-hidden"
-                        >
-                            <Image
-                                src="/placeholder-logo.svg"
-                                alt="KhmerWork Logo"
-                                width={32}
-                                height={32}
-                                className="w-8 h-8"
-                            />
-                        </motion.div>
+                    <Link href="/" className="flex flex-col group">
+                        <Logo />
                         <AnimatePresence>
                             {isSidebarOpen && (
                                 <motion.div
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -10 }}
-                                    className="overflow-hidden"
+                                    className="ml-11 -mt-2"
                                 >
-                                    <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/40">
-                                        KhmerWork
-                                    </span>
                                     <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold opacity-80">Admin Console</p>
                                 </motion.div>
                             )}
@@ -273,20 +260,9 @@ function AdminLayoutContent({
                                 <SheetContent side="left" className="p-0 w-72 bg-[#050505] border-white/5">
                                     <div className="h-full flex flex-col">
                                         <div className="p-8 flex items-center justify-between">
-                                            <Link href="/admin" className="flex items-center gap-3" onClick={() => setIsMobileMenuOpen(false)}>
-                                                <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center overflow-hidden">
-                                                    <Image
-                                                        src="/placeholder-logo.svg"
-                                                        alt="KhmerWork Logo"
-                                                        width={32}
-                                                        height={32}
-                                                        className="w-8 h-8"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <span className="text-xl font-bold tracking-tight text-white">KhmerWork</span>
-                                                    <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold opacity-80">Admin Console</p>
-                                                </div>
+                                            <Link href="/admin" className="flex flex-col" onClick={() => setIsMobileMenuOpen(false)}>
+                                                <Logo />
+                                                <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold opacity-80 mt-1 ml-11">Admin Console</p>
                                             </Link>
                                         </div>
                                         <div className="px-4 py-6 flex-1 space-y-8 overflow-y-auto">

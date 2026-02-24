@@ -37,19 +37,78 @@ api.interceptors.request.use(
     }
 );
 
-let isRefreshing = false;
-let failedQueue: any[] = [];
+// Shared refresh promise to prevent concurrent refresh calls
+let refreshPromise: Promise<any> | null = null;
 
-const processQueue = (error: any, token: string | null = null) => {
-    failedQueue.forEach((prom) => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve(token);
+/**
+ * Shared function to handle token refresh logic
+ * This can be called from both the interceptor and directly from services
+ */
+export const refreshTokens = async () => {
+    // If a refresh is already in progress, return the existing promise
+    if (refreshPromise) {
+        console.log('⏳ [Auth] Using existing refresh promise');
+        return refreshPromise;
+    }
+
+    refreshPromise = (async () => {
+        try {
+            const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+
+            // Don't even try if no token exists or if it's an invalid string
+            if (!storedRefreshToken || storedRefreshToken === 'undefined' || storedRefreshToken === 'null') {
+                console.warn('⚠️ [Auth] No valid refresh token found in storage, skipping request');
+                throw new Error('No valid refresh token');
+            }
+
+            console.log(`🔄 [Auth] Attempting token refresh (Token length: ${storedRefreshToken.length})`);
+
+            // Use direct axios to avoid interceptor loop
+            const response = await axios.post(`${API_URL}/auth/refresh`,
+                { refreshToken: storedRefreshToken },
+                { withCredentials: true }
+            );
+
+            console.log('✅ [Auth] Token refresh successful');
+
+            const { accessToken, refreshToken, user } = response.data;
+
+            // Update storage
+            if (typeof window !== 'undefined') {
+                if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+                if (user) {
+                    localStorage.setItem('user', JSON.stringify(user));
+                    // Re-sync the auth cookie
+                    const isSecure = window.location.protocol === 'https:';
+                    document.cookie = `is_authenticated=true; path=/; max-age=604800; SameSite=Lax${isSecure ? '; Secure' : ''}`;
+                    window.dispatchEvent(new CustomEvent("auth-update"));
+                }
+            }
+
+            return response.data;
+        } catch (error: any) {
+            console.error('❌ [Auth Error] Token refresh failed:', {
+                status: error.response?.status,
+                message: error.response?.data?.message || error.message
+            });
+
+            // Only clear storage if it's a definitive auth failure (401 or 403)
+            // Network errors shouldn't necessarily log the user out
+            if (error.response?.status === 401 || error.response?.status === 403 || error.message === 'No valid refresh token') {
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('refreshToken');
+                    document.cookie = `is_authenticated=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+                    window.dispatchEvent(new CustomEvent('auth-unauthorized'));
+                }
+            }
+            throw error;
+        } finally {
+            refreshPromise = null;
         }
-    });
+    })();
 
-    failedQueue = [];
+    return refreshPromise;
 };
 
 // Add response interceptor
@@ -71,72 +130,25 @@ api.interceptors.response.use(
 
         // Handle 401 Unauthorized errors
         if (error.response?.status === 401 && !originalRequest._retry) {
-            // Skip auth refresh for public endpoints
+            // Skip auth refresh for public endpoints or if already retried
             if (originalRequest.headers?.['x-skip-auth'] === 'true') {
                 return Promise.reject(error);
             }
 
             // Prevent infinite loops if refresh endpoint itself fails
             if (originalRequest.url?.includes('/auth/refresh')) {
-                if (typeof window !== 'undefined') {
-                    localStorage.removeItem('user');
-                    localStorage.removeItem('refreshToken');
-                    window.dispatchEvent(new CustomEvent('auth-unauthorized'));
-                }
                 return Promise.reject(error);
             }
 
-            if (isRefreshing) {
-                return new Promise(function (resolve, reject) {
-                    failedQueue.push({ resolve, reject });
-                })
-                    .then(() => {
-                        return api(originalRequest);
-                    })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
-            }
-
             originalRequest._retry = true;
-            isRefreshing = true;
 
             try {
-                // Refresh tokens via cookies OR body fallback
-                console.log('🔄 [Auth] Attempting token refresh...');
-                const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-
-                const refreshResponse = await axios.post(`${API_URL}/auth/refresh`,
-                    { refreshToken: storedRefreshToken },
-                    { withCredentials: true }
-                );
-
-                console.log('✅ [Auth] Token refresh successful');
-
-                const { accessToken, refreshToken, user } = refreshResponse.data;
-
-                // Update storage
-                if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-                if (user) localStorage.setItem('user', JSON.stringify(user));
-
-                processQueue(null, accessToken);
+                await refreshTokens();
+                // After successful refresh, retry the original request
                 return api(originalRequest);
             } catch (refreshError: any) {
-                console.error('❌ [Auth Error] Token refresh failed:', {
-                    status: refreshError.response?.status,
-                    message: refreshError.response?.data?.message || refreshError.message
-                });
-
-                processQueue(refreshError, null);
-
-                if (typeof window !== 'undefined') {
-                    localStorage.removeItem('user');
-                    localStorage.removeItem('refreshToken');
-                    window.dispatchEvent(new CustomEvent('auth-unauthorized'));
-                }
+                // If refresh fails, just reject the original request
                 return Promise.reject(refreshError);
-            } finally {
-                isRefreshing = false;
             }
         }
         return Promise.reject(error);

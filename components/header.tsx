@@ -15,6 +15,8 @@ import { SettingsControl } from "@/components/settings-control";
 import { messagingService } from "@/lib/services/messaging";
 import { wishlistService } from "@/lib/services/wishlist";
 import { API_URL } from "@/lib/api";
+import { Logo } from "@/components/logo";
+
 
 export function Header() {
   const t = useTranslations("common");
@@ -97,22 +99,13 @@ export function Header() {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="group">
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="relative flex items-center justify-center"
             >
-              <Image
-                src="/placeholder-logo.svg"
-                alt="KhmerWork Logo"
-                width={36}
-                height={36}
-                className="h-9 w-auto"
-                priority
-              />
+              <Logo />
             </motion.div>
-            <span className="text-xl font-bold text-foreground tracking-tight">KhmerWork</span>
           </Link>
         </div>
 

@@ -1,4 +1,4 @@
-import api from '../api';
+import api, { refreshTokens } from '../api';
 
 export const authService = {
     register: async (userData: any) => {
@@ -78,24 +78,6 @@ export const authService = {
     },
 
     refresh: async () => {
-        const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-        const response = await api.post('/auth/refresh', { refreshToken: storedRefreshToken });
-
-        if (response.data.user) {
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-            if (response.data.refreshToken) {
-                localStorage.setItem('refreshToken', response.data.refreshToken);
-            }
-
-            // Re-sync cookie
-            const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
-            const secureFlag = isSecure ? '; Secure' : '';
-            document.cookie = `is_authenticated=true; path=/; max-age=604800; SameSite=Lax${secureFlag}`;
-
-            window.dispatchEvent(new CustomEvent("auth-update"));
-        }
-        return response.data;
+        return refreshTokens();
     }
 };
-
-

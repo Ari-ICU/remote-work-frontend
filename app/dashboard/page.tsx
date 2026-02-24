@@ -69,7 +69,16 @@ export default function DashboardPage() {
                 let currentUser = user;
 
                 if (!currentUser) {
-                    console.log("Dashboard: No user in context, attempting refresh...");
+                    const hasSession = typeof window !== 'undefined' &&
+                        (localStorage.getItem('refreshToken') || document.cookie.includes('is_authenticated=true'));
+
+                    if (!hasSession) {
+                        console.log("Dashboard: No session found, redirecting to login");
+                        if (isMounted) router.push("/login?redirect=/dashboard");
+                        return;
+                    }
+
+                    console.log("Dashboard: No user in context but session exists, attempting refresh...");
                     try {
                         const res = await refresh();
                         currentUser = res.user;
