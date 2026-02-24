@@ -12,8 +12,10 @@ import { Footer } from "@/components/footer";
 import { Job } from "@/types/job";
 import { jobsService } from "@/lib/services/jobs";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function HomePage() {
+  const t = useTranslations("jobsList");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

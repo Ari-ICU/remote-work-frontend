@@ -136,12 +136,12 @@ export function Header() {
                 </Link>
               )}
               <Link href="/dashboard">
-                <Button variant="ghost" size="icon" className="group rounded-xl relative" title="Dashboard">
+                <Button variant="ghost" size="icon" className="group rounded-xl relative" title={t("dashboard")}>
                   <ShieldCheck className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </Button>
               </Link>
               <Link href="/jobs/saved">
-                <Button variant="ghost" size="icon" className="group rounded-xl relative" title="Saved Jobs">
+                <Button variant="ghost" size="icon" className="group rounded-xl relative" title={t("savedJobs")}>
                   <Bookmark className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   {savedJobsCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground ring-2 ring-background animate-in zoom-in duration-300">
@@ -151,7 +151,7 @@ export function Header() {
                 </Button>
               </Link>
               <Link href="/messages">
-                <Button variant="ghost" size="icon" className="group rounded-xl relative" title="Messages">
+                <Button variant="ghost" size="icon" className="group rounded-xl relative" title={t("messages")}>
                   <MessageSquare className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-black text-white ring-2 ring-background animate-in zoom-in duration-300">
@@ -172,12 +172,12 @@ export function Header() {
                   <span className="font-medium">{user.firstName}</span>
                 </Button>
               </Link>
-              <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout" className="rounded-xl">
+              <Button variant="ghost" size="icon" onClick={handleLogout} title={t("logout")} className="rounded-xl">
                 <LogOut className="h-4 w-4" />
               </Button>
               <Link href="/post-job">
                 <Button size="sm" className="shadow-md hover:shadow-lg transition-shadow">
-                  Post a Job
+                  {t("postJob")}
                 </Button>
               </Link>
             </>
@@ -185,12 +185,12 @@ export function Header() {
             <>
               <Link href="/login">
                 <Button variant="ghost" size="sm">
-                  Log In
+                  {t("logIn")}
                 </Button>
               </Link>
               <Link href="/post-job">
                 <Button size="sm" className="shadow-md hover:shadow-lg transition-shadow">
-                  Post a Job
+                  {t("postJob")}
                 </Button>
               </Link>
             </>
@@ -250,13 +250,13 @@ export function Header() {
                     <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="ghost" className="justify-start w-full gap-2">
                         <ShieldCheck className="h-4 w-4" />
-                        Dashboard
+                        {t("dashboard")}
                       </Button>
                     </Link>
                     <Link href="/jobs/saved" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="ghost" className="justify-start w-full gap-2 relative">
                         <Bookmark className="h-4 w-4" />
-                        Saved Jobs
+                        {t("savedJobs")}
                         {savedJobsCount > 0 && (
                           <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-black px-2 py-0.5 rounded-full">
                             {savedJobsCount}
@@ -267,7 +267,7 @@ export function Header() {
                     <Link href="/messages" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="ghost" className="justify-start w-full gap-2 relative">
                         <MessageSquare className="h-4 w-4" />
-                        Messages
+                        {t("messages")}
                         {unreadCount > 0 && (
                           <span className="ml-auto bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
                             {unreadCount}
@@ -278,26 +278,26 @@ export function Header() {
                     <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="ghost" className="justify-start w-full gap-2">
                         <User className="h-4 w-4" />
-                        Profile
+                        {t("profile")}
                       </Button>
                     </Link>
                     <Button variant="ghost" className="justify-start w-full gap-2 text-destructive" onClick={handleLogout}>
                       <LogOut className="h-4 w-4" />
-                      Logout
+                      {t("logout")}
                     </Button>
                     <Link href="/post-job" onClick={() => setMobileMenuOpen(false)}>
-                      <Button className="justify-start w-full">Post a Job</Button>
+                      <Button className="justify-start w-full">{t("postJob")}</Button>
                     </Link>
                   </>
                 ) : (
                   <>
                     <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="ghost" className="justify-start w-full">
-                        Log In
+                        {t("logIn")}
                       </Button>
                     </Link>
                     <Link href="/post-job" onClick={() => setMobileMenuOpen(false)}>
-                      <Button className="justify-start w-full">Post a Job</Button>
+                      <Button className="justify-start w-full">{t("postJob")}</Button>
                     </Link>
                   </>
                 )}

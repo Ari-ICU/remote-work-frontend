@@ -118,8 +118,8 @@
         "remote": "Remote",
         "viewDetails": "View Details",
         "noJobsFound": "No jobs found",
-        "noJobsDesc": "Try adjusting your search or filters to find more opportunities.",
-        "resetFilters": "Reset Filters",
+        "noJobsDesc": "Try adjusting your search or location to find more opportunities.",
+        "resetSearch": "Reset Search",
         "loadMore": "Load More",
         "loadingJobs": "Finding the best opportunities for you...",
         "allJobs": "All Jobs",
@@ -127,6 +127,14 @@
         "locationPlaceholder": "Location...",
         "activeFilters": "Active filters:",
         "filterByType": "Filter by Job Type",
-        "tryRefreshing": "Try Refreshing"
+        "tryRefreshing": "Try Refreshing",
+        "searchResults": "Search Results",
+        "latestJobs": "Latest Job Opportunities",
+        "showingResults": "Showing {count} results for",
+        "in": "in",
+        "viewAllJobs": "View All Jobs",
+        "discoverNewest": "Discover the newest remote and freelance positions",
+        "savedToWishlist": "Saved to your wishlist!",
+        "removedFromWishlist": "Removed from wishlist"
     }
 }

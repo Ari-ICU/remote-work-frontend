@@ -12,6 +12,7 @@ import { Search, MapPin, Filter, X, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useTranslations } from "next-intl";
 
 const JOB_TYPE_FILTERS = [
     { label: "Remote", value: "remote" },
@@ -22,6 +23,7 @@ const JOB_TYPE_FILTERS = [
 ];
 
 export default function JobsPage() {
+    const t = useTranslations("jobsList");
     const { user } = useAuth();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -119,7 +121,7 @@ export default function JobsPage() {
                             animate={{ opacity: 1, y: 0 }}
                             className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl mb-6"
                         >
-                            All Jobs
+                            {t("allJobs")}
                         </motion.h1>
 
                         <motion.div
@@ -132,7 +134,7 @@ export default function JobsPage() {
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
-                                        placeholder="Search by title, company, or keywords..."
+                                        placeholder={t("searchPlaceholder")}
                                         className="pl-10 h-12 rounded-xl"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -141,7 +143,7 @@ export default function JobsPage() {
                                 <div className="relative flex-1">
                                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
-                                        placeholder="Location..."
+                                        placeholder={t("locationPlaceholder")}
                                         className="pl-10 h-12 rounded-xl"
                                         value={locationQuery}
                                         onChange={(e) => setLocationQuery(e.target.value)}
@@ -157,7 +159,7 @@ export default function JobsPage() {
                                     onClick={() => setShowFilters(!showFilters)}
                                 >
                                     <Filter className={`h-4 w-4 mr-2 ${showFilters || selectedTypes.length > 0 ? "text-primary" : ""}`} />
-                                    Filters
+                                    {useTranslations("common")("filters")}
                                     {selectedTypes.length > 0 && (
                                         <Badge variant="secondary" className="ml-2 rounded-full h-5 w-5 p-0 flex items-center justify-center bg-primary text-primary-foreground border-none">
                                             {selectedTypes.length}
@@ -178,7 +180,7 @@ export default function JobsPage() {
                                             <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                                                 <Filter className="h-4 w-4 text-primary" />
                                             </div>
-                                            <h3 className="font-bold text-base">Filter by Job Type</h3>
+                                            <h3 className="font-bold text-base">{t("filterByType")}</h3>
                                         </div>
                                         {selectedTypes.length > 0 && (
                                             <Button
@@ -188,7 +190,7 @@ export default function JobsPage() {
                                                 className="h-8 text-xs hover:bg-destructive/10 hover:text-destructive"
                                             >
                                                 <X className="h-3 w-3 mr-1" />
-                                                Clear all
+                                                {useTranslations("common")("clearAll")}
                                             </Button>
                                         )}
                                     </div>
@@ -233,7 +235,7 @@ export default function JobsPage() {
                                 >
                                     <div className="flex items-center gap-2 text-sm font-medium text-primary">
                                         <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                                        <span>Active filters:</span>
+                                        <span>{t("activeFilters")}</span>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {selectedTypes.map((type) => (
@@ -254,7 +256,7 @@ export default function JobsPage() {
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
                             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                            <p className="text-muted-foreground font-medium">Finding the best opportunities for you...</p>
+                            <p className="text-muted-foreground font-medium">{t("loadingJobs")}</p>
                         </div>
                     ) : error ? (
                         <div className="text-center py-24 bg-destructive/5 border border-destructive/20 rounded-3xl">
@@ -264,7 +266,7 @@ export default function JobsPage() {
                                 className="mt-4 border-destructive/30 hover:bg-destructive/10"
                                 onClick={() => window.location.reload()}
                             >
-                                Try Refreshing
+                                {t("tryRefreshing")}
                             </Button>
                         </div>
                     ) : (

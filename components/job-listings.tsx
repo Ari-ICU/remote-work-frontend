@@ -10,6 +10,7 @@ import { Job } from "@/types/job";
 import { staggerContainer, slideInLeft, slideInRight } from "@/lib/animations";
 import { wishlistService } from "@/lib/services/wishlist";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 interface JobListingsProps {
   jobs: Job[];
@@ -21,6 +22,7 @@ interface JobListingsProps {
 }
 
 export function JobListings({ jobs, searchQuery, locationQuery, filterCount = 0, onReset, hideViewAll = false }: JobListingsProps) {
+  const t = useTranslations("jobsList");
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
@@ -48,9 +50,9 @@ export function JobListings({ jobs, searchQuery, locationQuery, filterCount = 0,
     setSavedJobs(wishlistService.getSavedJobIds());
 
     if (isNowSaved) {
-      toast.success("Saved to your wishlist!");
+      toast.success(t("savedToWishlist"));
     } else {
-      toast.info("Removed from wishlist");
+      toast.info(t("removedFromWishlist"));
     }
   };
 
@@ -85,16 +87,16 @@ export function JobListings({ jobs, searchQuery, locationQuery, filterCount = 0,
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               {isSearching ? (
                 <span>
-                  Search <span className="text-primary italic">Results</span>
+                  {t("searchResults").split(' ')[0]} <span className="text-primary italic">{t("searchResults").split(' ')[1]}</span>
                 </span>
               ) : (
-                "Latest Job Opportunities"
+                t("latestJobs")
               )}
             </h2>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-muted-foreground">
               {isSearching ? (
                 <>
-                  <span>Showing {jobs.length} results for </span>
+                  <span>{t("showingResults", { count: jobs.length })} </span>
                   {searchQuery && (
                     <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
                       "{searchQuery}"
@@ -102,7 +104,7 @@ export function JobListings({ jobs, searchQuery, locationQuery, filterCount = 0,
                   )}
                   {locationQuery && (
                     <>
-                      <span>in</span>
+                      <span>{t("in")}</span>
                       <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
                         "{locationQuery}"
                       </span>
@@ -110,7 +112,7 @@ export function JobListings({ jobs, searchQuery, locationQuery, filterCount = 0,
                   )}
                 </>
               ) : (
-                <p>Discover the newest remote and freelance positions</p>
+                <p>{t("discoverNewest")}</p>
               )}
             </div>
           </motion.div>
@@ -126,7 +128,7 @@ export function JobListings({ jobs, searchQuery, locationQuery, filterCount = 0,
                   variant="outline"
                   className="shrink-0 bg-transparent group"
                 >
-                  View All Jobs
+                  {t("viewAllJobs")}
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
@@ -165,16 +167,16 @@ export function JobListings({ jobs, searchQuery, locationQuery, filterCount = 0,
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                   <Search className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-foreground">No jobs found</h3>
+                <h3 className="mt-4 text-lg font-semibold text-foreground">{t("noJobsFound")}</h3>
                 <p className="mt-2 text-muted-foreground">
-                  Try adjusting your search or location to find more opportunities.
+                  {t("noJobsDesc")}
                 </p>
                 <Button
                   variant="outline"
                   className="mt-6"
                   onClick={onReset}
                 >
-                  Reset Search
+                  {t("resetSearch")}
                 </Button>
               </motion.div>
             )}
