@@ -1,8 +1,8 @@
 import api from '../api';
 
 export const aiService = {
-    chat: async (message: string, locale: string = 'en') => {
-        const response = await api.post('/ai/chat', { message, locale }, {
+    chat: async (message: string, locale: string = 'en', context?: string) => {
+        const response = await api.post('/ai/chat', { message, locale, context }, {
             headers: {
                 'x-skip-auth': 'true'
             }

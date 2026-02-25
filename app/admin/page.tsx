@@ -18,7 +18,8 @@ import {
     Activity,
     Globe,
     Server,
-    Cpu
+    Cpu,
+    RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -44,6 +45,14 @@ import {
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { motion } from "framer-motion";
 
 const activityData = [
@@ -187,9 +196,30 @@ export default function AdminOverview() {
                         <Trash2 size={18} />
                         {isCleaning ? "Purging..." : "Purge Test Data"}
                     </Button>
-                    <Button className="bg-primary text-black hover:bg-primary/90 shadow-[0_10px_20px_color-mix(in_srgb,var(--primary),transparent_70%)] h-11 px-6 rounded-xl font-bold flex gap-2">
-                        <Zap size={18} fill="currentColor" /> Quick Action
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button className="bg-primary text-black hover:bg-primary/90 shadow-[0_10px_20px_color-mix(in_srgb,var(--primary),transparent_70%)] h-11 px-6 rounded-xl font-bold flex gap-2 group">
+                                <Zap size={18} fill="currentColor" className="group-hover:scale-125 transition-transform" /> Quick Action
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-64 bg-[#0a0a0a]/90 backdrop-blur-xl border-white/10 p-2 rounded-2xl">
+                            <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-gray-500 font-bold px-3 py-2">System Protocols</DropdownMenuLabel>
+                            <DropdownMenuSeparator className="bg-white/5" />
+                            <DropdownMenuItem className="flex gap-3 px-4 py-3 rounded-xl focus:bg-primary focus:text-black cursor-pointer group" onClick={() => toast.success("Security scan initiated...")}>
+                                <ShieldCheck size={18} />
+                                <span className="font-bold text-sm">Initiate Global Scan</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="flex gap-3 px-4 py-3 rounded-xl focus:bg-white/10 cursor-pointer" onClick={() => toast.info("Check back in 5 minutes for the report")}>
+                                <FileText size={18} />
+                                <span className="font-bold text-sm">Generate Audit Log</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-white/5" />
+                            <DropdownMenuItem className="flex gap-3 px-4 py-3 rounded-xl focus:bg-white/10 cursor-pointer" onClick={() => window.location.reload()}>
+                                <RefreshCw size={18} />
+                                <span className="font-bold text-sm">Refresh Modules</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
 
@@ -318,11 +348,14 @@ export default function AdminOverview() {
                                         <Badge className="bg-primary/10 text-primary text-[10px] border-0 px-1.5">Target</Badge>
                                     </div>
                                 </div>
-                                <div className="space-y-2 md:border-l border-white/5 md:pl-8">
-                                    <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Server Health</p>
-                                    <div className="flex items-center gap-2 text-primary">
-                                        <Activity size={18} className="animate-pulse" />
-                                        <span className="text-xl md:text-2xl font-bold font-mono">99.9%</span>
+                                <div className="space-y-3 md:border-l border-white/5 md:pl-8">
+                                    <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">System Status</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative flex h-3 w-3">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]"></span>
+                                        </div>
+                                        <span className="text-xl md:text-2xl font-bold font-mono text-primary tracking-tighter">99.9% LIVE</span>
                                     </div>
                                 </div>
                             </div>

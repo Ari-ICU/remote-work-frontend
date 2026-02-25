@@ -62,7 +62,7 @@ export function AiChatBot() {
         setIsLoading(true)
 
         try {
-            const data = await aiService.chat(userMessage.content, locale)
+            const data = await aiService.chat(userMessage.content, locale, pathname)
             const botMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "bot",

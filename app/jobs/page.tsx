@@ -134,8 +134,8 @@ export default function JobsPage() {
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
-                                        placeholder={t("searchPlaceholder")}
-                                        className="pl-10 h-12 rounded-xl"
+                                        placeholder="Try 'React developer in Phnom Penh' or 'High paying design jobs'..."
+                                        className="pl-10 h-12 rounded-xl border-border focus:ring-primary/20 bg-background"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
