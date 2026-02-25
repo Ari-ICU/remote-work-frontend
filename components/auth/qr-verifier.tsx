@@ -33,33 +33,40 @@ export function QrVerifier() {
 
     useEffect(() => {
         let scanner: Html5QrcodeScanner | null = null;
+        let timeoutId: NodeJS.Timeout;
 
         if (isScannerOpen && !scannedToken) {
-            scanner = new Html5QrcodeScanner(
-                "qr-reader",
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                false
-            );
+            // Add a small delay to ensure the Dialog has rendered the content
+            timeoutId = setTimeout(() => {
+                const element = document.getElementById("qr-reader");
+                if (!element) return;
 
-            scanner.render(
-                (decodedText) => {
-                    // Extract token from URL or use raw text
-                    let token = decodedText;
-                    if (decodedText.includes("token=")) {
-                        token = decodedText.split("token=")[1].split("&")[0];
+                scanner = new Html5QrcodeScanner(
+                    "qr-reader",
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    /* verbose= */ false
+                );
+
+                scanner.render(
+                    (decodedText) => {
+                        let token = decodedText;
+                        if (decodedText.includes("token=")) {
+                            token = decodedText.split("token=")[1].split("&")[0];
+                        }
+
+                        setScannedToken(token);
+                        setIsScannerOpen(false);
+                        if (scanner) scanner.clear();
+                    },
+                    (error) => {
+                        // silent ignore scanning errors
                     }
-
-                    setScannedToken(token);
-                    setIsScannerOpen(false); // Close scanner once found
-                    if (scanner) scanner.clear();
-                },
-                (error) => {
-                    // silent ignore scanning errors
-                }
-            );
+                );
+            }, 300);
         }
 
         return () => {
+            if (timeoutId) clearTimeout(timeoutId);
             if (scanner) {
                 scanner.clear().catch(console.error);
             }
