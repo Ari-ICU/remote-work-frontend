@@ -16,6 +16,7 @@ import { messagingService } from "@/lib/services/messaging";
 import { wishlistService } from "@/lib/services/wishlist";
 import { API_URL } from "@/lib/api";
 import { Logo } from "@/components/logo";
+import { QrVerifier } from "@/components/auth/qr-verifier";
 
 
 export function Header() {
@@ -125,6 +126,7 @@ export function Header() {
         <div className="hidden items-center gap-3 md:flex">
           <SettingsControl />
           <div className="w-px h-6 bg-border mx-1" />
+          {user && <QrVerifier />}
           {user ? (
             <>
               {user.role?.toUpperCase() === 'ADMIN' && (
@@ -237,6 +239,12 @@ export function Header() {
               </div>
 
               <div className="mt-2 flex flex-col gap-2 border-t border-border pt-4">
+                {user && (
+                  <div className="px-3 py-2 flex items-center justify-between bg-primary/5 rounded-xl border border-primary/10">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary">Security Scan</span>
+                    <QrVerifier />
+                  </div>
+                )}
                 {user ? (
                   <>
                     {user.role?.toUpperCase() === 'ADMIN' && (

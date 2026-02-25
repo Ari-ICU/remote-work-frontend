@@ -152,6 +152,14 @@ export function QrLogin() {
                 )}
             </AnimatePresence>
 
+            <AnimatePresence>
+                {qrToken && status === "pending" && (
+                    // This could be a "Scan Detected" indicator if we had real-time signal
+                    // For now, it pulses while waiting
+                    null
+                )}
+            </AnimatePresence>
+
             <div className="text-center space-y-4 max-w-[280px]">
                 <div className="flex items-center justify-center gap-2 text-primary">
                     <ShieldCheck className="h-4 w-4" />
