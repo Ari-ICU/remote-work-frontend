@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import {
     Dialog,
@@ -34,58 +34,82 @@ export function QrVerifier() {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [isScanning, setIsScanning] = useState(false);
 
-    useEffect(() => {
-        let html5QrCode: Html5Qrcode | null = null;
+    const scannerRef = useRef<Html5Qrcode | null>(null);
 
-        const startScanner = async () => {
-            try {
-                // Ensure any existing instance is cleaned up first
-                const element = document.getElementById("qr-reader");
-                if (!element) return;
+    const startScanner = async () => {
+        try {
+            const element = document.getElementById("qr-reader");
+            if (!element) return;
 
-                html5QrCode = new Html5Qrcode("qr-reader");
-
-                // Set initializing state
-                setHasPermission(null);
-
-                await html5QrCode.start(
-                    { facingMode: "environment" },
-                    {
-                        fps: 15,
-                        qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0
-                    },
-                    (decodedText) => {
-                        let token = decodedText;
-                        if (decodedText.includes("token=")) {
-                            token = decodedText.split("token=")[1].split("&")[0];
-                        }
-                        setScannedToken(token);
-                        setIsScannerOpen(false);
-                        html5QrCode?.stop().catch(() => { });
-                    },
-                    () => { } // silent scan errors
-                );
-
-                setHasPermission(true);
-                setIsScanning(true);
-            } catch (err: any) {
-                console.error("Scanner error:", err);
-                setIsScanning(false);
-                setHasPermission(false);
+            if (!scannerRef.current) {
+                scannerRef.current = new Html5Qrcode("qr-reader");
             }
-        };
 
-        if (isScannerOpen && !scannedToken) {
+            if (scannerRef.current.isScanning) {
+                await scannerRef.current.stop();
+            }
+
+            setHasPermission(null);
+
+            await scannerRef.current.start(
+                { facingMode: "environment" },
+                {
+                    fps: 15,
+                    qrbox: { width: 250, height: 250 },
+                },
+                (decodedText) => {
+                    let token = decodedText;
+                    if (decodedText.includes("token=")) {
+                        token = decodedText.split("token=")[1].split("&")[0];
+                    }
+                    setScannedToken(token);
+                    setIsScannerOpen(false);
+                    scannerRef.current?.stop().catch(() => { });
+                },
+                () => { }
+            );
+
+            setHasPermission(true);
+            setIsScanning(true);
+        } catch (err: any) {
+            console.error("Scanner error:", err);
+            setIsScanning(false);
+            setHasPermission(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isScannerOpen && !scannedToken && hasPermission !== false) {
             const timeoutId = setTimeout(startScanner, 400);
             return () => {
                 clearTimeout(timeoutId);
-                if (html5QrCode?.isScanning) {
-                    html5QrCode.stop().catch(() => { });
+                if (scannerRef.current?.isScanning) {
+                    scannerRef.current.stop().catch(() => { });
                 }
             };
         }
     }, [isScannerOpen, scannedToken]);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            if (!scannerRef.current) {
+                scannerRef.current = new Html5Qrcode("qr-reader");
+            }
+            const decodedText = await scannerRef.current.scanFile(file, true);
+            let token = decodedText;
+            if (decodedText.includes("token=")) {
+                token = decodedText.split("token=")[1].split("&")[0];
+            }
+            setScannedToken(token);
+            setIsScannerOpen(false);
+            toast.success("Image processed successfully");
+        } catch (err) {
+            toast.error("No valid QR code found in image");
+        }
+    };
 
     const handleAction = async (approved: boolean) => {
         if (!approved) {
@@ -112,14 +136,6 @@ export function QrVerifier() {
             setStatus("error");
             setTimeout(() => setStatus("idle"), 2000);
         }
-    };
-
-    const retryConnection = () => {
-        setHasPermission(null);
-        setIsScanning(false);
-        // We close and reopen the scanner to trigger the effect again
-        setIsScannerOpen(false);
-        setTimeout(() => setIsScannerOpen(true), 100);
     };
 
     return (
@@ -203,22 +219,32 @@ export function QrVerifier() {
 
                             {/* Permission State */}
                             {hasPermission === false && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-black/90 backdrop-blur-md text-center space-y-5 z-30">
-                                    <div className="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center text-rose-500 animate-pulse border border-rose-500/30">
+                                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-black/95 backdrop-blur-md text-center space-y-6 z-30">
+                                    <div className="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center text-rose-500 border border-rose-500/30">
                                         <Camera size={28} />
                                     </div>
                                     <div className="space-y-2">
-                                        <p className="text-base font-black text-white">LENS ACCESS DENIED</p>
-                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider leading-relaxed">
-                                            Security protocol blocked.<br />Enable camera in browser settings.
+                                        <p className="text-lg font-black text-white">LENS BLOCKED</p>
+                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider leading-relaxed px-4">
+                                            Enable camera access in settings <br /> or upload a screenshot.
                                         </p>
                                     </div>
-                                    <Button
-                                        onClick={retryConnection}
-                                        className="rounded-xl h-12 px-6 bg-white text-black hover:bg-gray-200 transition-all font-black"
-                                    >
-                                        <RefreshCw size={16} className="mr-2" /> RE-INITIALIZE
-                                    </Button>
+
+                                    <div className="flex flex-col gap-2 w-full px-6">
+                                        <Button
+                                            onClick={startScanner}
+                                            className="rounded-xl h-11 bg-white text-black hover:bg-gray-200 transition-all font-black text-xs"
+                                        >
+                                            <RefreshCw size={14} className="mr-2" /> TRY AGAIN
+                                        </Button>
+
+                                        <label className="cursor-pointer">
+                                            <div className="flex items-center justify-center gap-2 h-11 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all">
+                                                <QrCode size={14} /> SCAN IMAGE FILE
+                                            </div>
+                                            <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                                        </label>
+                                    </div>
                                 </div>
                             )}
 
