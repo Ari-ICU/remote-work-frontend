@@ -37,44 +37,51 @@ export function QrVerifier() {
     useEffect(() => {
         let html5QrCode: Html5Qrcode | null = null;
 
-        if (isScannerOpen && !scannedToken) {
-            const startScanner = async () => {
-                try {
-                    html5QrCode = new Html5Qrcode("qr-reader");
-                    setIsScanning(true);
+        const startScanner = async () => {
+            try {
+                // Ensure any existing instance is cleaned up first
+                const element = document.getElementById("qr-reader");
+                if (!element) return;
 
-                    await html5QrCode.start(
-                        { facingMode: "environment" },
-                        {
-                            fps: 10,
-                            qrbox: { width: 250, height: 250 },
-                        },
-                        (decodedText) => {
-                            let token = decodedText;
-                            if (decodedText.includes("token=")) {
-                                token = decodedText.split("token=")[1].split("&")[0];
-                            }
-                            setScannedToken(token);
-                            setIsScannerOpen(false);
-                            html5QrCode?.stop().catch(console.error);
-                        },
-                        (errorMessage) => {
-                            // silent ignore scan errors
+                html5QrCode = new Html5Qrcode("qr-reader");
+
+                // Set initializing state
+                setHasPermission(null);
+
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 15,
+                        qrbox: { width: 250, height: 250 },
+                        aspectRatio: 1.0
+                    },
+                    (decodedText) => {
+                        let token = decodedText;
+                        if (decodedText.includes("token=")) {
+                            token = decodedText.split("token=")[1].split("&")[0];
                         }
-                    );
-                    setHasPermission(true);
-                } catch (err) {
-                    console.error("Scanner error:", err);
-                    setHasPermission(false);
-                    setIsScanning(false);
-                }
-            };
+                        setScannedToken(token);
+                        setIsScannerOpen(false);
+                        html5QrCode?.stop().catch(() => { });
+                    },
+                    () => { } // silent scan errors
+                );
 
-            const timeoutId = setTimeout(startScanner, 300);
+                setHasPermission(true);
+                setIsScanning(true);
+            } catch (err: any) {
+                console.error("Scanner error:", err);
+                setIsScanning(false);
+                setHasPermission(false);
+            }
+        };
+
+        if (isScannerOpen && !scannedToken) {
+            const timeoutId = setTimeout(startScanner, 400);
             return () => {
                 clearTimeout(timeoutId);
                 if (html5QrCode?.isScanning) {
-                    html5QrCode.stop().catch(console.error);
+                    html5QrCode.stop().catch(() => { });
                 }
             };
         }
@@ -105,6 +112,14 @@ export function QrVerifier() {
             setStatus("error");
             setTimeout(() => setStatus("idle"), 2000);
         }
+    };
+
+    const retryConnection = () => {
+        setHasPermission(null);
+        setIsScanning(false);
+        // We close and reopen the scanner to trigger the effect again
+        setIsScannerOpen(false);
+        setTimeout(() => setIsScannerOpen(true), 100);
     };
 
     return (
@@ -143,63 +158,66 @@ export function QrVerifier() {
                             <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-2">
                                 <Zap size={24} className="fill-primary" />
                             </div>
-                            <DialogTitle className="text-2xl font-black tracking-tight text-white">
+                            <DialogTitle className="text-2xl font-black tracking-tight text-white uppercase italic">
                                 Active Scanner
                             </DialogTitle>
-                            <DialogDescription className="text-gray-400 text-xs font-medium">
-                                Secure Identity Verification Sequence
+                            <DialogDescription className="text-gray-400 text-xs font-bold tracking-[0.2em] uppercase">
+                                Identity Verification
                             </DialogDescription>
                         </DialogHeader>
                     </div>
 
-                    <div className="relative aspect-square w-full max-w-[320px] mx-auto mt-4 px-4">
-                        <div className="relative w-full h-full rounded-[2rem] overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center group">
+                    <div className="relative aspect-square w-full max-w-[300px] mx-auto mt-4 px-4 h-[300px]">
+                        <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-black/40 border border-white/5 flex items-center justify-center group shadow-inner">
                             {/* Scanning Viewport */}
                             <div id="qr-reader" className="w-full h-full [&_video]:object-cover" />
+
+                            {/* Mask overlay for focus */}
+                            <div className="absolute inset-0 border-[40px] border-black/60 pointer-events-none z-10" />
 
                             {/* Custom Overlays */}
                             {isScanning && (
                                 <>
                                     {/* Laser Line */}
                                     <motion.div
-                                        initial={{ top: "10%" }}
-                                        animate={{ top: "90%" }}
+                                        initial={{ top: "20%" }}
+                                        animate={{ top: "80%" }}
                                         transition={{
-                                            duration: 2,
+                                            duration: 1.5,
                                             repeat: Infinity,
                                             repeatType: "reverse",
-                                            ease: "linear"
+                                            ease: "easeInOut"
                                         }}
-                                        className="absolute left-[10%] right-[10%] h-[2px] bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.8)] z-10"
+                                        className="absolute left-[15%] right-[15%] h-[2px] bg-primary z-20 shadow-[0_0_20px_rgba(var(--primary-rgb),1)]"
                                     />
 
-                                    {/* Corner Accents */}
-                                    <div className="absolute inset-[10%] pointer-events-none">
-                                        <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-primary rounded-tl-xl" />
-                                        <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-primary rounded-tr-xl" />
-                                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-primary rounded-bl-xl" />
-                                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-primary rounded-br-xl" />
+                                    {/* Target Reticle */}
+                                    <div className="absolute inset-[15%] z-20 pointer-events-none border border-white/20 rounded-2xl">
+                                        <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-primary rounded-tl-lg" />
+                                        <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-primary rounded-tr-lg" />
+                                        <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-primary rounded-bl-lg" />
+                                        <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-primary rounded-br-lg" />
                                     </div>
                                 </>
                             )}
 
                             {/* Permission State */}
                             {hasPermission === false && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-black/80 backdrop-blur-sm text-center space-y-4">
-                                    <div className="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-500">
-                                        <Camera size={24} />
+                                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-black/90 backdrop-blur-md text-center space-y-5 z-30">
+                                    <div className="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center text-rose-500 animate-pulse border border-rose-500/30">
+                                        <Camera size={28} />
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-bold text-white">Camera Access Denied</p>
-                                        <p className="text-xs text-gray-400">Please enable camera permissions in your browser settings to continue.</p>
+                                    <div className="space-y-2">
+                                        <p className="text-base font-black text-white">LENS ACCESS DENIED</p>
+                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider leading-relaxed">
+                                            Security protocol blocked.<br />Enable camera in browser settings.
+                                        </p>
                                     </div>
                                     <Button
-                                        onClick={() => window.location.reload()}
-                                        variant="outline"
-                                        size="sm"
-                                        className="rounded-xl border-white/10 hover:bg-white/5"
+                                        onClick={retryConnection}
+                                        className="rounded-xl h-12 px-6 bg-white text-black hover:bg-gray-200 transition-all font-black"
                                     >
-                                        <RefreshCw size={14} className="mr-2" /> Retry Sequence
+                                        <RefreshCw size={16} className="mr-2" /> RE-INITIALIZE
                                     </Button>
                                 </div>
                             )}
