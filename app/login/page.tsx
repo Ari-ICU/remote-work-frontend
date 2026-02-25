@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Briefcase, ArrowLeft, Mail, Lock, Eye, EyeOff, Github, Chrome, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +13,13 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { API_URL } from "@/lib/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { QrLogin } from "@/components/auth/qr-login";
+import { QrCode, Mail as MailIcon } from "lucide-react";
 
 function LoginContent() {
     const { login } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
+    const [loginMethod, setLoginMethod] = useState<"form" | "qr">("form");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -99,100 +102,126 @@ function LoginContent() {
                                 <Briefcase className="h-6 w-6 text-primary-foreground" />
                             </Link>
                             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                Welcome Back
+                                {loginMethod === "form" ? "Welcome Back" : "Identity Verification"}
                             </h1>
                             <p className="mt-2 text-sm text-muted-foreground">
-                                Enter your credentials to access your account
+                                {loginMethod === "form" ? "Enter your credentials to access your account" : "Verify your identity using your smartphone"}
                             </p>
                         </div>
 
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <div className="relative group">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                                    <Input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        placeholder="name@example.com"
-                                        required
-                                        className="pl-10 bg-background/50 border-border focus-visible:ring-primary/20 h-11"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="password">Password</Label>
-                                    <Link href="#" className="text-xs text-primary hover:underline">
-                                        Forgot password?
-                                    </Link>
-                                </div>
-                                <div className="relative group">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                                    <Input
-                                        id="password"
-                                        name="password"
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="••••••••"
-                                        required
-                                        className="pl-10 pr-10 bg-background/50 border-border focus-visible:ring-primary/20 h-11"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                    >
-                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="w-full h-11 text-base font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
-                                disabled={isLoading}
+                        <div className="flex p-1 bg-muted/40 backdrop-blur-sm rounded-2xl mb-8 border border-white/5">
+                            <button
+                                onClick={() => setLoginMethod("form")}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${loginMethod === "form"
+                                    ? "bg-card text-primary shadow-[0_5px_15px_rgba(var(--primary-rgb),0.2)]"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                                    }`}
                             >
-                                {isLoading ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Signing in...
+                                <MailIcon size={14} /> Password
+                            </button>
+                            <button
+                                onClick={() => setLoginMethod("qr")}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${loginMethod === "qr"
+                                    ? "bg-card text-primary shadow-[0_5px_15px_rgba(var(--primary-rgb),0.2)]"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                                    }`}
+                            >
+                                <QrCode size={14} /> QR Code
+                            </button>
+                        </div>
+
+                        <AnimatePresence mode="wait">
+                            {loginMethod === "form" ? (
+                                <motion.div
+                                    key="form"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+
+
+                                    <form onSubmit={handleSubmit} className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="email">Email address</Label>
+                                            <div className="relative group">
+                                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                                                <Input
+                                                    id="email"
+                                                    name="email"
+                                                    type="email"
+                                                    placeholder="name@example.com"
+                                                    required
+                                                    className="pl-10 bg-background/50 border-border focus-visible:ring-primary/20 h-11"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <Label htmlFor="password">Password</Label>
+                                                <Link href="#" className="text-xs text-primary hover:underline">
+                                                    Forgot password?
+                                                </Link>
+                                            </div>
+                                            <div className="relative group">
+                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                                                <Input
+                                                    id="password"
+                                                    name="password"
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder="••••••••"
+                                                    required
+                                                    className="pl-10 pr-10 bg-background/50 border-border focus-visible:ring-primary/20 h-11"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                                >
+                                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <Button
+                                            type="submit"
+                                            className="w-full h-11 text-base font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    Signing in...
+                                                </div>
+                                            ) : (
+                                                "Sign In"
+                                            )}
+                                        </Button>
+                                    </form>
+
+                                    <div className="relative my-8">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <span className="w-full border-t border-border" />
+                                        </div>
+                                        <div className="relative flex justify-center text-xs uppercase">
+                                            <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                                        </div>
                                     </div>
-                                ) : (
-                                    "Sign In"
-                                )}
-                            </Button>
-                        </form>
 
-                        <div className="relative my-8">
-                            <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-border" />
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <Button
-                                variant="outline"
-                                className="h-11 bg-background/50 border-border hover:bg-muted group/social"
-                                onClick={() => window.location.href = `${API_URL}/auth/google`}
-                            >
-                                <Chrome className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                                Google
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="h-11 bg-background/50 border-border hover:bg-muted group/social"
-                                onClick={() => window.location.href = `${API_URL}/auth/github`}
-                            >
-                                <Github className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                                GitHub
-                            </Button>
-                        </div>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="qr"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <QrLogin />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         <p className="mt-8 text-center text-sm text-muted-foreground">
                             Don&apos;t have an account?{" "}
