@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogDescription,
-    DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,60 +16,68 @@ import {
     Check,
     ShieldCheck,
     Loader2,
-    Smartphone,
     Monitor,
-    Zap
+    Zap,
+    Camera,
+    RefreshCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import axios from "axios";
 import { API_URL } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 export function QrVerifier() {
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [scannedToken, setScannedToken] = useState<string | null>(null);
     const [status, setStatus] = useState<"idle" | "verifying" | "success" | "error">("idle");
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+    const [isScanning, setIsScanning] = useState(false);
 
     useEffect(() => {
-        let scanner: Html5QrcodeScanner | null = null;
-        let timeoutId: NodeJS.Timeout;
+        let html5QrCode: Html5Qrcode | null = null;
 
         if (isScannerOpen && !scannedToken) {
-            // Add a small delay to ensure the Dialog has rendered the content
-            timeoutId = setTimeout(() => {
-                const element = document.getElementById("qr-reader");
-                if (!element) return;
+            const startScanner = async () => {
+                try {
+                    html5QrCode = new Html5Qrcode("qr-reader");
+                    setIsScanning(true);
 
-                scanner = new Html5QrcodeScanner(
-                    "qr-reader",
-                    { fps: 10, qrbox: { width: 250, height: 250 } },
-                    /* verbose= */ false
-                );
-
-                scanner.render(
-                    (decodedText) => {
-                        let token = decodedText;
-                        if (decodedText.includes("token=")) {
-                            token = decodedText.split("token=")[1].split("&")[0];
+                    await html5QrCode.start(
+                        { facingMode: "environment" },
+                        {
+                            fps: 10,
+                            qrbox: { width: 250, height: 250 },
+                        },
+                        (decodedText) => {
+                            let token = decodedText;
+                            if (decodedText.includes("token=")) {
+                                token = decodedText.split("token=")[1].split("&")[0];
+                            }
+                            setScannedToken(token);
+                            setIsScannerOpen(false);
+                            html5QrCode?.stop().catch(console.error);
+                        },
+                        (errorMessage) => {
+                            // silent ignore scan errors
                         }
+                    );
+                    setHasPermission(true);
+                } catch (err) {
+                    console.error("Scanner error:", err);
+                    setHasPermission(false);
+                    setIsScanning(false);
+                }
+            };
 
-                        setScannedToken(token);
-                        setIsScannerOpen(false);
-                        if (scanner) scanner.clear();
-                    },
-                    (error) => {
-                        // silent ignore scanning errors
-                    }
-                );
-            }, 300);
+            const timeoutId = setTimeout(startScanner, 300);
+            return () => {
+                clearTimeout(timeoutId);
+                if (html5QrCode?.isScanning) {
+                    html5QrCode.stop().catch(console.error);
+                }
+            };
         }
-
-        return () => {
-            if (timeoutId) clearTimeout(timeoutId);
-            if (scanner) {
-                scanner.clear().catch(console.error);
-            }
-        };
     }, [isScannerOpen, scannedToken]);
 
     const handleAction = async (approved: boolean) => {
@@ -123,35 +130,107 @@ export function QrVerifier() {
             </Button>
 
             {/* Scanner Dialog */}
-            <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
-                <DialogContent className="sm:max-w-[425px] bg-[#0a0a0a]/95 backdrop-blur-2xl border-white/10 rounded-[2rem] p-0 overflow-hidden">
-                    <div className="p-6">
-                        <DialogHeader className="items-center text-center">
-                            <DialogTitle className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-                                <Zap size={20} className="text-primary fill-primary" /> Active Scanner
+            <Dialog open={isScannerOpen} onOpenChange={(open) => {
+                setIsScannerOpen(open);
+                if (!open) {
+                    setHasPermission(null);
+                    setIsScanning(false);
+                }
+            }}>
+                <DialogContent className="sm:max-w-[425px] bg-[#0a0a0a]/95 backdrop-blur-2xl border-white/10 rounded-[2.5rem] p-0 overflow-hidden shadow-2xl">
+                    <div className="p-8 pb-4">
+                        <DialogHeader className="items-center text-center space-y-2">
+                            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-2">
+                                <Zap size={24} className="fill-primary" />
+                            </div>
+                            <DialogTitle className="text-2xl font-black tracking-tight text-white">
+                                Active Scanner
                             </DialogTitle>
-                            <DialogDescription className="text-gray-400 text-xs">
-                                Point your camera at a KhmerWork QR code
+                            <DialogDescription className="text-gray-400 text-xs font-medium">
+                                Secure Identity Verification Sequence
                             </DialogDescription>
                         </DialogHeader>
                     </div>
 
-                    <div className="relative">
-                        <div id="qr-reader" className="w-full border-y border-white/5 overflow-hidden" />
-                        <div className="absolute inset-x-0 bottom-4 flex justify-center pointer-events-none">
-                            <div className="px-4 py-2 bg-black/50 backdrop-blur-md rounded-full border border-white/10 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                Processing Visual Data...
+                    <div className="relative aspect-square w-full max-w-[320px] mx-auto mt-4 px-4">
+                        <div className="relative w-full h-full rounded-[2rem] overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center group">
+                            {/* Scanning Viewport */}
+                            <div id="qr-reader" className="w-full h-full [&_video]:object-cover" />
+
+                            {/* Custom Overlays */}
+                            {isScanning && (
+                                <>
+                                    {/* Laser Line */}
+                                    <motion.div
+                                        initial={{ top: "10%" }}
+                                        animate={{ top: "90%" }}
+                                        transition={{
+                                            duration: 2,
+                                            repeat: Infinity,
+                                            repeatType: "reverse",
+                                            ease: "linear"
+                                        }}
+                                        className="absolute left-[10%] right-[10%] h-[2px] bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.8)] z-10"
+                                    />
+
+                                    {/* Corner Accents */}
+                                    <div className="absolute inset-[10%] pointer-events-none">
+                                        <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-primary rounded-tl-xl" />
+                                        <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-primary rounded-tr-xl" />
+                                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-primary rounded-bl-xl" />
+                                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-primary rounded-br-xl" />
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Permission State */}
+                            {hasPermission === false && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-black/80 backdrop-blur-sm text-center space-y-4">
+                                    <div className="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-500">
+                                        <Camera size={24} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-bold text-white">Camera Access Denied</p>
+                                        <p className="text-xs text-gray-400">Please enable camera permissions in your browser settings to continue.</p>
+                                    </div>
+                                    <Button
+                                        onClick={() => window.location.reload()}
+                                        variant="outline"
+                                        size="sm"
+                                        className="rounded-xl border-white/10 hover:bg-white/5"
+                                    >
+                                        <RefreshCw size={14} className="mr-2" /> Retry Sequence
+                                    </Button>
+                                </div>
+                            )}
+
+                            {/* Loading State */}
+                            {hasPermission === null && !isScanning && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4">
+                                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest animate-pulse">Initializing Lens...</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-20">
+                            <div className="px-4 py-2 bg-black/80 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl flex items-center gap-2">
+                                <div className={cn("w-1.5 h-1.5 rounded-full", isScanning ? "bg-primary animate-pulse" : "bg-gray-500")} />
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                                    {isScanning ? "Data Stream Active" : "Waiting for Input"}
+                                </span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-6">
+                    <div className="p-8 pt-10">
                         <Button
                             variant="ghost"
                             onClick={() => setIsScannerOpen(false)}
-                            className="w-full rounded-xl text-gray-500 hover:text-white"
+                            className="w-full h-12 rounded-2xl text-gray-500 hover:text-white hover:bg-white/5 transition-colors font-bold"
                         >
-                            Cancel
+                            Cancel Operation
                         </Button>
                     </div>
                 </DialogContent>
