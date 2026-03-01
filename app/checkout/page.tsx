@@ -45,12 +45,40 @@ export default function CheckoutPage() {
     const [cardExpiry, setCardExpiry] = useState("");
     const [cardCvv, setCardCvv] = useState("");
 
+    // KHQR state
+    const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+    const [khqrLoading, setKhqrLoading] = useState(false);
+
     useEffect(() => {
         const user = authService.getCurrentUser();
         if (!user) {
             router.push("/login?redirect=/checkout");
         }
     }, [router]);
+
+    useEffect(() => {
+        if (paymentMethod === "khqr" && !qrCodeUrl) {
+            fetchKHQRIntent();
+        }
+    }, [paymentMethod]);
+
+    const fetchKHQRIntent = async () => {
+        setKhqrLoading(true);
+        setError(null);
+        try {
+            const response = await api.post("/payments/create-intent", {
+                amount: parseFloat(amount),
+                currency: "usd",
+                provider: "KHQR"
+            });
+            setQrCodeUrl(response.data.qrCodeUrl);
+        } catch (err: any) {
+            console.error("Failed to fetch KHQR intent:", err);
+            setError("Failed to generate KHQR code. Please try again.");
+        } finally {
+            setKhqrLoading(false);
+        }
+    };
 
     const formatCardNumber = (value: string) => {
         const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
@@ -180,8 +208,8 @@ export default function CheckoutPage() {
                                                 whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
                                                 className={`relative p-4 rounded-xl border-2 transition-all text-left ${paymentMethod === method.id
-                                                        ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
-                                                        : "border-border hover:border-primary/30 hover:bg-muted/30"
+                                                    ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
+                                                    : "border-border hover:border-primary/30 hover:bg-muted/30"
                                                     }`}
                                             >
                                                 <method.icon className={`h-6 w-6 mb-2 ${paymentMethod === method.id ? "text-primary" : "text-muted-foreground"}`} />
@@ -345,21 +373,65 @@ export default function CheckoutPage() {
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: -10 }}
-                                                    className="py-12 text-center"
+                                                    className="py-6 text-center"
                                                 >
-                                                    <div className="w-64 h-64 mx-auto mb-6 bg-gradient-to-br from-muted to-muted/50 rounded-2xl flex items-center justify-center border-2 border-dashed border-border shadow-inner">
-                                                        <div className="text-center">
-                                                            <Sparkles className="h-12 w-12 mx-auto mb-3 text-primary" />
-                                                            <span className="text-sm text-muted-foreground">QR Code will appear here</span>
-                                                        </div>
+                                                    <div className="relative w-64 h-64 mx-auto mb-6 bg-white rounded-2xl flex items-center justify-center border-2 border-border shadow-lg overflow-hidden group">
+                                                        {khqrLoading ? (
+                                                            <div className="text-center">
+                                                                <Loader2 className="h-10 w-10 mx-auto mb-3 text-primary animate-spin" />
+                                                                <span className="text-sm text-muted-foreground font-medium">Generating QR Code...</span>
+                                                            </div>
+                                                        ) : qrCodeUrl ? (
+                                                            <>
+                                                                <img
+                                                                    src={qrCodeUrl}
+                                                                    alt="Bakong KHQR"
+                                                                    className="w-full h-full object-contain p-4"
+                                                                />
+                                                                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                    <div className="bg-white/90 px-3 py-1 rounded-full text-[10px] font-bold text-primary shadow-sm">
+                                                                        SCAN WITH BANK APP
+                                                                    </div>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <div className="text-center">
+                                                                <AlertCircle className="h-10 w-10 mx-auto mb-3 text-destructive" />
+                                                                <span className="text-sm text-destructive font-medium">Failed to load QR</span>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={fetchKHQRIntent}
+                                                                    className="mt-2 text-xs"
+                                                                >
+                                                                    Try Again
+                                                                </Button>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <h3 className="text-xl font-bold mb-2">Scan to Pay</h3>
-                                                    <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                                                        Open your banking app and scan the QR code to complete payment
+                                                    <h3 className="text-xl font-bold mb-2 flex items-center justify-center gap-2">
+                                                        Scan to Pay
+                                                        <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] rounded font-black">KHQR</span>
+                                                    </h3>
+                                                    <p className="text-muted-foreground mb-6 max-w-sm mx-auto text-sm">
+                                                        Open your Bakong or any Cambodian banking app to scan and pay <span className="font-bold text-foreground">${amount}</span>
                                                     </p>
-                                                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                                                        <Shield className="h-4 w-4" />
-                                                        <span>Secured by Bakong</span>
+                                                    <div className="flex flex-col items-center gap-3">
+                                                        <div className="flex items-center justify-center gap-4">
+                                                            <div className="h-8 w-20 bg-muted/50 rounded flex items-center justify-center grayscale opacity-70">
+                                                                <span className="text-[10px] font-black italic">BAKONG</span>
+                                                            </div>
+                                                            <div className="h-8 w-16 bg-muted/50 rounded flex items-center justify-center grayscale opacity-70">
+                                                                <span className="text-[10px] font-black italic">ABA</span>
+                                                            </div>
+                                                            <div className="h-8 w-16 bg-muted/50 rounded flex items-center justify-center grayscale opacity-70">
+                                                                <span className="text-[10px] font-black italic">ACLEDA</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground bg-muted/30 px-3 py-1 rounded-full">
+                                                            <Shield className="h-3 w-3" />
+                                                            <span>Transaction secured by NBC Bakong Network</span>
+                                                        </div>
                                                     </div>
                                                 </motion.div>
                                             )}

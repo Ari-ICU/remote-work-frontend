@@ -56,7 +56,9 @@ export default function AdminSettings() {
     const [settings, setSettings] = useState<any>({
         stripeKey: '',
         openaiKey: '',
-        paymentAccount: '',
+        bakongAccountId: '',
+        bakongMerchantName: '',
+        bakongMerchantCity: '',
         environment: 'development'
     });
 
@@ -342,19 +344,39 @@ export default function AdminSettings() {
                                     <p className="text-[10px] text-gray-500 italic mt-1 uppercase tracking-wider">Used for processing employer subscriptions and freelancer payouts.</p>
                                 </div>
                                 <div className="space-y-4">
-                                    <Label htmlFor="payment-account" className="text-xs font-black uppercase tracking-widest text-gray-500">Primary Payment Account ID</Label>
+                                    <Label htmlFor="bakong-account-id" className="text-xs font-black uppercase tracking-widest text-primary">KHQR - Bakong ID (Carrier Identity)</Label>
                                     <div className="relative group/key">
                                         <Input
-                                            id="payment-account"
-                                            type="text"
-                                            value={settings.paymentAccount}
-                                            onChange={(e) => setSettings({ ...settings, paymentAccount: e.target.value })}
-                                            placeholder="acct_xxxxxxxxxxxxxx"
-                                            className="h-14 bg-black/40 border-white/10 rounded-xl font-bold group-hover/key:border-primary/30 transition-all"
+                                            id="bakong-account-id"
+                                            value={settings.bakongAccountId}
+                                            onChange={(e) => setSettings({ ...settings, bakongAccountId: e.target.value })}
+                                            placeholder="your_id@abaa"
+                                            className="h-14 bg-black/40 border-primary/20 rounded-xl group-hover/key:border-primary/50 transition-all font-bold"
                                         />
-                                        <Key className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                                        <ImageIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/60" />
                                     </div>
-                                    <p className="text-[10px] text-gray-500 italic mt-1 uppercase tracking-wider">The central Stripe account ID where all platform platform commissions are aggregated.</p>
+                                    <p className="text-[10px] text-gray-500 italic mt-1 uppercase tracking-wider">The primary identifier for receiving payments via Bakong KHQR network.</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <Label htmlFor="bakong-merchant-name" className="text-xs font-black uppercase tracking-widest text-gray-500">Merchant Name (Display)</Label>
+                                        <Input
+                                            id="bakong-merchant-name"
+                                            value={settings.bakongMerchantName}
+                                            onChange={(e) => setSettings({ ...settings, bakongMerchantName: e.target.value })}
+                                            className="h-12 bg-black/40 border-white/10 rounded-xl font-bold"
+                                        />
+                                    </div>
+                                    <div className="space-y-4">
+                                        <Label htmlFor="bakong-merchant-city" className="text-xs font-black uppercase tracking-widest text-gray-500">Merchant City</Label>
+                                        <Input
+                                            id="bakong-merchant-city"
+                                            value={settings.bakongMerchantCity}
+                                            onChange={(e) => setSettings({ ...settings, bakongMerchantCity: e.target.value })}
+                                            className="h-12 bg-black/40 border-white/10 rounded-xl font-bold"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-4">
                                     <Label htmlFor="openai-key" className="text-xs font-black uppercase tracking-widest text-gray-500">OpenAI Neural Processor (Match Engine)</Label>
